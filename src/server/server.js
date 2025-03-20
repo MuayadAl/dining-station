@@ -1,0 +1,159 @@
+const express = require("express");
+const Stripe = require("stripe");
+const cors = require("cors");
+const admin = require("firebase-admin");
+require("dotenv").config();
+
+const app = express();
+const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
+
+// Initialize Firebase Admin SDK
+const serviceAccount = require("./serviceAccountKey.json");
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount),
+});
+
+const db = admin.firestore();
+const ordersCollection = db.collection("orders");
+
+// Middleware
+app.use(cors());
+app.use(express.json());
+
+// Import and Use Order Routes
+const orderRoutes = require("./orderController");
+app.use("/orders", orderRoutes);
+
+/// ✅ **🔥 API: Get Order Details (Fix: Missing API)**
+app.get("/orders/:orderId", async (req, res) => {
+  try {
+    const { orderId } = req.params;
+    const doc = await ordersCollection.doc(orderId).get();
+    
+    if (!doc.exists) {
+      return res.status(404).json({ error: "Order not found" });
+    }
+
+    res.status(200).json({ id: doc.id, ...doc.data() });
+  } catch (error) {
+    console.error("Error fetching order:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/// ✅ **🔥 API: Update Order Status (Fix: Ensure Order Exists)**
+app.put("/orders/:orderId/status", async (req, res) => {
+  try {
+    const { orderId } = req.params;
+    const { status } = req.body;
+
+    if (!status) {
+      return res.status(400).json({ error: "Status is required" });
+    }
+
+    // Check if order exists before updating
+    const orderRef = ordersCollection.doc(orderId);
+    const doc = await orderRef.get();
+
+    if (!doc.exists) {
+      return res.status(404).json({ error: "Order not found" });
+    }
+
+    await orderRef.update({ status });
+
+    res.status(200).json({ message: `Order status updated to '${status}'` });
+  } catch (error) {
+    console.error("Error updating order status:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.delete("/orders/:orderId", async (req, res) => {
+  try {
+      const { orderId } = req.params;
+      const orderRef = ordersCollection.doc(orderId);
+      const doc = await orderRef.get();
+
+      if (!doc.exists) {
+          return res.status(404).json({ error: "Order not found" });
+      }
+
+      const orderData = doc.data();
+
+      // ✅ Only allow deletion if status is "Placed"
+      if (orderData.status !== "Placed") {
+          return res.status(400).json({ error: "You can only delete orders that are 'Placed'." });
+      }
+
+      // 🔥 Delete the order from Firestore
+      await orderRef.delete();
+
+      res.status(200).json({ message: "Order deleted successfully" });
+  } catch (error) {
+      console.error("Error deleting order:", error);
+      res.status(500).json({ error: error.message });
+  }
+});
+
+
+/// ✅ **🔥 API: Create Stripe Checkout Session**
+app.post("/create-checkout-session", async (req, res) => {
+  try {
+    const { cartItems, userId, userName, restaurantId, restaurantName } = req.body;
+
+    // Ensure required fields are present
+    if (!cartItems || cartItems.length === 0 || !userId || !userName || !restaurantId || !restaurantName) {
+      return res.status(400).json({ error: "Missing required fields" });
+    }
+
+    // 🔹 Calculate total on the backend (ensuring it's correct)
+    const total = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+
+    // Generate a unique orderId
+    const orderId = `order_${Date.now()}`;
+
+    // 🔥 Wrap Firestore write in try-catch to avoid failures
+    try {
+      const orderData = {
+        orderId,
+        userId,
+        userName,
+        restaurantId,
+        restaurantName,
+        total: parseFloat(total.toFixed(2)),  
+        time: new Date().toISOString(),
+        items: cartItems,
+        status: "Placed",
+      };
+      await ordersCollection.doc(orderId).set(orderData);
+    } catch (error) {
+      console.error("🔥 Firestore Write Error:", error);
+      return res.status(500).json({ error: "Failed to save order." });
+    }
+
+    // 🔥 Create Stripe Checkout Session
+    const session = await stripe.checkout.sessions.create({
+      payment_method_types: ["card"],
+      mode: "payment",
+      success_url: `http://localhost:3000/order/${orderId}`, // Redirect to order tracking
+      cancel_url: "http://localhost:3000/cancel",
+      line_items: cartItems.map((item) => ({
+        price_data: {
+          currency: "usd",
+          product_data: { name: item.name },
+          unit_amount: Math.round(item.price * 100),  // Convert to cents
+        },
+        quantity: item.quantity,
+      })),
+    });
+
+    res.json({ url: session.url });
+  } catch (error) {
+    console.error("🔥 Stripe Checkout Error:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Start Server
+const PORT = 5000;
+app.listen(PORT, () => console.log(`✅ Server running on port ${PORT}`));
