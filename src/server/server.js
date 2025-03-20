@@ -28,8 +28,9 @@ app.use("/orders", orderRoutes);
 app.get("/orders/:orderId", async (req, res) => {
   try {
     const { orderId } = req.params;
-    const doc = await ordersCollection.doc(orderId).get();
-    
+    const orderRef = ordersCollection.doc(orderId);
+    const doc = await orderRef.get();
+
     if (!doc.exists) {
       return res.status(404).json({ error: "Order not found" });
     }
@@ -68,68 +69,77 @@ app.put("/orders/:orderId/status", async (req, res) => {
   }
 });
 
+/// ✅ **🔥 API: Delete Order**
 app.delete("/orders/:orderId", async (req, res) => {
   try {
-      const { orderId } = req.params;
-      const orderRef = ordersCollection.doc(orderId);
-      const doc = await orderRef.get();
+    const { orderId } = req.params;
+    const orderRef = ordersCollection.doc(orderId);
+    const doc = await orderRef.get();
 
-      if (!doc.exists) {
-          return res.status(404).json({ error: "Order not found" });
-      }
+    if (!doc.exists) {
+      return res.status(404).json({ error: "Order not found" });
+    }
 
-      const orderData = doc.data();
+    const orderData = doc.data();
+    if (orderData.status.toLowerCase() !== "placed") {
+      return res
+        .status(400)
+        .json({ error: "You can only delete orders that are 'Placed'." });
+    }
 
-      // ✅ Only allow deletion if status is "Placed"
-      if (orderData.status !== "Placed") {
-          return res.status(400).json({ error: "You can only delete orders that are 'Placed'." });
-      }
+    // 🔥 Delete the order from Firestore
+    await orderRef.delete();
 
-      // 🔥 Delete the order from Firestore
-      await orderRef.delete();
-
-      res.status(200).json({ message: "Order deleted successfully" });
+    res.status(200).json({ message: "Order deleted successfully" });
   } catch (error) {
-      console.error("Error deleting order:", error);
-      res.status(500).json({ error: error.message });
+    console.error("Error deleting order:", error);
+    res.status(500).json({ error: error.message });
   }
 });
-
 
 /// ✅ **🔥 API: Create Stripe Checkout Session**
 app.post("/create-checkout-session", async (req, res) => {
   try {
-    const { cartItems, userId, userName, restaurantId, restaurantName } = req.body;
+    const { cartItems, userId, userName, restaurantId, restaurantName } =
+      req.body;
 
     // Ensure required fields are present
-    if (!cartItems || cartItems.length === 0 || !userId || !userName || !restaurantId || !restaurantName) {
+    if (
+      !cartItems ||
+      cartItems.length === 0 ||
+      !userId ||
+      !userName ||
+      !restaurantId ||
+      !restaurantName
+    ) {
       return res.status(400).json({ error: "Missing required fields" });
     }
 
     // 🔹 Calculate total on the backend (ensuring it's correct)
-    const total = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+    const total = cartItems.reduce(
+      (sum, item) => sum + item.price * item.quantity,
+      0
+    );
 
-    // Generate a unique orderId
-    const orderId = `order_${Date.now()}`;
+    // 🔥 Generate a Firestore document reference and get the auto-generated ID
+    const newOrderRef = ordersCollection.doc();
+    const orderId = newOrderRef.id; // Use Firestore's auto-generated ID
 
-    // 🔥 Wrap Firestore write in try-catch to avoid failures
-    try {
-      const orderData = {
-        orderId,
-        userId,
-        userName,
-        restaurantId,
-        restaurantName,
-        total: parseFloat(total.toFixed(2)),  
-        time: new Date().toISOString(),
-        items: cartItems,
-        status: "Placed",
-      };
-      await ordersCollection.doc(orderId).set(orderData);
-    } catch (error) {
-      console.error("🔥 Firestore Write Error:", error);
-      return res.status(500).json({ error: "Failed to save order." });
-    }
+    const orderData = {
+      orderId, // Store the Firestore-generated ID explicitly
+      userId,
+      userName,
+      restaurantId,
+      restaurantName,
+      total: parseFloat(total.toFixed(2)),
+      time: new Date().toISOString(),
+      items: cartItems,
+      status: "Placed",
+    };
+
+    // 🔥 Save order in Firestore
+    await newOrderRef.set(orderData, { merge: true });
+
 
     // 🔥 Create Stripe Checkout Session
     const session = await stripe.checkout.sessions.create({
@@ -141,7 +151,7 @@ app.post("/create-checkout-session", async (req, res) => {
         price_data: {
           currency: "usd",
           product_data: { name: item.name },
-          unit_amount: Math.round(item.price * 100),  // Convert to cents
+          unit_amount: Math.round(item.price * 100), // Convert to cents
         },
         quantity: item.quantity,
       })),

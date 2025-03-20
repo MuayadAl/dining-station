@@ -23,8 +23,33 @@ function Header() {
   const [loading, setLoading] = useState(true); // Track loading state
   const navbarRef = useRef(null);
   const navigate = useNavigate();
+  const [lastOrderId, setLastOrderId] = useState(null);
 
   const closeNavbar = () => setIsOpen(false);
+
+  // Fetch the latest order ID for the logged-in user
+  useEffect(() => {
+    const fetchLatestOrder = async () => {
+      if (user) {
+        const ordersRef = collection(db, "orders");
+        const q = query(ordersRef, where("userId", "==", user.uid));
+        const querySnapshot = await getDocs(q);
+
+        if (!querySnapshot.empty) {
+          // Get the most recent order based on time
+          const latestOrder = querySnapshot.docs
+            .map((doc) => ({ id: doc.id, ...doc.data() }))
+            .sort((a, b) => new Date(b.time) - new Date(a.time))[0];
+
+          setLastOrderId(latestOrder.id);
+        } else {
+          setLastOrderId(null);
+        }
+      }
+    };
+
+    fetchLatestOrder();
+  }, [user]);
 
   // Close navbar if clicked outside
   useEffect(() => {
@@ -39,55 +64,36 @@ function Header() {
 
   // Fetch user data & role from Firestore
   useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged(async (authUser) => {
-      if (authUser) {
-        setUser(authUser);
-        setLoading(true);
-
-        try {
-          // Fetch user details
-          const userRef = doc(db, "users", authUser.uid);
-          const userDoc = await getDoc(userRef);
-
-          if (userDoc.exists()) {
-            setUserName(userDoc.data().name);
-            setUserRole(userDoc.data().userRole);
-
-            // If the user is a restaurant owner, fetch their restaurant document
-            if (userDoc.data().userRole === "restaurant-owner") {
-              const restaurantsQuery = collection(db, "restaurants");
-              const querySnapshot = await getDocs(
-                query(restaurantsQuery, where("userId", "==", authUser.uid))
-              );
-
-              if (!querySnapshot.empty) {
-                const restaurantDoc = querySnapshot.docs[0]; // Assuming one restaurant per owner
-                setRestaurantId(restaurantDoc.id);
-              } else {
-                console.log("No restaurant found for this owner.");
-                setRestaurantId(null);
-              }
+    if (!user) {  // Prevent redundant calls
+      const unsubscribe = auth.onAuthStateChanged(async (authUser) => {
+        if (authUser) {
+          setUser(authUser);
+          setLoading(true);
+          try {
+            const userRef = doc(db, "users", authUser.uid);
+            const userDoc = await getDoc(userRef);
+  
+            if (userDoc.exists()) {
+              setUserName(userDoc.data().name);
+              setUserRole(userDoc.data().userRole);
             }
+          } catch (error) {
+            console.error("Error fetching user:", error);
+          } finally {
+            setLoading(false);
           }
-        } catch (error) {
-          console.error("Error fetching user or restaurant data: ", error);
+        } else {
+          setUser(null);
           setUserName("");
           setUserRole(null);
-          setRestaurantId(null);
-        } finally {
           setLoading(false);
         }
-      } else {
-        setUser(null);
-        setUserName("");
-        setUserRole(null);
-        setRestaurantId(null);
-        setLoading(false);
-      }
-    });
-
-    return () => unsubscribe();
-  }, []);
+      });
+  
+      return () => unsubscribe();
+    }
+  }, [user]); // Add user as dependency
+  
 
   // Handle Logout
   const handleUserLogout = async () => {
@@ -268,9 +274,7 @@ function Header() {
                     <>
                       <li>
                         <NavLink
-                          to={`/order/${
-                            localStorage.getItem("lastOrderId") || ""
-                          }`}
+                          to={lastOrderId ? `/order/${lastOrderId}` : "/orders"}
                           onClick={closeNavbar}
                         >
                           <span className="user_icon"></span>

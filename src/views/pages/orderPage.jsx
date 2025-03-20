@@ -1,15 +1,9 @@
 import React, { useEffect, useState } from "react";
-import { useParams, Link, useNavigate } from "react-router-dom";
-import {
-  doc,
-  onSnapshot,
-  collection,
-  query,
-  where,
-  getDocs,
-} from "firebase/firestore";
-import { db } from "../../models/firebase";
-import { Container, ProgressBar, Table } from "react-bootstrap";
+import { useParams, useNavigate } from "react-router-dom";
+import { onAuthStateChanged } from "firebase/auth";
+import { doc, onSnapshot, collection, query, where, getDocs, deleteDoc } from "firebase/firestore";
+import { db, auth } from "../../models/firebase";
+import useAlert from "../../hooks/userAlert"; // Import the custom alert hook
 
 const OrderPage = () => {
   const { orderId } = useParams();
@@ -17,68 +11,86 @@ const OrderPage = () => {
   const [loading, setLoading] = useState(true);
   const [previousOrders, setPreviousOrders] = useState([]);
   const navigate = useNavigate();
+  const { confirmAction, showSuccess, showError } = useAlert(); // Use alert functions
 
   useEffect(() => {
-    const orderRef = doc(db, "orders", orderId);
+    setLoading(true);
 
-    // 🔥 Save last visited orderId in LocalStorage
-    localStorage.setItem("lastOrderId", orderId);
+    const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        const orderRef = doc(db, "orders", orderId);
 
-    // 🔥 Listen to real-time order updates
-    const unsubscribe = onSnapshot(orderRef, (doc) => {
-      if (doc.exists()) {
-        setOrder(doc.data());
-        setLoading(false);
+        const unsubscribeOrder = onSnapshot(orderRef, (docSnapshot) => {
+          if (docSnapshot.exists()) {
+            setOrder({ id: docSnapshot.id, ...docSnapshot.data() });
+          } else {
+            showError("Order not found.");
+            navigate("/orders");
+          }
+          setLoading(false);
+        });
+
+        return () => unsubscribeOrder();
       } else {
-        console.error("Order not found.");
-        setOrder(null);
+        showError("No authenticated user.");
+        navigate("/login");
         setLoading(false);
       }
     });
 
-    return () => unsubscribe();
-  }, [orderId]);
+    return () => unsubscribeAuth();
+  }, [orderId, navigate]);
 
-  // 🔹 Fetch Previous Orders for the Same User
   useEffect(() => {
-    if (order?.userId) {
+    if (orderId && order?.userId) {
       const fetchPreviousOrders = async () => {
-        const ordersRef = collection(db, "orders");
-        const q = query(ordersRef, where("userId", "==", order.userId));
-        const querySnapshot = await getDocs(q);
+        try {
+          const ordersRef = collection(db, "orders");
+          const q = query(ordersRef, where("userId", "==", order.userId));
+          const querySnapshot = await getDocs(q);
 
-        const orders = querySnapshot.docs
-          .map((doc) => ({ id: doc.id, ...doc.data() }))
-          .filter((o) => o.orderId !== orderId) // Exclude current order
-          .sort((a, b) => new Date(b.time) - new Date(a.time)); // Sort by date (latest first)
+          const orders = querySnapshot.docs
+            .map((doc) => ({ id: doc.id, ...doc.data() }))
+            .filter((o) => o.id !== orderId)
+            .sort((a, b) => new Date(b.time) - new Date(a.time));
 
-        setPreviousOrders(orders);
+          setPreviousOrders(orders);
+        } catch (error) {
+          showError("Error fetching previous orders.");
+        }
       };
 
       fetchPreviousOrders();
     }
-  }, [order]);
+  }, [orderId, order?.userId]);
 
   const handleDeleteOrder = async () => {
-    if (!window.confirm("Are you sure you want to delete this order?")) return;
+    const isConfirmed = await confirmAction(
+      "Are you sure?",
+      "This action cannot be undone. Do you want to delete this order?",
+      "Yes, delete it"
+    );
+
+    if (!isConfirmed) return;
 
     try {
-      const response = await fetch(`http://localhost:5000/orders/${orderId}`, {
-        method: "DELETE",
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        alert(data.error);
+      const currentUser = auth.currentUser;
+      if (!currentUser) {
+        showError("You need to be logged in to delete an order.");
         return;
       }
 
-      alert("Order deleted successfully!");
-      navigate("/orders"); // Redirect to the orders list page
+      if (order.userId !== currentUser.uid) {
+        showError("Unauthorized action.");
+        return;
+      }
+
+      await deleteDoc(doc(db, "orders", orderId));
+
+      showSuccess("Order deleted successfully!");
+      navigate("/restaurants");
     } catch (error) {
-      console.error("Error deleting order:", error);
-      alert("Failed to delete order.");
+      showError("Failed to delete order.");
     }
   };
 
@@ -95,67 +107,56 @@ const OrderPage = () => {
       </div>
     );
 
-  // 🔹 Define Status Steps
-  const statusSteps = [
-    "Placed",
-    "In the Kitchen",
-    "Ready to Pick Up",
-    "Picked Up",
-  ];
+  const statusSteps = ["Placed", "In Kitchen", "Ready to Pick Up", "Picked Up"];
   const currentStepIndex = statusSteps.indexOf(order.status);
-  const progressPercentage =
-    ((currentStepIndex + 1) / statusSteps.length) * 100;
+  const progressPercentage = ((currentStepIndex + 1) / statusSteps.length) * 100;
 
-  // 🔹 Define Colors Based on Status
   const getProgressColor = () => {
-    if (currentStepIndex === 0) return "info"; // Blue for "Placed"
-    if (currentStepIndex === 1) return "warning"; // Yellow for "In the Kitchen"
-    if (currentStepIndex === 2) return "success"; // Green for "Ready to Pick Up"
-    return "primary"; // Dark blue for "Picked Up"
+    if (currentStepIndex === 0) return "info";
+    if (currentStepIndex === 1) return "warning";
+    if (currentStepIndex === 2) return "success";
+    return "danger";
   };
 
   return (
-    <Container className="mb-4">
-      <h2 className="mb-3">Order Details</h2>
-      <p>
-        <strong>Order ID:</strong> {orderId}
-      </p>
-      <p>
-        <strong>Restaurant:</strong> {order.restaurantName}
-      </p>
-      <p>
-        <strong>User:</strong> {order.userName}
-      </p>
-      <p>
-        <strong>Order Time:</strong> {new Date(order.time).toLocaleString()}
-      </p>
-      <p>
-        <strong>Status:</strong>{" "}
-        <span className={`badge bg-${getProgressColor()}`}>{order.status}</span>
-      </p>
-      <div>
-        {order.status === "Placed" && (
-          <button className="btn btn-danger" onClick={handleDeleteOrder}>
-            Delete Order
-          </button>
-        )}
+    <div className="container mb-4">
+      <div className="d-flex row justify-content-start shadow p-3 my-5 bg-body rounded-3">
+        <h2 className="mb-3">Order Details</h2>
+        <p><strong>Order ID:</strong> {orderId}</p>
+        <p><strong>Restaurant:</strong> {order.restaurantName}</p>
+        <p><strong>Customer:</strong> {order.userName}</p>
+        <p><strong>Order Time:</strong> {new Date(order.time).toLocaleString()}</p>
+        <p>
+          <strong>Status:</strong> <span className={`badge bg-${getProgressColor()}`}>{order.status}</span>
+        </p>
+        <div>
+          {order.status === "Placed" && (
+            <button className="btn btn-danger" onClick={handleDeleteOrder}>
+              Delete Order
+            </button>
+          )}
+        </div>
       </div>
 
-      {/* 🔥 Bootstrap Progress Bar with Dynamic Colors */}
-      <div className="mt-4">
-        <ProgressBar
-          now={progressPercentage}
-          label={`${progressPercentage}%`}
-          variant={getProgressColor()}
-          animated
-        />
-        <div className="d-flex justify-content-between mt-2">
+      <div className="bg-body shadow p-4 rounded-3 d-flex flex-column justify-content-center align-items-center">
+        <div className="progress w-100" aria-valuemin="0" aria-valuemax="100">
+          <div
+            className={`progress-bar progress-bar-striped progress-bar-animated bg-${getProgressColor()}`}
+            role="progressbar"
+            style={{ width: `${progressPercentage}%` }}
+            aria-valuenow={progressPercentage}
+            aria-valuemin="0"
+            aria-valuemax="100"
+          >
+            {progressPercentage}%
+          </div>
+        </div>
+
+        <div className="d-flex justify-content-between w-100 mt-2">
           {statusSteps.map((step, index) => (
             <span
               key={index}
-              className={`fw-bold ${
-                index <= currentStepIndex ? "text-primary" : "text-muted"
-              }`}
+              className={`fw-bold ${index <= currentStepIndex ? "text-primary" : "text-muted"}`}
             >
               {step}
             </span>
@@ -172,52 +173,48 @@ const OrderPage = () => {
         ))}
       </ul>
 
-      <h3 className="mt-3">
-        <strong>Total Amount: RM{parseFloat(order.total).toFixed(2)}</strong>
-      </h3>
+      <h3 className="mt-3"><strong>Total Amount: RM{parseFloat(order.total).toFixed(2)}</strong></h3>
 
-      {/* 🔥 Display Previous Orders */}
       <h4 className="mt-5">Previous Orders</h4>
       {previousOrders.length === 0 ? (
         <p className="text-muted">No previous orders found.</p>
       ) : (
-        <Table striped bordered hover className="mt-3">
-          <thead className="bg-dark text-white">
-            <tr>
-              <th>Order ID</th>
-              <th>Restaurant</th>
-              <th>Status</th>
-              <th>Total</th>
-              <th>Order Date</th>
-              <th>Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {previousOrders.map((prevOrder) => (
-              <tr key={prevOrder.orderId}>
-                <td>{prevOrder.orderId}</td>
-                <td>{prevOrder.restaurantName}</td>
-                <td>
-                  <span className={`badge bg-${getProgressColor()}`}>
-                    {prevOrder.status}
-                  </span>
-                </td>
-                <td>RM{parseFloat(prevOrder.total).toFixed(2)}</td>
-                <td>{new Date(prevOrder.time).toLocaleString()}</td>
-                <td>
-                  <Link
-                    to={`/order/${prevOrder.orderId}`}
-                    className="btn btn-primary btn-sm"
-                  >
-                    View Order
-                  </Link>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </Table>
+        <div className="justify-content-start shadow px-1 pb-3 mb-5 bg-body rounded-3">
+          <div className="table-responsive mt-4">
+            <table className="table table-bordered table-hover table-striped">
+              <thead className="bg-dark text-white text-center">
+                <tr>
+                  <th>Order ID</th>
+                  <th>Restaurant</th>
+                  <th>Status</th>
+                  <th>Total</th>
+                  <th>Order Date</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {previousOrders.map((prevOrder) => (
+                  <tr key={prevOrder.id} className="align-middle text-center">
+                    <td className="fw-bold">{prevOrder.id}</td>
+                    <td>{prevOrder.restaurantName}</td>
+                    <td>
+                      <span className={`badge bg-${getProgressColor()}`}>{prevOrder.status}</span>
+                    </td>
+                    <td className="fw-semibold">RM{parseFloat(prevOrder.total).toFixed(2)}</td>
+                    <td>{new Date(prevOrder.time).toLocaleString()}</td>
+                    <td>
+                      <button className="btn btn-primary btn-sm shadow-sm" onClick={() => setOrder(prevOrder)}>
+                        View Order
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
       )}
-    </Container>
+    </div>
   );
 };
 

@@ -1267,3 +1267,9 @@ textarea#comment.update_mail::placeholder {
     color: white !important;
     opacity: 0.7;
   }
+
+
+  .row{
+    padding: 0% !important;
+    margin: 0% !important;
+  }
