@@ -18,12 +18,82 @@ import {
   faDoorOpen,
   faDoorClosed,
 } from "@fortawesome/free-solid-svg-icons";
+import Loader from "../components/Loader";
 
 const RestaurantStatusReports = () => {
   const [restaurant, setRestaurant] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [restaurantStatus, setRestaurantStatus] = useState("Checking status...");
+  const [restaurantStatus, setRestaurantStatus] =
+    useState("Checking status...");
+  const [orderStats, setOrderStats] = useState({
+    totalIncome: 0,
+    completedOrders: 0,
+    cancelledOrders: 0,
+    topItems: [],
+    dailyTotals: [],
+  });
+  const [orders, setOrders] = useState([]);
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+
+  const downloadCSV = (data) => {
+    const filtered = data.filter((order) => {
+      const orderDate = new Date(order.time);
+      return (
+        (!startDate || orderDate >= new Date(startDate)) &&
+        (!endDate || orderDate <= new Date(endDate))
+      );
+    });
+  
+    let rows = [];
+  
+    filtered.forEach((order) => {
+      const baseInfo = [
+        order.id,
+        new Date(order.time).toLocaleDateString(),
+        new Date(order.time).toLocaleTimeString(),
+        `RM${order.total?.toFixed(2) || "0.00"}`,
+        order.status,
+      ];
+  
+      if (order.items && Array.isArray(order.items)) {
+        order.items.forEach((item) => {
+          rows.push([
+            ...baseInfo,
+            item.name,
+            item.quantity,
+            `RM${(item.price * item.quantity).toFixed(2)}`,
+          ]);
+        });
+      } else {
+        rows.push([...baseInfo, "N/A", "N/A", "N/A"]);
+      }
+    });
+  
+    const headers = [
+      "Order ID",
+      "Date",
+      "Time",
+      "Total",
+      "Status",
+      "Item Name",
+      "Quantity",
+      "Item Subtotal",
+    ];
+  
+    const csvContent = [headers, ...rows].map((r) => r.join(",")).join("\n");
+  
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", `restaurant_orders_export.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+  
 
   // Function to check if the restaurant is open or closed
   const getRestaurantStatus = (openingHours) => {
@@ -68,6 +138,96 @@ const RestaurantStatusReports = () => {
             // Calculate and set the restaurant status
             const status = getRestaurantStatus(restaurantData.openingHours);
             setRestaurantStatus(status);
+            // Fetch all orders for this restaurant
+            const orderQuery = query(
+              collection(db, "orders"),
+              where("restaurantId", "==", restaurantData.restaurantId)
+            );
+            const orderSnapshot = await getDocs(orderQuery);
+
+            let income = 0;
+            let completed = 0;
+            let cancelled = 0;
+            let itemCountMap = {};
+            let dailyMap = {};
+            const fetchedOrders = [];
+
+            orderSnapshot.forEach((doc) => {
+              const data = doc.data();
+              fetchedOrders.push({ id: doc.id, ...data });
+
+              // Only count orders with total value
+              if (data.total) {
+                const dateStr = new Date(data.time).toLocaleDateString();
+
+                if (data.status === "Picked Up") {
+                  income += parseFloat(data.total);
+                  completed++;
+                  dailyMap[dateStr] =
+                    (dailyMap[dateStr] || 0) + parseFloat(data.total);
+                } else if (data.status === "Cancelled") {
+                  cancelled++;
+                }
+
+                // Count items for top sold
+                if (data.items?.length) {
+                  data.items.forEach((item) => {
+                    const name = item.name;
+                    itemCountMap[name] =
+                      (itemCountMap[name] || 0) + item.quantity;
+                  });
+                }
+              }
+            });
+
+            // Top 3 sold items
+            const topItems = Object.entries(itemCountMap)
+              .sort(([, a], [, b]) => b - a)
+              .slice(0, 3)
+              .map(([name, quantity]) => ({ name, quantity }));
+
+            // Daily totals sorted by date descending
+            const dailyTotals = Object.entries(dailyMap)
+              .map(([date, total]) => ({ date, total }))
+              .sort((a, b) => new Date(b.date) - new Date(a.date));
+
+            // Group by week & month
+            let weekMap = {};
+            let monthMap = {};
+            let totalOrders = 0;
+
+            orderSnapshot.forEach((doc) => {
+              const data = doc.data();
+              if (data.status === "Picked Up" && data.total) {
+                const time = new Date(data.time);
+                const weekKey = `${time.getFullYear()}-W${Math.ceil(
+                  time.getDate() / 7
+                )}`;
+                const monthKey = `${time.getFullYear()}-${(time.getMonth() + 1)
+                  .toString()
+                  .padStart(2, "0")}`;
+
+                weekMap[weekKey] =
+                  (weekMap[weekKey] || 0) + parseFloat(data.total);
+                monthMap[monthKey] =
+                  (monthMap[monthKey] || 0) + parseFloat(data.total);
+                totalOrders++;
+              }
+            });
+
+            setOrders(fetchedOrders);
+
+            setOrderStats({
+              totalIncome: income,
+              completedOrders: completed,
+              cancelledOrders: cancelled,
+              topItems,
+              dailyTotals,
+              weeklyTotals: Object.entries(weekMap),
+              monthlyTotals: Object.entries(monthMap),
+              totalOrders,
+              avgTicket: completed ? income / completed : 0,
+            });
           } else {
             setError("No restaurant found for this user.");
           }
@@ -87,21 +247,17 @@ const RestaurantStatusReports = () => {
 
   if (loading) {
     return (
-      <div className="min-vh-100 container-fluid d-flex align-items-center justify-content-center">
-        <div className="container d-flex justify-content-center align-items-center">
-          <div className="spinner-border text-primary" role="status">
-            <span className="visually-hidden">Loading...</span>
-          </div>
-        </div>
-
-      </div>
+      Loader("Loading")
     );
   }
 
   if (error) {
     return (
       <div className="min-vh-100 container-fluid">
-        <div className=" container-fluid float-start alert alert-danger text-center my-5 py-5 fs-5" role="alert">
+        <div
+          className=" container-fluid float-start alert alert-danger text-center my-5 py-5 fs-5"
+          role="alert"
+        >
           {error}
         </div>
       </div>
@@ -110,32 +266,17 @@ const RestaurantStatusReports = () => {
 
   if (!restaurant) {
     return (
-        <div className="alert alert-warning text-center mt-5" role="alert">
-          No restaurant data available.
-        </div>
-
+      <div className="alert alert-warning text-center mt-5" role="alert">
+        No restaurant data available.
+      </div>
     );
   }
 
   return (
-    <div className="container-fluid mb-4 float-start">
-      {/* Restaurant Status Badge */}
-      <div className="d-flex justify-content-between align-items-center mb-4">
-        <p className="flex-grow-1 text-center fs-1 mt-2 me-2 fw-bold">Restaurant Status & Reports</p>
-        <div >
-          <span
-            className={`badge py-3 ${
-              restaurantStatus === "Open" ? "bg-success" : "bg-danger"
-            }`}
-          >
-            <FontAwesomeIcon
-              icon={restaurantStatus === "Open" ? faDoorOpen : faDoorClosed}
-              className="me-2"
-            />
-            {restaurantStatus}
-          </span>
-        </div>
-      </div>
+    <div className="d-flex container justify-content-center align-items-center mb-4 ">
+      <div className="w-100 ">
+
+      <p className="mt-2 text-center fs-2 fw-bold">Restaurant Status & Reports</p>
 
       {/* Restaurant Status Section */}
       <section className="mb-5">
@@ -145,9 +286,27 @@ const RestaurantStatusReports = () => {
         </h2>
         <div className="card shadow-sm">
           <div className="card-body fs-6">
-            <h5 className="card-title text-primary text-center fw-bold">
-              {restaurant.name}
-            </h5>
+            <div className="justify-content-between d-flex align-items-center">
+              <h5 className="card-title text-primary fw-bold">
+                {restaurant.name}
+              </h5>
+              <div>
+                <span
+                  className={`badge py-3 ${
+                    restaurantStatus === "Open" ? "bg-success" : "bg-danger"
+                  }`}
+                >
+                  <FontAwesomeIcon
+                    icon={
+                      restaurantStatus === "Open" ? faDoorOpen : faDoorClosed
+                    }
+                    className="me-2"
+                  />
+                  {restaurantStatus}
+                </span>
+              </div>
+            </div>
+
             <hr />
 
             <div className="row">
@@ -245,15 +404,203 @@ const RestaurantStatusReports = () => {
           <FontAwesomeIcon icon={faChartLine} className="me-2" />
           Reports
         </h2>
-        <div className="card shadow-sm">
-          <div className="card-body">
-            <p className="card-text text-muted">
-              Reports section will be added once the backend is ready.
-            </p>
+        {orders.length > 0 && (
+          <div className="text-end mb-3">
+            <button
+              className="btn btn-outline-dark"
+              onClick={() => downloadCSV(orders)}
+            >
+              Export All Orders to CSV
+            </button>
           </div>
+        )}
+        <div className="row mb-3 g-2">
+          <div className="col-md-4">
+            <label className="form-label">Start Date</label>
+            <input
+              type="date"
+              className="form-control"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+            />
+          </div>
+          <div className="col-md-4">
+            <label className="form-label">End Date</label>
+            <input
+              type="date"
+              className="form-control"
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+            />
+          </div>
+          <div className="col-md-4 d-flex align-items-end">
+            <button
+              className="btn btn-outline-primary w-100"
+              onClick={() => downloadCSV(orders)}
+            >
+              Export CSV
+            </button>
+          </div>
+        </div>
+
+        <div className="row g-3">
+          <div className="col-md-4">
+            <div className="card shadow-sm border-success">
+              <div className="card-body text-success text-center">
+                <h5>Total Income</h5>
+                <h3 className="fw-bold">
+                  RM {orderStats.totalIncome.toFixed(2)}
+                </h3>
+              </div>
+            </div>
+          </div>
+
+          <div className="col-md-4">
+            <div className="card shadow-sm border-primary">
+              <div className="card-body text-primary text-center">
+                <h5>Completed Orders</h5>
+                <h3 className="fw-bold">{orderStats.completedOrders}</h3>
+              </div>
+            </div>
+          </div>
+
+          <div className="col-md-4">
+            <div className="card shadow-sm border-danger">
+              <div className="card-body text-danger text-center">
+                <h5>Cancelled Orders</h5>
+                <h3 className="fw-bold">{orderStats.cancelledOrders}</h3>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-5">
+          <h4>Top 3 Sold Items</h4>
+          <ul className="list-group">
+            {orderStats.topItems.length === 0 ? (
+              <li className="list-group-item text-muted">No data</li>
+            ) : (
+              orderStats.topItems.map((item, idx) => (
+                <li
+                  key={idx}
+                  className="list-group-item d-flex justify-content-between"
+                >
+                  <strong>{item.name}</strong>
+                  <span>{item.quantity} sold</span>
+                </li>
+              ))
+            )}
+          </ul>
+        </div>
+
+        <div className="mt-5">
+          <h4>Daily Income Summary</h4>
+          <table className="table table-striped table-hover">
+            <thead className="table-dark">
+              <tr>
+                <th>Date</th>
+                <th>Total Income</th>
+              </tr>
+            </thead>
+            <tbody>
+              {orderStats.dailyTotals.length === 0 ? (
+                <tr>
+                  <td colSpan="2" className="text-muted text-center">
+                    No orders yet.
+                  </td>
+                </tr>
+              ) : (
+                orderStats.dailyTotals.map((day, idx) => (
+                  <tr key={idx}>
+                    <td>{day.date}</td>
+                    <td>RM {day.total.toFixed(2)}</td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        <div className="row mt-4">
+          <div className="col-md-6">
+            <div className="card shadow-sm border-info">
+              <div className="card-body text-info text-center">
+                <h5>Total Orders</h5>
+                <h3 className="fw-bold">{orderStats.totalOrders}</h3>
+              </div>
+            </div>
+          </div>
+
+          <div className="col-md-6">
+            <div className="card shadow-sm border-secondary">
+              <div className="card-body text-secondary text-center">
+                <h5>Avg Ticket Size</h5>
+                <h3 className="fw-bold">
+                  RM {orderStats.avgTicket.toFixed(2)}
+                </h3>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-5">
+          <h4>Weekly Income Summary</h4>
+          <table className="table table-striped table-hover">
+            <thead className="table-secondary">
+              <tr>
+                <th>Week</th>
+                <th>Total Income</th>
+              </tr>
+            </thead>
+            <tbody>
+              {orderStats.weeklyTotals.length === 0 ? (
+                <tr>
+                  <td colSpan="2" className="text-muted text-center">
+                    No weekly data.
+                  </td>
+                </tr>
+              ) : (
+                orderStats.weeklyTotals.map(([week, total], idx) => (
+                  <tr key={idx}>
+                    <td>{week}</td>
+                    <td>RM {total.toFixed(2)}</td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        <div className="mt-5">
+          <h4>Monthly Income Summary</h4>
+          <table className="table table-striped table-hover">
+            <thead className="table-secondary">
+              <tr>
+                <th>Month</th>
+                <th>Total Income</th>
+              </tr>
+            </thead>
+            <tbody>
+              {orderStats.monthlyTotals.length === 0 ? (
+                <tr>
+                  <td colSpan="2" className="text-muted text-center">
+                    No monthly data.
+                  </td>
+                </tr>
+              ) : (
+                orderStats.monthlyTotals.map(([month, total], idx) => (
+                  <tr key={idx}>
+                    <td>{month}</td>
+                    <td>RM {total.toFixed(2)}</td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
         </div>
       </section>
     </div>
+      </div>
   );
 };
 

@@ -11,7 +11,7 @@ import {
   updateDoc,
 } from "firebase/firestore";
 import { db, auth } from "../../models/firebase";
-import useAlert from "../../hooks/userAlert"; 
+import useAlert from "../../hooks/userAlert";
 import Loader from "../components/Loader";
 const OrderPage = () => {
   const { orderId } = useParams();
@@ -108,7 +108,6 @@ const OrderPage = () => {
       await updateDoc(orderRef, { status: "Cancelled" });
 
       showSuccess("Order canceled successfully!");
-
     } catch (error) {
       showError("Failed to cancel order.");
     }
@@ -221,7 +220,7 @@ const OrderPage = () => {
       <h4 className="mt-5">Previous Orders</h4>
       {!ordersLoaded ? (
         <button
-          className="btn btn-primary"
+          className="btn btn-primary mb-2"
           onClick={fetchPreviousOrders}
           disabled={loadingOrders}
         >
