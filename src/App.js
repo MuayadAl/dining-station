@@ -28,6 +28,9 @@ import MenuPage from "./views/pages/MenuPage";
 import CartPage from "./views/pages/CartPage";
 import CheckoutPage from "./views/pages/CheckoutPage";
 import RestaurantOrderManager from "./views/pages/RestaurantOrderManager";
+import AdminReportPage from "./views/pages/AdminReportPage";
+
+
 
 // Stripe pages
 import Cancel from "./views/pages/Cancel";
@@ -60,22 +63,18 @@ function App() {
         <Route path="/cart" element={<CartPage />} />
         <Route path="/checkout/:restaurantId" element={<CheckoutPage />} />
         <Route path="/order/:orderId" element={<OrderPage />} />
+
         {/* Restaurant Dashboard */}
         <Route path="/my-restaurant/add" element={<AddRestaurant />} />
         <Route path="/my-restaurant/edit" element={<EditRestaurant />} />
-        <Route
-          path="/my-restaurant/status-report"
-          element={<RestaurantStatusReports />}
-        />
+        <Route path="/my-restaurant/status-report"element={<RestaurantStatusReports />}/>
         <Route path="/my-restaurant-add-menu" element={<AddMenuItem />} />
         <Route path="/my-restaurant/orders" element={<RestaurantOrderManager />} />
 
         {/* Admin Dashboard */}
-        <Route
-          path="/admin/restaurants-requests"
-          element={<AdminRestaurantApprovalPage />}
-        />
+        <Route path="/admin/restaurants-requests" element={<AdminRestaurantApprovalPage />}/>
         <Route path="/messagesadmin" element={<MessagesAdmin />} />
+        <Route path="/admin/report" element={<AdminReportPage />} />
       </Routes>
       <Footer />
     </Router>

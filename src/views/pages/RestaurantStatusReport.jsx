@@ -435,10 +435,10 @@ const RestaurantStatusReports = () => {
           </div>
           <div className="col-md-4 d-flex align-items-end">
             <button
-              className="btn btn-outline-primary w-100"
+              className="btn btn-danger w-100"
               onClick={() => downloadCSV(orders)}
             >
-              Export CSV
+              Export to CSV
             </button>
           </div>
         </div>

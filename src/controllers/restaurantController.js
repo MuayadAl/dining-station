@@ -69,7 +69,7 @@ export const addRestaurant = async ({
     imgUrl,
     status: null,
     openingHours,
-    approvalStatus: "pending", // default approval status
+    approvalStatus: "pending", // default approval status until the admin approve it or reject it.
     remark,
     description,
     createdAt: serverTimestamp(),

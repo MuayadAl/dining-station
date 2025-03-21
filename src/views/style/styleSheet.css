@@ -1273,3 +1273,11 @@ textarea#comment.update_mail::placeholder {
     padding: 0% !important;
     margin: 0% !important;
   }
+
+  /* Admin Report Page */
+
+  .hover_effect:hover{
+    transform: scale(1.02);
+    /* box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15); */
+    transition: transform 0.2s ease-in-out, box-shadow 0.3s ease;
+  }

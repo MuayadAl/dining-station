@@ -197,6 +197,14 @@ function Header() {
                             Customer Messages
                           </NavLink>
                         </li>
+                        <li className="nav-item">
+                          <NavLink
+                            className="dropdown-item"
+                            to="/admin/report"
+                          >
+                            Reports
+                          </NavLink>
+                        </li>
                       </ul>
                     </li>
                   )}
