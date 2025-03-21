@@ -13,7 +13,6 @@ const CartPage = () => {
   const [cartItems, setCartItems] = useState([]);
   const { showSuccess, showError } = useAlert();
   const navigate = useNavigate();
-  const storedRestaurantId = localStorage.getItem("restaurantId");
 
 
   useEffect(() => {

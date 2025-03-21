@@ -3,11 +3,10 @@ import { getCart } from "../../controllers/cartController";
 import { useNavigate, useParams } from "react-router-dom";
 import { Button, Table } from "react-bootstrap";
 import useAlert from "../../hooks/userAlert";
-import { auth } from "../../models/firebase";
+import { auth, db } from "../../models/firebase";
 import { doc, getDoc } from "firebase/firestore";
-import { db } from "../../models/firebase";
-
 import { getUserDetails } from "../../controllers/userController";
+import {clearCart} from "../../controllers/cartController"
 
 const CheckoutForm = ({ cartItems, total, user, restaurant }) => {
   const { showError } = useAlert();
@@ -39,17 +38,16 @@ const CheckoutForm = ({ cartItems, total, user, restaurant }) => {
       });
 
       const data = await response.json();
-      console.log("Stripe Session Data:", data);
+      await clearCart();
 
       if (!response.ok || !data.url) {
         showError(data.error || "Payment failed. Please try again.");
         return;
       }
 
-      // Redirect user to Stripe Checkout
-      window.location.href = data.url;
+      window.location.href = data.url; // Redirect to Stripe
     } catch (err) {
-      console.error("Network error:", err);
+      console.error("❌ Network error:", err);
       showError("Network error: Unable to reach Stripe.");
     }
   };
@@ -70,74 +68,55 @@ const CheckoutPage = () => {
   const [total, setTotal] = useState(0);
   const [user, setUser] = useState(null);
   const [restaurant, setRestaurant] = useState(null);
-  const [loadingUser, setLoadingUser] = useState(true);
-  const [loadingRestaurant, setLoadingRestaurant] = useState(true);
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
-  
 
   useEffect(() => {
-    const fetchCart = async () => {
-      const cartData = await getCart();
-      setCartItems(cartData);
-      calculateTotal(cartData);
-    };
+    const fetchData = async () => {
+      try {
+        setLoading(true);
 
-    fetchCart();
-  }, []);
+        // Fetch Cart Data
+        const cartData = await getCart();
+        setCartItems(cartData);
+        setTotal(cartData.reduce((sum, item) => sum + item.price * item.quantity, 0));
 
-  useEffect(() => {
-    const fetchUser = async () => {
-      const currentUser = auth.currentUser;
-      if (currentUser) {
-        console.log("👤 User ID:", currentUser.uid);
-        const userDetails = await getUserDetails(currentUser.uid); // ✅ Fetch from Firestore
-
-        if (userDetails) {
+        // Fetch User Data
+        const currentUser = auth.currentUser;
+        if (currentUser) {
+          console.log("👤 User ID:", currentUser.uid);
+          const userDetails = await getUserDetails(currentUser.uid);
           setUser({
             id: currentUser.uid,
-            name: userDetails.name, // ✅ Use Firestore name instead of displayName
-            email: userDetails.email,
+            name: userDetails?.name || "Unknown User",
+            email: userDetails?.email || "",
           });
         } else {
-          console.warn("⚠ User details not found in Firestore.");
-          setUser({ id: currentUser.uid, name: "Unknown User" });
+          console.warn("⚠ No user is logged in.");
         }
-      } else {
-        console.warn("⚠ No user is logged in.");
-      }
-      setLoadingUser(false);
-    };
 
-    fetchUser();
-  }, []);
+        // Fetch Restaurant Data
+        if (restaurantId) {
+          console.log(`📢 Fetching restaurant details for ID: ${restaurantId}`);
+          const restaurantRef = doc(db, "restaurants", restaurantId);
+          const restaurantSnap = await getDoc(restaurantRef);
 
-  useEffect(() => {
-    const fetchRestaurant = async () => {
-      if (!restaurantId) {
-        console.warn("⚠ No restaurantId found in URL or localStorage.");
-        setLoadingRestaurant(false);
-        return;
-      }
-
-      try {
-        console.log(`📢 Fetching restaurant details for ID: ${restaurantId}`);
-        const restaurantRef = doc(db, "restaurants", restaurantId);
-        const restaurantSnap = await getDoc(restaurantRef);
-
-        if (restaurantSnap.exists()) {
-          console.log("✅ Restaurant found:", restaurantSnap.data());
-          setRestaurant({ id: restaurantId, ...restaurantSnap.data() });
+          if (restaurantSnap.exists()) {
+            setRestaurant({ id: restaurantId, ...restaurantSnap.data() });
+          } else {
+            console.error("❌ Restaurant not found in Firestore.");
+          }
         } else {
-          console.error("❌ Restaurant not found in Firestore.");
+          console.warn("⚠ No restaurantId found.");
         }
       } catch (error) {
-        console.error("❌ Firestore error fetching restaurant:", error);
+        console.error("❌ Fetching error:", error);
+      } finally {
+        setLoading(false);
       }
-
-      setLoadingRestaurant(false);
     };
 
-    fetchRestaurant();
+    fetchData();
   }, [restaurantId]);
 
   useEffect(() => {
@@ -146,11 +125,6 @@ const CheckoutPage = () => {
       setTimeout(() => navigate("/restaurants"), 2000);
     }
   }, [restaurantId, navigate]);
-
-  const calculateTotal = (items) => {
-    const totalAmount = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
-    setTotal(totalAmount);
-  };
 
   return (
     <div className="container">
@@ -183,7 +157,7 @@ const CheckoutPage = () => {
             <h4 className="text-right">Total: RM{total.toFixed(2)}</h4>
 
             {/* Stripe Payment Button */}
-            {loadingUser || loadingRestaurant ? (
+            {loading ? (
               <p className="text-center text-warning">Loading user and restaurant details...</p>
             ) : restaurant ? (
               <CheckoutForm cartItems={cartItems} total={total} user={user} restaurant={restaurant} />

@@ -64,7 +64,8 @@ function Header() {
 
   // Fetch user data & role from Firestore
   useEffect(() => {
-    if (!user) {  // Prevent redundant calls
+    if (!user) {
+      // Prevent redundant calls
       const unsubscribe = auth.onAuthStateChanged(async (authUser) => {
         if (authUser) {
           setUser(authUser);
@@ -72,7 +73,7 @@ function Header() {
           try {
             const userRef = doc(db, "users", authUser.uid);
             const userDoc = await getDoc(userRef);
-  
+
             if (userDoc.exists()) {
               setUserName(userDoc.data().name);
               setUserRole(userDoc.data().userRole);
@@ -89,11 +90,10 @@ function Header() {
           setLoading(false);
         }
       });
-  
+
       return () => unsubscribe();
     }
   }, [user]); // Add user as dependency
-  
 
   // Handle Logout
   const handleUserLogout = async () => {
@@ -110,7 +110,7 @@ function Header() {
 
   return (
     <div
-      className="header_section header_bg navbar-light"
+      className="d-flex header_section header_bg navbar-light"
       style={{ position: "sticky", top: "0", zIndex: "1000" }}
     >
       <div className="container">
@@ -210,6 +210,25 @@ function Header() {
                       Contact
                     </NavLink>
                   </li>
+                  {!loading && user && userRole === "customer" && (
+                    <>
+                      <li className="nav-item">
+                        <NavLink className="nav-link text-white"
+                          to={lastOrderId ? `/order/${lastOrderId}` : "/orders"}
+                          onClick={closeNavbar}
+                        >
+                          <span className="user_icon"></span>
+                          My Orders
+                        </NavLink>
+                      </li>
+                      <li>
+                        <NavLink to="/cart" onClick={closeNavbar}>
+                          <span className="user_icon"></span>
+                          <i class="fa-solid fa-cart-shopping"></i>
+                        </NavLink>
+                      </li>
+                    </>
+                  )}
 
                   {/* My Restaurant */}
                   {!loading && user && userRole === "restaurant-owner" && (
@@ -223,6 +242,14 @@ function Header() {
                         My Restaurant
                       </button>
                       <ul className="dropdown-menu dropdown-menu-dark">
+                        <li>
+                          <NavLink
+                            className="dropdown-item"
+                            to="/my-restaurant/orders"
+                          >
+                            Manage Orders
+                          </NavLink>
+                        </li>
                         <li>
                           <NavLink
                             className="dropdown-item"
@@ -266,28 +293,13 @@ function Header() {
                       </ul>
                     </li>
                   )}
+                 
                 </ul>
 
                 {/* Login & Logout Section */}
                 <div className="login_bt mt-1">
                   {user ? (
                     <>
-                      <li>
-                        <NavLink
-                          to={lastOrderId ? `/order/${lastOrderId}` : "/orders"}
-                          onClick={closeNavbar}
-                        >
-                          <span className="user_icon"></span>
-                          My Orders
-                        </NavLink>
-                      </li>
-
-                      <li>
-                        <NavLink to="/cart" onClick={closeNavbar}>
-                          <span className="user_icon"></span>
-                          <i class="fa-solid fa-cart-shopping"></i>
-                        </NavLink>
-                      </li>
                       <li>
                         <NavLink to="/profile" onClick={closeNavbar}>
                           <span className="user_icon"></span>

@@ -27,8 +27,9 @@ import AddMenuItem from "./views/pages/AddMenuItem";
 import MenuPage from "./views/pages/MenuPage";
 import CartPage from "./views/pages/CartPage";
 import CheckoutPage from "./views/pages/CheckoutPage";
+import RestaurantOrderManager from "./views/pages/RestaurantOrderManager";
+
 // Stripe pages
-import Success from "./views/pages/Success";
 import Cancel from "./views/pages/Cancel";
 import OrderPage from "./views/pages/orderPage";
 
@@ -51,7 +52,6 @@ function App() {
         <Route path="/registered-success" element={<RegisteredSuccess />} />
         <Route path="/user/menu-page/:restaurantId" element={<MenuPage />} />
         <Route path="/profile" element={<Profile />} />
-        <Route path="/success" element={<Success />} />
         <Route path="/cancel" element={<Cancel />} />
 
         {/* Common navigation ends*/}
@@ -68,6 +68,7 @@ function App() {
           element={<RestaurantStatusReports />}
         />
         <Route path="/my-restaurant-add-menu" element={<AddMenuItem />} />
+        <Route path="/my-restaurant/orders" element={<RestaurantOrderManager />} />
 
         {/* Admin Dashboard */}
         <Route

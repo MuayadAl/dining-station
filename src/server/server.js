@@ -30,6 +30,7 @@ app.get("/orders/:orderId", async (req, res) => {
     const { orderId } = req.params;
     const orderRef = ordersCollection.doc(orderId);
     const doc = await orderRef.get();
+    res.json({ paymentStatus: "paid" });
 
     if (!doc.exists) {
       return res.status(404).json({ error: "Order not found" });
@@ -41,6 +42,8 @@ app.get("/orders/:orderId", async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+
+
 
 /// ✅ **🔥 API: Update Order Status (Fix: Ensure Order Exists)**
 app.put("/orders/:orderId/status", async (req, res) => {
@@ -149,7 +152,7 @@ app.post("/create-checkout-session", async (req, res) => {
       cancel_url: "http://localhost:3000/cancel",
       line_items: cartItems.map((item) => ({
         price_data: {
-          currency: "usd",
+          currency: "myr",
           product_data: { name: item.name },
           unit_amount: Math.round(item.price * 100), // Convert to cents
         },
