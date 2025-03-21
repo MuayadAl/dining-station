@@ -8,12 +8,11 @@ import {
   query,
   where,
   getDocs,
-  deleteDoc,
+  updateDoc,
 } from "firebase/firestore";
 import { db, auth } from "../../models/firebase";
-import useAlert from "../../hooks/userAlert"; // Import the custom alert hook
-import { clearCart } from "../../controllers/cartController";
-
+import useAlert from "../../hooks/userAlert"; 
+import Loader from "../components/Loader";
 const OrderPage = () => {
   const { orderId } = useParams();
   const [order, setOrder] = useState(null);
@@ -25,8 +24,6 @@ const OrderPage = () => {
 
   const navigate = useNavigate();
   const { confirmAction, showSuccess, showError } = useAlert();
-
-  
 
   useEffect(() => {
     let isMounted = true;
@@ -84,13 +81,11 @@ const OrderPage = () => {
     }
   };
 
-  
-
-  const handleDeleteOrder = async () => {
+  const handleCancelOrder = async () => {
     const isConfirmed = await confirmAction(
       "Are you sure?",
-      "This action cannot be undone. Do you want to delete this order?",
-      "Yes, delete it"
+      "This action cannot be undone. Do you want to cancel this order?",
+      "Yes, cancel it"
     );
 
     if (!isConfirmed) return;
@@ -98,7 +93,7 @@ const OrderPage = () => {
     try {
       const currentUser = auth.currentUser;
       if (!currentUser) {
-        showError("You need to be logged in to delete an order.");
+        showError("You need to be logged in to cancel an order.");
         return;
       }
 
@@ -107,23 +102,19 @@ const OrderPage = () => {
         return;
       }
 
-      await deleteDoc(doc(db, "orders", orderId));
+      // await deleteDoc(doc(db, "orders", orderId));
+      const orderRef = doc(db, "orders", orderId);
 
-      showSuccess("Order deleted successfully!");
-      navigate("/restaurants");
+      await updateDoc(orderRef, { status: "Cancelled" });
 
-      window.location.reload();
+      showSuccess("Order canceled successfully!");
+
     } catch (error) {
-      showError("Failed to delete order.");
+      showError("Failed to cancel order.");
     }
   };
 
-  if (loading)
-    return (
-      <div className="container mb-4">
-        <h3>Loading order details...</h3>
-      </div>
-    );
+  if (loading) return Loader("Loading order details");
   if (!order)
     return (
       <div className="container mb-4">
@@ -144,48 +135,47 @@ const OrderPage = () => {
   };
 
   return (
-    
     <div className="container ">
       <h3>Order Details</h3>
       <div className="w-100 row justify-content-between align-items-center shadow p-3 my-3 bg-body rounded-3">
-  <div className="col-lg-4">
-    <p>
-      <strong>Order ID:</strong> {orderId}
-    </p>
-  </div>
-  <div className="col-lg-4 col-md-6">
-    <p>
-      <strong>Restaurant:</strong> {order.restaurantName}
-    </p>
-  </div>
-  <div className="col-lg-4 col-md-6">
-    <p>
-      <strong>Customer:</strong> {order.userName}
-    </p>
-  </div>
+        <div className="col-lg-4">
+          <p>
+            <strong>Order ID:</strong> {orderId}
+          </p>
+        </div>
+        <div className="col-lg-4 col-md-6">
+          <p>
+            <strong>Restaurant:</strong> {order.restaurantName}
+          </p>
+        </div>
+        <div className="col-lg-4 col-md-6">
+          <p>
+            <strong>Customer:</strong> {order.userName}
+          </p>
+        </div>
 
-  <div className="col-lg-4 col-md-6">
-    <p>
-      <strong>Order Time:</strong> {new Date(order.time).toLocaleString()}
-    </p>
-  </div>
-  <div className="col-lg-4 col-md-6">
-    <p>
-      <strong>Status:</strong>{" "}
-      <span className={`badge bg-${getProgressColor()}`}>
-        {order.status}
-      </span>
-    </p>
-  </div>
+        <div className="col-lg-4 col-md-6">
+          <p>
+            <strong>Order Time:</strong> {new Date(order.time).toLocaleString()}
+          </p>
+        </div>
+        <div className="col-lg-4 col-md-6">
+          <p>
+            <strong>Status:</strong>{" "}
+            <span className={`badge bg-${getProgressColor()}`}>
+              {order.status}
+            </span>
+          </p>
+        </div>
 
-  {order.status === "Placed" && (
-    <div className="col-12 mt-3">
-      <button className="btn btn-danger" onClick={handleDeleteOrder}>
-        Delete Order
-      </button>
-    </div>
-  )}
-</div>
+        {order.status === "Placed" && (
+          <div className="col-12 mt-3">
+            <button className="btn btn-danger" onClick={handleCancelOrder}>
+              Cancel Order
+            </button>
+          </div>
+        )}
+      </div>
 
       <div className="my-3">
         <h3>Order Status</h3>
