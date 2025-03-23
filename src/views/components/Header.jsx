@@ -183,6 +183,14 @@ function Header() {
                         <li>
                           <NavLink
                             className="dropdown-item"
+                            to="/signup"
+                          >
+                            Register new user
+                          </NavLink>
+                        </li>
+                        <li>
+                          <NavLink
+                            className="dropdown-item"
                             to="/admin/restaurants-requests"
                           >
                             Restaurants opening requests

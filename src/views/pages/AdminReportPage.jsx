@@ -10,7 +10,6 @@ import {
 
 import "../style/styleSheet.css";
 
-
 const AdminReportPage = () => {
   const [orders, setOrders] = useState([]);
   const [restaurants, setRestaurants] = useState([]);
@@ -32,6 +31,7 @@ const AdminReportPage = () => {
     latest: [],
   });
   const [groupedTotals, setGroupedTotals] = useState({});
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -72,6 +72,8 @@ const AdminReportPage = () => {
           .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
           .slice(0, 5),
       });
+
+      setLoading(false);
     };
 
     fetchData();
@@ -258,7 +260,13 @@ const AdminReportPage = () => {
             <div className="card shadow-sm border-success hover_effect ">
               <div className="card-body text-success text-center ">
                 <h5>Total Income</h5>
-                <h3 className="fw-bold">RM {stats.totalIncome.toFixed(2)}</h3>
+                {loading ? (
+                  <div className="placeholder-glow">
+                    <span className="placeholder col-6"></span>
+                  </div>
+                ) : (
+                  <h3 className="fw-bold">RM {stats.totalIncome.toFixed(2)}</h3>
+                )}
               </div>
             </div>
           </div>
@@ -267,7 +275,13 @@ const AdminReportPage = () => {
             <div className="card shadow-sm border-primary hover_effect">
               <div className="card-body text-primary text-center">
                 <h5>Completed Orders</h5>
-                <h3 className="fw-bold">{stats.totalOrders}</h3>
+                {loading ? (
+                  <div className="placeholder-glow">
+                    <span className="placeholder col-6"></span>
+                  </div>
+                ) : (
+                  <h3 className="fw-bold">{stats.totalOrders}</h3>
+                )}
               </div>
             </div>
           </div>
@@ -276,7 +290,13 @@ const AdminReportPage = () => {
             <div className="card shadow-sm border-danger hover_effect">
               <div className="card-body text-danger text-center">
                 <h5>Cancelled Orders</h5>
-                <h3 className="fw-bold">{stats.cancelledOrders}</h3>
+                {loading ? (
+                  <div className="placeholder-glow">
+                    <span className="placeholder col-6"></span>
+                  </div>
+                ) : (
+                  <h3 className="fw-bold">{stats.cancelledOrders}</h3>
+                )}
               </div>
             </div>
           </div>
@@ -299,65 +319,93 @@ const AdminReportPage = () => {
           <h4>
             {groupBy.charAt(0).toUpperCase() + groupBy.slice(1)} Income Summary
           </h4>
-          <table className="table table-striped">
-            <thead className="table-light">
-              <tr>
-                <th>{groupBy.charAt(0).toUpperCase() + groupBy.slice(1)}</th>
-                <th>Total Income</th>
-              </tr>
-            </thead>
-            <tbody>
-              {Object.entries(groupedTotals).map(([key, total], idx) => (
-                <tr key={idx}>
-                  <td>{key}</td>
-                  <td>RM {total.toFixed(2)}</td>
+          {loading ? (
+            <div className="placeholder-glow">
+              <span class="placeholder w-75"></span>
+              <span class="placeholder w-25 "></span>
+              <span class="placeholder w-50"></span>
+            </div>
+          ) : (
+            <table className="table table-striped">
+              <thead className="table-light">
+                <tr>
+                  <th>{groupBy.charAt(0).toUpperCase() + groupBy.slice(1)}</th>
+                  <th>Total Income</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {Object.entries(groupedTotals).map(([key, total], idx) => (
+                  <tr key={idx}>
+                    <td>{key}</td>
+                    <td>RM {total.toFixed(2)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
         </div>
 
         {/* Top Restaurants */}
         <div className="mb-4 shadow p-3 bg-body rounded-3 hover_effect">
           <h4>Top Restaurants by Revenue</h4>
-          <ul className="list-group">
-            {stats.topRestaurants.map((rest, idx) => (
-              <li
-                key={idx}
-                className="list-group-item d-flex justify-content-between"
-              >
-                <strong>{rest.name}</strong>
-                <span>RM {rest.total}</span>
-              </li>
-            ))}
-          </ul>
+          {loading ? (
+            <div className="placeholder-glow">
+              <span class="placeholder w-100"></span>
+            </div>
+          ) : (
+            <ul className="list-group">
+              {stats.topRestaurants.map((rest, idx) => (
+                <li
+                  key={idx}
+                  className="list-group-item d-flex justify-content-between"
+                >
+                  <strong>{rest.name}</strong>
+                  <span>RM {rest.total}</span>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
 
         {/* Top Items */}
         <div className="mb-5 shadow p-3 bg-body rounded-3 hover_effect">
           <h4>Top 5 Sold Items</h4>
-          <ul className="list-group">
-            {stats.topItems.map((item, idx) => (
-              <li
-                key={idx}
-                className="list-group-item d-flex justify-content-between"
-              >
-                <strong>{item.name}</strong>
-                <span>{item.quantity} sold</span>
-              </li>
-            ))}
-          </ul>
+          {loading ? (
+            <div className="placeholder-glow">
+              <span class="placeholder w-100"></span>
+              <span class="placeholder w-75"></span>
+              <span class="placeholder w-50"></span>
+            </div>
+          ) : (
+            <ul className="list-group">
+              {stats.topItems.map((item, idx) => (
+                <li
+                  key={idx}
+                  className="list-group-item d-flex justify-content-between"
+                >
+                  <strong>{item.name}</strong>
+                  <span>{item.quantity} sold</span>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
 
         {/* Summary Users */}
-          <h4>User Summary</h4>
+        <h4>User Summary</h4>
         <div className="mt-2 shadow p-3 bg-body rounded-3 hover_effect">
           <div className="row g-3">
             <div className="col-md-3">
               <div className="card text-center border-dark hover_effect">
                 <div className="card-body ">
                   <h6>Total Users</h6>
-                  <h3>{userStats.total}</h3>
+                  {loading ? (
+                    <div className="placeholder-glow">
+                      <span class="placeholder col-6"></span>
+                    </div>
+                  ) : (
+                    <h3>{userStats.total}</h3>
+                  )}
                 </div>
               </div>
             </div>
@@ -365,7 +413,13 @@ const AdminReportPage = () => {
               <div className="card text-center border-primary hover_effect">
                 <div className="card-body">
                   <h6>Admins</h6>
-                  <h3>{userStats.admin}</h3>
+                  {loading ? (
+                    <div className="placeholder-glow">
+                      <span class="placeholder col-6"></span>
+                    </div>
+                  ) : (
+                    <h3>{userStats.admin}</h3>
+                  )}
                 </div>
               </div>
             </div>
@@ -373,7 +427,13 @@ const AdminReportPage = () => {
               <div className="card text-center border-warning hover_effect">
                 <div className="card-body">
                   <h6>Restaurants</h6>
-                  <h3>{userStats.restaurant}</h3>
+                  {loading ? (
+                    <div className="placeholder-glow">
+                      <span class="placeholder col-6"></span>
+                    </div>
+                  ) : (
+                    <h3>{userStats.restaurant}</h3>
+                  )}
                 </div>
               </div>
             </div>
@@ -381,24 +441,40 @@ const AdminReportPage = () => {
               <div className="card text-center border-info hover_effect">
                 <div className="card-body">
                   <h6>Regular Users</h6>
-                  <h3>{userStats.users}</h3>
+                  {loading ? (
+                    <div className="placeholder-glow">
+                      <span class="placeholder col-6"></span>
+                    </div>
+                  ) : (
+                    <h3>{userStats.users}</h3>
+                  )}
                 </div>
               </div>
             </div>
           </div>
 
           <h5 className="mt-4">Latest Registered Users</h5>
-          <ul className="list-group">
-            {userStats.latest.map((user, idx) => (
-              <li
-                key={idx}
-                className="list-group-item d-flex justify-content-between"
-              >
-                <span>{user.name}</span>
-                <span className="text-muted">{user.userRole}</span>
-              </li>
-            ))}
-          </ul>
+          {loading ? (
+                    <div className="placeholder-glow">
+                      <span class="placeholder col-6"></span>
+                      <span class="placeholder col-12"></span>
+                      <span class="placeholder col-6"></span>
+                      <span class="placeholder col-4"></span>
+                    </div>
+                  ) : (
+                    
+            <ul className="list-group">
+              {userStats.latest.map((user, idx) => (
+                <li
+                  key={idx}
+                  className="list-group-item d-flex justify-content-between"
+                >
+                  <span>{user.name}</span>
+                  <span className="text-muted">{user.userRole}</span>
+                </li>
+              ))}
+            </ul>
+                  )}
         </div>
       </div>
     </div>

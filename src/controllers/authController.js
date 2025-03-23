@@ -12,8 +12,8 @@ export const handleSignUp = async (email, password, userData) => {
 
     // Store user details in Firestore
     await storeUserDetails(userData, user.uid);
-
-    return user; // Returning the user after sign-up and storing their details
+    
+    return user; 
   } catch (error) {
     console.error("Error signing up: ", error);
     throw error;

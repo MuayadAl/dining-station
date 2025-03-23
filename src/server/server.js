@@ -3,6 +3,7 @@ const Stripe = require("stripe");
 const cors = require("cors");
 const admin = require("firebase-admin");
 require("dotenv").config();
+const adminRoutes = require("./adminRoutes");
 
 const app = express();
 const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
@@ -19,7 +20,7 @@ const ordersCollection = db.collection("orders");
 // Middleware
 app.use(cors());
 app.use(express.json());
-
+app.use("/api", adminRoutes);
 // Import and Use Order Routes
 const orderRoutes = require("./orderController");
 app.use("/orders", orderRoutes);
@@ -42,8 +43,6 @@ app.get("/orders/:orderId", async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
-
-
 
 /// ✅ **🔥 API: Update Order Status (Fix: Ensure Order Exists)**
 app.put("/orders/:orderId/status", async (req, res) => {
@@ -142,7 +141,6 @@ app.post("/create-checkout-session", async (req, res) => {
 
     // 🔥 Save order in Firestore
     await newOrderRef.set(orderData, { merge: true });
-
 
     // 🔥 Create Stripe Checkout Session
     const session = await stripe.checkout.sessions.create({
