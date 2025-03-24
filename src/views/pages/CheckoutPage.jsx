@@ -24,7 +24,8 @@ const CheckoutForm = ({ cartItems, total, user, restaurant }) => {
     }
 
     try {
-      const response = await fetch("http://localhost:5000/create-checkout-session", {
+      const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || "http://localhost:5000";
+      const response = await fetch(`${API_BASE_URL}/create-checkout-session`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -38,7 +39,7 @@ const CheckoutForm = ({ cartItems, total, user, restaurant }) => {
       });
 
       const data = await response.json();
-      await clearCart();
+      // await clearCart();
 
       if (!response.ok || !data.url) {
         showError(data.error || "Payment failed. Please try again.");

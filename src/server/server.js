@@ -2,7 +2,7 @@ const express = require("express");
 const Stripe = require("stripe");
 const cors = require("cors");
 const admin = require("firebase-admin");
-require("dotenv").config();
+require("dotenv").config({ path: require("path").resolve(__dirname, "../../.env.local") });
 const adminRoutes = require("./adminRoutes");
 
 const app = express();
@@ -18,7 +18,17 @@ const db = admin.firestore();
 const ordersCollection = db.collection("orders");
 
 // Middleware
-app.use(cors());
+app.use(
+  cors({
+    origin: [
+      process.env.FRONTEND_BASE_URL,
+      "http://localhost:3000",
+      "http://192.168.100.31:3000",
+    ],
+    credentials: true,
+  })
+);
+
 app.use(express.json());
 app.use("/api", adminRoutes);
 // Import and Use Order Routes
@@ -143,11 +153,13 @@ app.post("/create-checkout-session", async (req, res) => {
     await newOrderRef.set(orderData, { merge: true });
 
     // 🔥 Create Stripe Checkout Session
+    const FRONTEND_BASE_URL =
+      process.env.FRONTEND_BASE_URL || "http://localhost:3000";
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
       mode: "payment",
-      success_url: `http://localhost:3000/order/${orderId}`, // Redirect to order tracking
-      cancel_url: "http://localhost:3000/cancel",
+      success_url: `${FRONTEND_BASE_URL}/order/${orderId}`,
+      cancel_url: `${FRONTEND_BASE_URL}/cancel`,
       line_items: cartItems.map((item) => ({
         price_data: {
           currency: "myr",

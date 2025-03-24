@@ -30,8 +30,6 @@ import CheckoutPage from "./views/pages/CheckoutPage";
 import RestaurantOrderManager from "./views/pages/RestaurantOrderManager";
 import AdminReportPage from "./views/pages/AdminReportPage";
 
-
-
 // Stripe pages
 import Cancel from "./views/pages/Cancel";
 import OrderPage from "./views/pages/orderPage";
@@ -67,12 +65,25 @@ function App() {
         {/* Restaurant Dashboard */}
         <Route path="/my-restaurant/add" element={<AddRestaurant />} />
         <Route path="/my-restaurant/edit" element={<EditRestaurant />} />
-        <Route path="/my-restaurant/status-report"element={<RestaurantStatusReports />}/>
+        <Route
+          path="/my-restaurant/status-report"
+          element={<RestaurantStatusReports />}
+        />
         <Route path="/my-restaurant-add-menu" element={<AddMenuItem />} />
-        <Route path="/my-restaurant/orders" element={<RestaurantOrderManager />} />
+        <Route
+          path="/my-restaurant/orders"
+          element={<RestaurantOrderManager />}
+        />
+        <Route
+          path="/my-restaurant/register-staff"
+          element={<SignUp isStaffRegistration={true} />}
+        />
 
         {/* Admin Dashboard */}
-        <Route path="/admin/restaurants-requests" element={<AdminRestaurantApprovalPage />}/>
+        <Route
+          path="/admin/restaurants-requests"
+          element={<AdminRestaurantApprovalPage />}
+        />
         <Route path="/messagesadmin" element={<MessagesAdmin />} />
         <Route path="/admin/report" element={<AdminReportPage />} />
       </Routes>

@@ -78,6 +78,44 @@ function Header() {
               setUserName(userDoc.data().name);
               setUserRole(userDoc.data().userRole);
             }
+            // Add this inside the onAuthStateChanged logic, after you set the userRole
+            if (userDoc.exists()) {
+              const data = userDoc.data();
+              setUserName(data.name);
+              setUserRole(data.userRole);
+
+              // If the user is a restaurant owner, get their restaurantId
+              if (data.userRole === "restaurant-owner") {
+                const q = query(
+                  collection(db, "restaurants"),
+                  where("userId", "==", authUser.uid)
+                );
+                const snapshot = await getDocs(q);
+                if (!snapshot.empty) {
+                  const restaurantDoc = snapshot.docs[0];
+                  setRestaurantId(restaurantDoc.id); // ✅ Set the ID
+                }
+              }
+            }
+            // Add this inside the onAuthStateChanged logic, after you set the userRole
+            if (userDoc.exists()) {
+              const data = userDoc.data();
+              setUserName(data.name);
+              setUserRole(data.userRole);
+
+              // If the user is a restaurant owner, get their restaurantId
+              if (data.userRole === "restaurant-owner") {
+                const q = query(
+                  collection(db, "restaurants"),
+                  where("userId", "==", authUser.uid)
+                );
+                const snapshot = await getDocs(q);
+                if (!snapshot.empty) {
+                  const restaurantDoc = snapshot.docs[0];
+                  setRestaurantId(restaurantDoc.id); // ✅ Set the ID
+                }
+              }
+            }
           } catch (error) {
             console.error("Error fetching user:", error);
           } finally {
@@ -162,11 +200,16 @@ function Header() {
                       Home
                     </NavLink>
                   </li>
-                  <li className="nav-item">
-                    <NavLink className="nav-link text-white" to="/restaurants">
-                      Restaurants
-                    </NavLink>
-                  </li>
+                  {userRole != "restaurant-owner" && (
+                    <li className="nav-item">
+                      <NavLink
+                        className="nav-link text-white"
+                        to="/restaurants"
+                      >
+                        Restaurants
+                      </NavLink>
+                    </li>
+                  )}
 
                   {/* Admin Drop down menu */}
                   {!loading && user && userRole === "admin" && (
@@ -181,10 +224,7 @@ function Header() {
                       </button>
                       <ul className="dropdown-menu dropdown-menu-dark">
                         <li>
-                          <NavLink
-                            className="dropdown-item"
-                            to="/signup"
-                          >
+                          <NavLink className="dropdown-item" to="/signup">
                             Register new user
                           </NavLink>
                         </li>
@@ -206,10 +246,7 @@ function Header() {
                           </NavLink>
                         </li>
                         <li className="nav-item">
-                          <NavLink
-                            className="dropdown-item"
-                            to="/admin/report"
-                          >
+                          <NavLink className="dropdown-item" to="/admin/report">
                             Reports
                           </NavLink>
                         </li>
@@ -229,7 +266,8 @@ function Header() {
                   {!loading && user && userRole === "customer" && (
                     <>
                       <li className="nav-item">
-                        <NavLink className="nav-link text-white"
+                        <NavLink
+                          className="nav-link text-white"
                           to={lastOrderId ? `/order/${lastOrderId}` : "/orders"}
                           onClick={closeNavbar}
                         >
@@ -301,6 +339,14 @@ function Header() {
                         <li>
                           <NavLink
                             className="dropdown-item"
+                            to="/my-restaurant/register-staff"
+                          >
+                            Register Staff
+                          </NavLink>
+                        </li>
+                        <li>
+                          <NavLink
+                            className="dropdown-item"
                             to="/my-restaurant/status-report"
                           >
                             Restaurant Status & Report
@@ -309,7 +355,6 @@ function Header() {
                       </ul>
                     </li>
                   )}
-                 
                 </ul>
 
                 {/* Login & Logout Section */}

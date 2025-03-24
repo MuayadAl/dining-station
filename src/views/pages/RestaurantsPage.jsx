@@ -6,7 +6,7 @@ import {
   orderBy,
   startAfter,
   limit,
-  where, // Import where
+  where,
 } from "firebase/firestore";
 import { db } from "../../models/firebase";
 import "../style/styleSheet.css";
@@ -69,6 +69,8 @@ function RestaurantsPage() {
       } else {
         setHasMore(false); // Stop fetching when no more data
       }
+
+      
     } catch (error) {
       console.error("Error fetching restaurants:", error);
     }
@@ -134,7 +136,9 @@ function RestaurantsPage() {
               </div>
             </div>
           ))
-        ) : ( ""
+        ) : ( !loading && (
+          <p>Please log in to view restaurants.</p>
+        )
         )}
       </div>
       {loading && (
@@ -143,12 +147,12 @@ function RestaurantsPage() {
           restaurants...
         </p>
       )}
-      {!hasMore && restaurants.length > 0 && (
+      {/* {!hasMore && restaurants.length > 0 && (
         <p>
           <i className="fa-solid fa-bed fa-beat"></i> No more restaurants to
           load.
         </p>
-      )}
+      )} */}
     </div>
   );
 }

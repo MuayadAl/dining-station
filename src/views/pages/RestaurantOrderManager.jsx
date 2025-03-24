@@ -282,13 +282,13 @@ function RestaurantOrderManager() {
                                 handleNextStatus(order.id, order.status)
                               }
                             >
-                              ✅ Confirm Order
+                              <i class="fa-solid fa-circle-check"></i> Confirm Order
                             </button>
                             <button
                               className="btn btn-danger"
                               onClick={() => handleCancelOrder(order.id)}
                             >
-                              ❌ Cancel
+                              <i class="fa-solid fa-xmark"></i> Cancel
                             </button>
                           </div>
                         ) : (
@@ -299,7 +299,7 @@ function RestaurantOrderManager() {
                                 handleNextStatus(order.id, order.status)
                               }
                             >
-                              {`Mark as "${nextStatus}"`}
+                              {nextStatus}
                             </button>
                           )
                         )}

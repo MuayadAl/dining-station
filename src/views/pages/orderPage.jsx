@@ -129,7 +129,8 @@ const OrderPage = () => {
   const getProgressColor = () => {
     if (currentStepIndex === 0) return "info";
     if (currentStepIndex === 1) return "warning";
-    if (currentStepIndex === 2) return "success";
+    if (currentStepIndex === 2) return "success-emphasis";
+    if (currentStepIndex === 3) return "success";
     return "danger";
   };
 

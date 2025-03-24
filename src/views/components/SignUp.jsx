@@ -1,29 +1,31 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "font-awesome/css/font-awesome.min.css";
 import { handleSignUp } from "../../controllers/authController";
 import { auth, db } from "../../models/firebase";
 import { onAuthStateChanged } from "firebase/auth";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, collection, query, where, getDocs  } from "firebase/firestore";
 import useAlert from "../../hooks/userAlert";
 
-export default function SignUp() {
+export default function SignUp({ isStaffRegistration = false }) {
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     gender: "",
-    userRole: "customer",
+    userRole: "",
     password: "",
     confirmPassword: "",
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState("");
-  const [currentUserRole, setCurrentUserRole] = useState(null); 
+  const [loading, setLoading] = useState(false); // 🔄 Loading state
+  const [currentUserRole, setCurrentUserRole] = useState(null);
+  const errorRef = useRef(null); // 🔁 Ref for scrolling to error
+
   const navigate = useNavigate();
-    const { confirmAction, showSuccess, showError } = useAlert();
-  
+  const { confirmAction, showSuccess, showError } = useAlert();
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
@@ -39,7 +41,6 @@ export default function SignUp() {
     return () => unsubscribe();
   }, []);
 
-  // Handle input changes
   const handleChange = (e) => {
     setFormData({
       ...formData,
@@ -47,77 +48,104 @@ export default function SignUp() {
     });
   };
 
-  // Handle password visibility toggle
-  const togglePassword = () => {
-    setShowPassword(!showPassword);
-  };
-
-  const toggleConfirmPassword = () => {
+  const togglePassword = () => setShowPassword(!showPassword);
+  const toggleConfirmPassword = () =>
     setShowConfirmPassword(!showConfirmPassword);
+
+  const scrollToError = () => {
+    if (errorRef.current) {
+      errorRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
   };
 
-  // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+    setLoading(true);
   
     const emailRegex = /@apu.edu.my$|@mail.apu.edu.my$/;
     if (!emailRegex.test(formData.email)) {
-      showError("Email must be @apu.edu.my or @mail.apu.edu.my");
+      const msg = "Email must be @apu.edu.my or @mail.apu.edu.my";
+      setError(msg);
+      showError(msg);
+      setLoading(false);
+      scrollToError();
       return;
     }
   
     if (formData.password !== formData.confirmPassword) {
-      showError("Passwords do not match");
+      const msg = "Passwords do not match";
+      setError(msg);
+      showError(msg);
+      setLoading(false);
+      scrollToError();
       return;
     }
   
     try {
-      if (currentUserRole === "admin") {
-        // 🔐 Get admin's Firebase ID token
+      if (currentUserRole === "admin" || isStaffRegistration) {
         const token = await auth.currentUser.getIdToken();
-      
+  
+        // ✅ Build userData before API call
+        const userData = {
+          name: formData.name,
+          gender: formData.gender,
+          userRole: formData.userRole,
+          email: formData.email,
+        };
+  
+        // ✅ For restaurant staff, fetch restaurantId
+        if (isStaffRegistration) {
+          const q = query(
+            collection(db, "restaurants"),
+            where("userId", "==", auth.currentUser.uid)
+          );
+          const snapshot = await getDocs(q);
+  
+          if (!snapshot.empty) {
+            const restaurantId = snapshot.docs[0].id;
+            userData.restaurantId = restaurantId;
+            userData.createdBy = auth.currentUser.uid;
+          } else {
+            throw new Error("No restaurant found for this owner.");
+          }
+        }
+  
+        // ✅ Now send the API request with correct userData
         const response = await fetch("http://localhost:5000/api/create-user", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`, // ✅ Required for authMiddleware
+            Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify({
             email: formData.email,
             password: formData.password,
-            userData: {
-              name: formData.name,
-              gender: formData.gender,
-              userRole: formData.userRole,
-              email: formData.email,
-            },
+            userData: userData, // ← includes restaurantId and createdBy if applicable
           }),
         });
-      
+  
         if (!response.ok) {
           const { error } = await response.json();
           throw new Error(error || "Failed to create user");
         }
-      
+  
         showSuccess(`You have successfully registered ${formData.name}!`);
         setFormData({
           name: "",
           email: "",
           gender: "",
-          userRole: "customer",
+          userRole: "",
           password: "",
           confirmPassword: "",
         });
-      }
-       else {
-        // Regular user self-registration (auto-login)
+      } else {
+        // Normal customer sign up
         await handleSignUp(formData.email, formData.password, {
           name: formData.name,
           gender: formData.gender,
           userRole: formData.userRole,
           email: formData.email,
-          
         });
   
         showSuccess("You have successfully registered!");
@@ -126,21 +154,25 @@ export default function SignUp() {
     } catch (err) {
       console.error(err);
       setError(err.message || "Sign-up failed. Please try again.");
+      scrollToError();
+    } finally {
+      setLoading(false);
     }
   };
   
-  
 
   return (
-    <div className="container d-flex justify-content-center align-items-center ">
-      <div
-        className="card shadow-lg p-4 my-4 w-75"
-      >
+    <div className="container d-flex justify-content-center align-items-center">
+      <div className="card shadow-lg p-4 my-4 col-lg-9 col-12">
         <h3 className="text-center mb-4">
           <i className="fa fa-user-plus"></i> Sign Up
         </h3>
         <form onSubmit={handleSubmit}>
-          {error && <div className="alert alert-danger">{error}</div>}
+          {error && (
+            <div ref={errorRef} className="alert alert-danger">
+              {error}
+            </div>
+          )}
 
           {/* Name */}
           <div className="mb-3">
@@ -195,18 +227,36 @@ export default function SignUp() {
           </div>
 
           {/* User Role */}
-
-          {currentUserRole === "admin" && (
+          {currentUserRole === "admin" || isStaffRegistration ? (
             <div className="mb-3">
-              <label className="form-label"><i className="fa fa-users"></i> User Role</label>
-              <select className="form-select" name="userRole" value={formData.userRole} onChange={handleChange} required>
+              <label className="form-label">
+                <i className="fa fa-users"></i> User Role
+              </label>
+              <select
+                className="form-select"
+                name="userRole"
+                value={formData.userRole}
+                onChange={handleChange}
+                required
+              >
                 <option value="">Select User Role</option>
-                <option value="customer">Customer</option>
-                <option value="restaurant-owner">Restaurant Owner</option>
-                <option value="admin">Admin</option>
+                {currentUserRole === "admin" && (
+                  <>
+                    <option value="customer">Customer</option>
+                    <option value="restaurant-owner">Restaurant Owner</option>
+                    <option value="admin">Admin</option>
+                  </>
+                )}
+                {isStaffRegistration && (
+                  <>
+                  <option value="restaurant-staff">Restaurant Staff</option>
+                  <option value="#" disabled>Restaurant Manager</option>
+                  <option value="#" disabled>Restaurant Accountant</option>
+                  </>
+                )}
               </select>
             </div>
-          )}
+          ) : null}
 
           {/* Password */}
           <div className="mb-3">
@@ -267,19 +317,28 @@ export default function SignUp() {
           </div>
 
           {/* Submit Button */}
-          <div className="d-flex justify-content-center align-items-center main_btn active w-100">
-            <button type="submit" className="btn w-50">
-              Sign Up
+          <div className="d-flex justify-content-center align-items-center send_bt">
+            <button type="submit" disabled={loading}>
+              {loading ? (
+                <>
+                  "Signing Up..."<i class="fa-solid fa-spinner fa-spin"></i>
+                </>
+              ) : (
+                "Sign Up"
+              )}
             </button>
           </div>
 
           {/* Already have an account */}
-          <div className="text-center mt-3">
-            <span>Already have an account? </span>
-            <NavLink to="/login" className="text-primary">
-              Login
-            </NavLink>
-          </div>
+          {currentUserRole == null &&(
+
+            <div className="text-center mt-3">
+              <span>Already have an account? </span>
+              <NavLink to="/login" className="text-primary">
+                Login
+              </NavLink>
+            </div>
+          )}
         </form>
       </div>
     </div>
