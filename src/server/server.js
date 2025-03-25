@@ -24,6 +24,7 @@ app.use(
       process.env.FRONTEND_BASE_URL,
       "http://localhost:3000",
       "http://192.168.100.31:3000",
+      "https://dinging-station.web.app/"
     ],
     credentials: true,
   })

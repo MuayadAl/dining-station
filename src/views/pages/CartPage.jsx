@@ -38,16 +38,16 @@ const CartPage = () => {
 
   const handleQuantityChange = async (itemId, quantity) => {
     if (quantity < 1) return;
-
-    const updatedCart = await updateCartQuantity(itemId, quantity);
-
-    console.log("Updated Cart from API:", updatedCart); // Debugging
-
+  
+    await updateCartQuantity(itemId, quantity);
+    const updatedCart = await getCart(); // <-- fetch fresh copy
+  
     setCartItems(updatedCart.map(item => ({
         ...item,
-        price: parseFloat(item.price) || 0 // Ensure price is never NaN
+        price: parseFloat(item.price) || 0
     })));
-};
+  };
+  
 
   
 

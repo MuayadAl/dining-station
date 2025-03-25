@@ -195,18 +195,34 @@ function Header() {
               <div className="offcanvas-body">
                 {/* ✅ Navbar Links */}
                 <ul className="navbar-nav me-auto mb-2 mb-lg-0">
+
                   <li className="nav-item">
                     <NavLink className="nav-link text-white" to="/landing">
                       Home
                     </NavLink>
                   </li>
-                  {userRole != "restaurant-owner" && (
+                  {/* Customer Dashboard */}
+                  {!loading && user && userRole === "customer" &&(
+                    <>
                     <li className="nav-item">
                       <NavLink
                         className="nav-link text-white"
                         to="/restaurants"
                       >
                         Restaurants
+                      </NavLink>
+                    </li>
+                    </>
+                    )}
+                  
+                  {/* Restaurant-staff Dashboard */}
+                  {!loading && user && userRole=== "restaurant-staff" &&(
+                      <li className="nav-item">
+                      <NavLink
+                        className="nav-link text-white"
+                        to="/my-restaurant/orders"
+                      >
+                        Manage Orders
                       </NavLink>
                     </li>
                   )}
@@ -258,16 +274,7 @@ function Header() {
                       </ul>
                     </li>
                   )}
-                  <li className="nav-item">
-                    <NavLink className="nav-link text-white" to="/about">
-                      About
-                    </NavLink>
-                  </li>
-                  <li className="nav-item">
-                    <NavLink className="nav-link text-white" to="/contact">
-                      Contact
-                    </NavLink>
-                  </li>
+                
                   {!loading && user && userRole === "customer" && (
                     <>
                       <li className="nav-item">
@@ -276,20 +283,14 @@ function Header() {
                           to={lastOrderId ? `/order/${lastOrderId}` : "/orders"}
                           onClick={closeNavbar}
                         >
-                          <span className="user_icon"></span>
                           My Orders
                         </NavLink>
                       </li>
-                      <li>
-                        <NavLink to="/cart" onClick={closeNavbar}>
-                          <span className="user_icon"></span>
-                          <i class="fa-solid fa-cart-shopping"></i>
-                        </NavLink>
-                      </li>
+                     
                     </>
                   )}
 
-                  {/* My Restaurant */}
+                  {/*restaurant-owner Dashboard */}
                   {!loading && user && userRole === "restaurant-owner" && (
                     <li className="nav-item dropdown">
                       <button
@@ -365,8 +366,30 @@ function Header() {
                             Restaurant Status & Report
                           </NavLink>
                         </li>
+                        
                       </ul>
                     </li>
+                    
+                  )}
+                    <li className="nav-item">
+                    <NavLink className="nav-link text-white" to="/about">
+                      About
+                    </NavLink>
+                  </li>
+                  <li className="nav-item">
+                    <NavLink className="nav-link text-white" to="/contact">
+                      Contact
+                    </NavLink>
+                  </li>
+
+                  {/* Cart for customer dashboard */}
+                  {userRole === "customer" &&(
+                     <li className="nav-item">
+                     <NavLink className="nav-link text-white" to="/cart" onClick={closeNavbar}>
+                       <i class="fa-solid fa-cart-shopping"></i>
+                       <span className=""> Cart</span>
+                     </NavLink>
+                   </li>
                   )}
                 </ul>
 

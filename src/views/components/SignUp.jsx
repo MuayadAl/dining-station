@@ -13,7 +13,7 @@ export default function SignUp({ isStaffRegistration = false }) {
     name: "",
     email: "",
     gender: "",
-    userRole: "",
+    userRole: "customer",
     password: "",
     confirmPassword: "",
   });

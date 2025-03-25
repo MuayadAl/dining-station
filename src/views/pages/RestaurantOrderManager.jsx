@@ -7,6 +7,7 @@ import {
   updateDoc,
   doc,
   getDocs,
+  getDoc
 } from "firebase/firestore";
 import { db } from "../../models/firebase";
 import { getAuth } from "firebase/auth";
@@ -31,33 +32,57 @@ function RestaurantOrderManager() {
 
   useEffect(() => {
     const auth = getAuth();
-
+  
     const unsubscribeAuth = auth.onAuthStateChanged(async (user) => {
       if (!user) return;
-
+  
       try {
-        // Fetch the restaurantId from the restaurants collection
-        const q = query(
-          collection(db, "restaurants"),
-          where("userId", "==", user.uid)
-        );
-        const querySnapshot = await getDocs(q);
-
-        if (querySnapshot.empty) {
-          console.warn("No restaurant found for this user.");
+        let userRestaurantId = null;
+  
+        // 1️⃣ Try fetching from users collection
+        const userDocRef = doc(db, "users", user.uid);
+        const userDoc = await getDoc(userDocRef);
+  
+        if (userDoc.exists()) {
+          const userData = userDoc.data();
+          if (userData.restaurantId) {
+            userRestaurantId = userData.restaurantId;
+            console.log("Found restaurantId in users collection:", userRestaurantId);
+          }
+        }
+  
+        // 2️⃣ If not found in users, query restaurants collection using userId field
+        if (!userRestaurantId) {
+          const restaurantQuery = query(
+            collection(db, "restaurants"),
+            where("userId", "==", user.uid)
+          );
+          const restaurantQuerySnapshot = await getDocs(restaurantQuery);
+  
+          if (!restaurantQuerySnapshot.empty) {
+            const docSnap = restaurantQuerySnapshot.docs[0]; // Assuming one restaurant per user
+            userRestaurantId = docSnap.id; // Use document ID as restaurantId
+            console.log("Found restaurantId in restaurants collection:", userRestaurantId);
+          } else {
+            console.warn("Restaurant document does not exist for this user.");
+          }
+        }
+  
+        // 3️⃣ If still no restaurantId found, stop
+        if (!userRestaurantId) {
+          console.warn("No restaurantId found in either users or restaurants collection.");
           setLoading(false);
           return;
         }
-
-        const fetchedRestaurantId = querySnapshot.docs[0].data().restaurantId;
-        setRestaurantId(fetchedRestaurantId);
-
-        // Now fetch orders using that restaurantId
+  
+        // ✅ Set restaurantId and listen to orders
+        setRestaurantId(userRestaurantId);
+  
         const orderQuery = query(
           collection(db, "orders"),
-          where("restaurantId", "==", fetchedRestaurantId)
+          where("restaurantId", "==", userRestaurantId)
         );
-
+  
         const unsubscribeOrders = onSnapshot(orderQuery, (snapshot) => {
           const orderList = snapshot.docs.map((doc) => ({
             id: doc.id,
@@ -66,18 +91,21 @@ function RestaurantOrderManager() {
           setOrders(orderList);
           setLoading(false);
         });
-
-        // Clean up Firestore listener on unmount
+  
         return () => unsubscribeOrders();
       } catch (error) {
-        console.error("Failed to fetch restaurant orders:", error);
+        console.error("Failed to fetch data:", error);
         setLoading(false);
       }
     });
-
-    // Clean up Auth listener
+  
     return () => unsubscribeAuth();
   }, []);
+  
+  
+  
+  
+  
 
   const getNextStatus = (currentStatus) => {
     const index = statusSteps.indexOf(currentStatus);
