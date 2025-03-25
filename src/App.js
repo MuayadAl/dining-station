@@ -21,7 +21,7 @@ import Profile from "./views/pages/Profile";
 import AddRestaurant from "./views/pages/AddRestaurant";
 import EditRestaurant from "./views/pages/EditRestaurant";
 import RestaurantStatusReports from "./views/pages/RestaurantStatusReport";
-import MessagesAdmin from "./views/pages/MessagesAdmin";
+import AdminMessages from "./views/pages/AdminMessages";
 import AdminRestaurantApprovalPage from "./views/pages/AdminRestaurantApprovalPage";
 import AddMenuItem from "./views/pages/AddMenuItem";
 import MenuPage from "./views/pages/MenuPage";
@@ -29,6 +29,7 @@ import CartPage from "./views/pages/CartPage";
 import CheckoutPage from "./views/pages/CheckoutPage";
 import RestaurantOrderManager from "./views/pages/RestaurantOrderManager";
 import AdminReportPage from "./views/pages/AdminReportPage";
+import AdminManageUsers from "./views/pages/AdminManageUsers";
 
 // Stripe pages
 import Cancel from "./views/pages/Cancel";
@@ -84,8 +85,9 @@ function App() {
           path="/admin/restaurants-requests"
           element={<AdminRestaurantApprovalPage />}
         />
-        <Route path="/messagesadmin" element={<MessagesAdmin />} />
+        <Route path="/messagesadmin" element={<AdminMessages />} />
         <Route path="/admin/report" element={<AdminReportPage />} />
+        <Route path="/admin/user-management" element={<AdminManageUsers />} />
       </Routes>
       <Footer />
     </Router>

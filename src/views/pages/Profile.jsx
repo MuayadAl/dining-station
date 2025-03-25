@@ -1,15 +1,16 @@
 // src/pages/Profile.jsx
 import React, { useState, useEffect } from "react";
-import Swal from 'sweetalert2';
+import Swal from "sweetalert2";
 
-// Firebase and controller import starts 
+// Firebase and controller import starts
 import { auth, db } from "../../models/firebase"; // Firebase auth
 import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
 import { updateUserName } from "../../controllers/userController"; // Import the new function
 import { deleteUserAccount } from "../../controllers/userController";
+import { handlePasswordReset } from "../../controllers/authController";
 
-// Firebase and controller import ends 
+// Firebase and controller import ends
 /*******************************/
 
 // Pages and components starts
@@ -25,9 +26,7 @@ import { faFloppyDisk } from "@fortawesome/free-solid-svg-icons/faFloppyDisk";
 
 // Font Awesome Packages ends
 
-
 export default function Profile() {
-
   const [userData, setUserData] = useState({
     name: "",
     email: "",
@@ -47,7 +46,7 @@ export default function Profile() {
         try {
           const userRef = doc(db, "users", user.uid);
           const userDoc = await getDoc(userRef);
-  
+
           if (userDoc.exists()) {
             setUserData(userDoc.data());
           } else {
@@ -61,10 +60,10 @@ export default function Profile() {
       } else {
         setError("User not authenticated");
         setLoading(false);
-        navigate("/login"); 
+        navigate("/login");
       }
     });
-  
+
     return () => unsubscribe();
   }, [navigate]);
 
@@ -75,11 +74,21 @@ export default function Profile() {
       [e.target.name]: e.target.value,
     });
   };
+  const handlePasswordChange = async () => {
+    try {
+      await handlePasswordReset(userData.email);
+      Swal.fire("Success!", "Password reset email sent.", "success");
+    } catch (error) {
+      Swal.fire("Error!", "Failed to send password reset email.", "error");
+    }
+  };
+  
+  
 
   // Handle saving changes to profile
   const handleSaveChanges = async () => {
     setError("");
-    setSuccess(""); 
+    setSuccess("");
 
     // Check if any fields are blank
     if (!userData.name || !userData.gender) {
@@ -91,7 +100,7 @@ export default function Profile() {
       const user = auth.currentUser;
       if (user) {
         if (userData.name !== user.displayName) {
-          await updateUserName(user.uid, userData.name); 
+          await updateUserName(user.uid, userData.name);
         }
         // Update gender (can add more fields here as needed)
         const userRef = doc(db, "users", user.uid);
@@ -100,46 +109,44 @@ export default function Profile() {
           gender: userData.gender,
         });
 
-        setEditing(false); 
-        setSuccess("Profile updated successfully!"); 
+        setEditing(false);
+        setSuccess("Profile updated successfully!");
       }
     } catch (err) {
       setError("Error updating profile");
     }
   };
 
-
   // Hanle Delete Account
   const handleDeleteAccount = async () => {
     setError("");
 
     const result = await Swal.fire({
-    title: "Are you sure?",
-    text: "This action will permanently delete your account.",
-    icon: "warning",
-    showCancelButton: true,
-    confirmButtonColor: "#d33",
-    cancelButtonColor: "#3085d6",
-    confirmButtonText: "Yes, delete my account!"
-  });
+      title: "Are you sure?",
+      text: "This action will permanently delete your account.",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#d33",
+      cancelButtonColor: "#3085d6",
+      confirmButtonText: "Yes, delete my account!",
+    });
 
-  if (result.isConfirmed) {
-    try {
-      const user = auth.currentUser;
+    if (result.isConfirmed) {
+      try {
+        const user = auth.currentUser;
 
-      if (user) {
-        await deleteUserAccount(user.uid);
-        navigate("/login");
-        Swal.fire("Deleted!", "Your account has been deleted.", "success");
-      } else {
-        setError("No user authenticated");
+        if (user) {
+          await deleteUserAccount(user.uid);
+          navigate("/login");
+          Swal.fire("Deleted!", "Your account has been deleted.", "success");
+        } else {
+          setError("No user authenticated");
+        }
+      } catch (err) {
+        setError("Error deleting user account");
       }
-    } catch (err) {
-      setError("Error deleting user account");
     }
-  }
   };
-  
 
   if (loading) {
     return <Loader message="Loading your profile..." />;
@@ -161,7 +168,7 @@ export default function Profile() {
           {/* Name */}
           <div className="mb-3">
             <label htmlFor="name" className="form-label">
-            <i className="fa fa-user"></i> Name
+              <i className="fa fa-user"></i> Name
             </label>
             <input
               type="text"
@@ -177,7 +184,7 @@ export default function Profile() {
           {/* Email */}
           <div className="mb-3">
             <label htmlFor="email" className="form-label">
-            <i class="fa fa-envelope"></i> Email
+              <i class="fa fa-envelope"></i> Email
             </label>
             <input
               type="email"
@@ -192,7 +199,7 @@ export default function Profile() {
           {/* Gender */}
           <div className="mb-3">
             <label htmlFor="gender" className="form-label">
-            <i class="fa fa-venus-mars"></i> Gender
+              <i class="fa fa-venus-mars"></i> Gender
             </label>
             <select
               className="form-select"
@@ -205,6 +212,82 @@ export default function Profile() {
               <option value="male">Male</option>
               <option value="female">Female</option>
             </select>
+          </div>
+
+          {/* Change Password Modal */}
+          <div
+            class="modal fade"
+            id="password-modal"
+            tabindex="-1"
+            aria-labelledby="password-modal-label"
+            aria-hidden="true"
+          >
+            <div class="modal-dialog">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h1 class="modal-title fs-5" id="password-modal-label">
+                    <i class="fa-solid fa-lock"></i> Password Change Form
+                  </h1>
+                  <button
+                    type="button"
+                    class="btn-close"
+                    data-bs-dismiss="modal"
+                    aria-label="Close"
+                  ></button>
+                </div>
+                <div class="modal-body">
+                  <div className="mb-3">
+                    <label htmlFor="current-password" className="form-label">
+                      Current Password
+                    </label>
+                    <input
+                      type="text"
+                      className="form-control"
+                      id="current-password"
+                      name="current_password"
+      
+                    />
+                  </div>
+                  <div className="mb-3">
+                    <label htmlFor="new-password" className="form-label">
+                      New Password
+                    </label>
+                    <input
+                      type="text"
+                      className="form-control"
+                      id="new-password"
+                      name="new_password"
+                      
+                    />
+                  </div>
+                  <div className="mb-3">
+                    <label htmlFor="confirm-password" className="form-label">
+                      Confirm Password
+                    </label>
+                    <input
+                      type="text"
+                      className="form-control"
+                      id="confirm-password"
+                      name="confirm_password"
+
+                    />
+                  </div>
+                </div>
+
+                <div class="modal-footer">
+                  <button
+                    type="button"
+                    class="btn btn-secondary"
+                    data-bs-dismiss="modal"
+                  >
+                    Close
+                  </button>
+                  <button type="button" class="btn btn-danger">
+                    Save changes
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
 
           <div className="d-flex justify-content-between">
@@ -223,16 +306,23 @@ export default function Profile() {
                 onClick={() => setEditing(true)} // Enable editing on click
               >
                 <FontAwesomeIcon icon={faPenToSquare} /> Edit Profile
-
-
               </button>
             )}
+            <button
+              type="button"
+              className="btn btn-primary"
+              // data-bs-toggle="modal"
+              // data-bs-target="#password-modal"
+              onClick= {handlePasswordChange}  
+                      >
+              <i class="fa-solid fa-lock"> </i> Change Password
+            </button>
             <button
               type="button"
               className="btn btn-danger"
               onClick={handleDeleteAccount}
             >
-               <FontAwesomeIcon icon={faTrashCan} /> Delete Account
+              <FontAwesomeIcon icon={faTrashCan} /> Delete Account
             </button>
           </div>
         </form>

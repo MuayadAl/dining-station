@@ -3,6 +3,11 @@ const router = express.Router();
 const { isAdmin } = require("../middleware/authMiddleware");
 const { createUserAsAdmin } = require("../controllers/adminController");
 const admin = require("firebase-admin");
+const adminController = require("../controllers/adminController");
+
+router.post("/deleteUser", adminController.deleteUserAccount);
+
+module.exports = router;
 
 const db = admin.firestore();
 const ordersCollection = db.collection("orders");

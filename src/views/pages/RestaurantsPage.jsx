@@ -1,4 +1,6 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback} from "react";
+import { useNavigate } from 'react-router-dom';
+
 import {
   collection,
   getDocs,
@@ -24,7 +26,9 @@ function RestaurantsPage() {
   const [hasMore, setHasMore] = useState(true);
 
 
+  const navigate = useNavigate();
   const fetchRestaurants = useCallback(async () => {
+    
     if (loading || !hasMore) return;
 
     setLoading(true);
@@ -63,11 +67,10 @@ function RestaurantsPage() {
         return [...prevRestaurants, ...uniqueRestaurants];
       });
 
-      // Update last document for pagination
       if (querySnapshot.docs.length > 0) {
         setLastVisible(querySnapshot.docs[querySnapshot.docs.length - 1]);
       } else {
-        setHasMore(false); // Stop fetching when no more data
+        setHasMore(false);
       }
 
       
@@ -78,7 +81,7 @@ function RestaurantsPage() {
   }, [lastVisible, loading, hasMore]);
 
   useEffect(() => {
-    fetchRestaurants(); // Fetch initial data
+    fetchRestaurants();
   }, []);
 
   useEffect(() => {
@@ -97,6 +100,12 @@ function RestaurantsPage() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, [fetchRestaurants, loading, hasMore]);
 
+  const handleNavigation =( (page) => {
+    navigate(`/user/menu-page/${page}`);
+
+  });
+  
+
   
 
   return (
@@ -109,7 +118,7 @@ function RestaurantsPage() {
               key={restaurant.id}
               className="col-lg-3 col-md-6 d-flex justify-content-center"
             >
-              <div className="restaurant_card">
+              <div className="restaurant_card" onClick={() => handleNavigation(restaurant.id)}>
                 <div className="restaurant_img placeholder-glow">
                   <img
                     src={restaurant.imgUrl}
@@ -124,7 +133,7 @@ function RestaurantsPage() {
                   <p className="looking_text" title={restaurant.description}>
                     {restaurant.description}
                   </p>
-                  <div className="read_bt">
+                  <div className="read_bt" >
                     <NavLink
                       className="order_btn"
                       to={`/user/menu-page/${restaurant.id}`}
@@ -147,12 +156,7 @@ function RestaurantsPage() {
           restaurants...
         </p>
       )}
-      {/* {!hasMore && restaurants.length > 0 && (
-        <p>
-          <i className="fa-solid fa-bed fa-beat"></i> No more restaurants to
-          load.
-        </p>
-      )} */}
+
     </div>
   );
 }

@@ -14,8 +14,8 @@ const useAlert = () => {
             text,
             icon: "warning",
             showCancelButton: true,
-            confirmButtonColor: "#3085d6",
-            cancelButtonColor: "#f01c1c",
+            confirmButtonColor: "#f01c1c",
+            cancelButtonColor: "#3085d6",
             confirmButtonText,
         });
         return result.isConfirmed;

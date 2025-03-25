@@ -6,7 +6,7 @@ import { db } from "../../models/firebase"; // Import Firebase
 import { collection, getDocs, query, orderBy } from "firebase/firestore";
 import useAlert from "../../hooks/userAlert"; // ✅ Import the alert hook
 
-function MessagesAdmin() {
+function AdminMessages() {
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -91,4 +91,4 @@ function MessagesAdmin() {
   );
 }
 
-export default MessagesAdmin;
+export default AdminMessages;

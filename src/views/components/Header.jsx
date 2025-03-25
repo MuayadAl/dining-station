@@ -229,6 +229,11 @@ function Header() {
                           </NavLink>
                         </li>
                         <li>
+                          <NavLink className="dropdown-item" to="/admin/user-management">
+                            View & Manage Users
+                          </NavLink>
+                        </li>
+                        <li>
                           <NavLink
                             className="dropdown-item"
                             to="/admin/restaurants-requests"
@@ -342,6 +347,14 @@ function Header() {
                             to="/my-restaurant/register-staff"
                           >
                             Register Staff
+                          </NavLink>
+                        </li>
+                        <li>
+                          <NavLink
+                            className="dropdown-item"
+                            to="/admin/user-management"
+                          >
+                            Manage Staff Users
                           </NavLink>
                         </li>
                         <li>

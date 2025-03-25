@@ -39,7 +39,7 @@ export default function Login() {
     }
 
     // Validate email format (simple regex)
-    const emailRegex = /^[a-zA-Z0-9._-]+@apu\.edu\.my$/;
+    const emailRegex = /^[a-zA-Z0-9._-]+@apu.edu.my$|@mail.apu.edu.my$/;
     if (!emailRegex.test(email)) {
       setError("Please enter a valid email address.");
       return;

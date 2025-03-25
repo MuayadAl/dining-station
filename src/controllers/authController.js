@@ -49,6 +49,6 @@ export const handlePasswordReset = async (email) => {
     await sendPasswordResetEmail(auth, email);
   } catch (error) {
     console.error("Error sending password reset email: ", error);
-    throw error;
+    throw new Error("Failed to send password reset email. Please try again.");
   }
 };

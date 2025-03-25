@@ -30,6 +30,7 @@ app.use(
 );
 
 app.use(express.json());
+
 app.use("/api", adminRoutes);
 // Import and Use Order Routes
 const orderRoutes = require("./orderController");
