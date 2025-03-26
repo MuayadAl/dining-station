@@ -1,3 +1,5 @@
+import { useLocation } from "react-router-dom";
+
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { onAuthStateChanged } from "firebase/auth";
@@ -13,6 +15,8 @@ import {
 import { db, auth } from "../../models/firebase";
 import useAlert from "../../hooks/userAlert";
 import Loader from "../components/Loader";
+import { clearCart } from "../../controllers/cartController";
+
 const OrderPage = () => {
   const { orderId } = useParams();
   const [order, setOrder] = useState(null);
@@ -22,30 +26,45 @@ const OrderPage = () => {
   const [ordersLoaded, setOrdersLoaded] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState(null);
 
+  const location = useLocation();
+  const queryParams = new URLSearchParams(location.search);
+  const sessionId = queryParams.get("session_id");
+
   const navigate = useNavigate();
   const { confirmAction, showSuccess, showError } = useAlert();
 
   useEffect(() => {
     let isMounted = true;
-
-    setLoading(true);
-
+  
     const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
       if (user && isMounted) {
         const orderRef = doc(db, "orders", orderId);
-
-        const unsubscribeOrder = onSnapshot(orderRef, (docSnapshot) => {
+  
+        const unsubscribeOrder = onSnapshot(orderRef, async (docSnapshot) => {
           if (isMounted) {
             if (docSnapshot.exists()) {
-              setOrder({ id: docSnapshot.id, ...docSnapshot.data() });
+              const fetchedOrder = { id: docSnapshot.id, ...docSnapshot.data() };
+              setOrder(fetchedOrder);
+              setLoading(false);
+  
+              // ✅ Clear cart only if user came from Stripe payment success redirect
+              if (
+                sessionId &&
+                fetchedOrder.status === "Placed" && // Or check for "Paid"
+                !localStorage.getItem(`cartCleared_${orderId}`)
+              ) {
+                await clearCart();
+                localStorage.setItem(`cartCleared_${orderId}`, "true");
+                showSuccess("Payment successful!");
+              }
             } else {
               showError("Order not found.");
               navigate("/orders");
+              setLoading(false);
             }
-            setLoading(false);
           }
         });
-
+  
         return () => unsubscribeOrder();
       } else if (isMounted) {
         showError("No authenticated user.");
@@ -53,12 +72,16 @@ const OrderPage = () => {
         setLoading(false);
       }
     });
-
+  
     return () => {
       isMounted = false;
       unsubscribeAuth();
     };
-  }, [orderId, navigate]);
+  }, [orderId, navigate, sessionId]);
+
+  const handleClearCart = async () => {
+    await clearCart();
+  };
 
   const fetchPreviousOrders = async () => {
     setLoadingOrders(true);

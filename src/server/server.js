@@ -160,7 +160,7 @@ app.post("/create-checkout-session", async (req, res) => {
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
       mode: "payment",
-      success_url: `${FRONTEND_BASE_URL}/order/${orderId}`,
+      success_url: `${FRONTEND_BASE_URL}/order/${orderId}?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${FRONTEND_BASE_URL}/cancel`,
       line_items: cartItems.map((item) => ({
         price_data: {

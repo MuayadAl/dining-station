@@ -105,57 +105,75 @@ function RestaurantsPage() {
 
   });
   
-
+  const RestaurantCardPlaceholder = () => (
+    <div className="col-lg-3 col-md-6 d-flex justify-content-center">
+      <div className="restaurant_card placeholder-glow">
+        <div className="restaurant_img bg-secondary placeholder" style={{ height: '200px', width: '100%' }}></div>
+        <div className="restaurant_box">
+          <h3 className="types_text placeholder bg-secondary" style={{ height: '20px', width: '70%' }}></h3>
+          <p className="looking_text placeholder bg-secondary" style={{ height: '14px', width: '100%' }}></p>
+          <div className="read_bt">
+            <div className="order_btn placeholder bg-secondary" style={{ height: '30px', width: '100px' }}></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+  
   
 
   return (
     <div className="container p-4 text-center">
       <h1 className="restaurant_title">OUR RESTAURANTS</h1>
       <div className="row justify-content-start shadow p-3 mb-5 bg-body rounded-3">
-        {restaurants.length > 0 ? (
-          restaurants.map((restaurant) => (
-            <div
-              key={restaurant.id}
-              className="col-lg-3 col-md-6 d-flex justify-content-center"
-            >
-              <div className="restaurant_card" onClick={() => handleNavigation(restaurant.id)}>
-                <div className="restaurant_img placeholder-glow">
-                  <img
-                    src={restaurant.imgUrl}
-                    alt={restaurant.name}
-                    loading="lazy"
-                  />
-                </div>
-                <div className="restaurant_box">
-                  <h3 className="types_text" title={restaurant.name}>
-                    {restaurant.name}
-                  </h3>
-                  <p className="looking_text" title={restaurant.description}>
-                    {restaurant.description}
-                  </p>
-                  <div className="read_bt" >
-                    <NavLink
-                      className="order_btn"
-                      to={`/user/menu-page/${restaurant.id}`}
-                    >
-                      Order Now
-                    </NavLink>
-                  </div>
-                </div>
-              </div>
-            </div>
-          ))
-        ) : ( !loading && (
-          <p>Please log in to view restaurants.</p>
-        )
-        )}
+      {restaurants.length > 0 ? (
+  restaurants.map((restaurant) => (
+    <div
+      key={restaurant.id}
+      className="col-lg-3 col-md-6 d-flex justify-content-center"
+    >
+      <div className="restaurant_card" onClick={() => handleNavigation(restaurant.id)}>
+        <div className="restaurant_img placeholder-glow">
+          <img
+            src={restaurant.imgUrl}
+            alt={restaurant.name}
+            loading="lazy"
+          />
+        </div>
+        <div className="restaurant_box">
+          <h3 className="types_text" title={restaurant.name}>
+            {restaurant.name}
+          </h3>
+          <p className="looking_text" title={restaurant.description}>
+            {restaurant.description}
+          </p>
+          <div className="read_bt">
+            <NavLink className="order_btn" to={`/user/menu-page/${restaurant.id}`}>
+              Order Now
+            </NavLink>
+          </div>
+        </div>
       </div>
-      {loading && (
+    </div>
+  ))
+) : loading ? (
+  // Show placeholders if loading and no restaurants yet
+  <>
+    {Array.from({ length: BATCH_SIZE }).map((_, index) => (
+      <RestaurantCardPlaceholder key={index} />
+    ))}
+  </>
+) : (
+  <p>Please log in to view restaurants.</p>
+)}
+
+      </div>
+      {/* {loading && (
         <p>
           <i className="fa-solid fa-spinner fa-spin"></i> Loading more
           restaurants...
         </p>
-      )}
+      )} */}
 
     </div>
   );

@@ -18,7 +18,7 @@ const CheckoutForm = ({ cartItems, total, user, restaurant }) => {
     }
 
     if (!user || !restaurant) {
-      console.error("❌ Missing user or restaurant details", { user, restaurant });
+      console.error("Missing user or restaurant details", { user, restaurant });
       showError("Error retrieving user or restaurant details.");
       return;
     }

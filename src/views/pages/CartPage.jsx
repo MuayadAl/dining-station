@@ -10,25 +10,32 @@ import { Button, Table } from "react-bootstrap";
 import useAlert from "../../hooks/userAlert";
 
 const CartPage = () => {
-  const [cartItems, setCartItems] = useState([]);
+  const [cartItems, setCartItems] = useState(() => {
+    // Initialize state with data from localStorage if available
+    const savedCart = localStorage.getItem("cart");
+    return savedCart ? JSON.parse(savedCart) : [];
+  });
   const { showSuccess, showError } = useAlert();
   const navigate = useNavigate();
-
 
   useEffect(() => {
     const fetchCart = async () => {
       const cartData = await getCart();
-  
-      console.log("Fetched Cart Data:", cartData); // Debugging
-  
-      setCartItems(cartData.map(item => ({
-        ...item,
-        price: parseFloat(item.price) || 0  // Ensure price is always a number
-      })));
+      setCartItems(cartData);
+      // Save fetched cart data to localStorage
+      localStorage.setItem("cart", JSON.stringify(cartData));
     };
-    fetchCart();
+
+    // Fetch cart only if localStorage is empty
+    if (cartItems.length === 0) {
+      fetchCart();
+    }
   }, []);
-  
+
+  useEffect(() => {
+    // Update localStorage whenever cartItems state changes
+    localStorage.setItem("cart", JSON.stringify(cartItems));
+  }, [cartItems]);
 
   const handleRemoveItem = async (itemId) => {
     const updatedCart = await removeFromCart(itemId);
@@ -38,18 +45,11 @@ const CartPage = () => {
 
   const handleQuantityChange = async (itemId, quantity) => {
     if (quantity < 1) return;
-  
-    await updateCartQuantity(itemId, quantity);
-    const updatedCart = await getCart(); // <-- fetch fresh copy
-  
-    setCartItems(updatedCart.map(item => ({
-        ...item,
-        price: parseFloat(item.price) || 0
-    })));
-  };
-  
 
-  
+    await updateCartQuantity(itemId, quantity);
+    const updatedCart = await getCart();
+    setCartItems(updatedCart);
+  };
 
   const handleClearCart = async () => {
     await clearCart();
@@ -60,19 +60,16 @@ const CartPage = () => {
   const handleCheckout = () => {
     const storedRestaurantId = localStorage.getItem("restaurantId");
     if (!storedRestaurantId) {
-      console.error("❌ No restaurantId found. Ensure restaurant is selected.");
       showError("Error: No restaurant selected. Please select a restaurant first.");
       return;
     }
-  
-    navigate(`/checkout/${storedRestaurantId}`); // ✅ Pass restaurantId in the URL
+
+    navigate(`/checkout/${storedRestaurantId}`);
   };
-  
-  
 
   return (
-    <div className="container ">
-      <h2 className=" text-center">Your Cart</h2>
+    <div className="container">
+      <h2 className="text-center">Your Cart</h2>
       <div className="card shadow p-4 w-100 my-3">
         {cartItems.length === 0 ? (
           <p className="text-center text-muted">Your cart is empty.</p>
@@ -92,8 +89,7 @@ const CartPage = () => {
                 {cartItems.map((item) => (
                   <tr key={item.itemId}>
                     <td>{item.name}</td>
-                    <td>RM{(item.quantity * (parseFloat(item.price))).toFixed(2)}</td>
-
+                    <td>RM{parseFloat(item.price).toFixed(2)}</td>
                     <td>
                       <Button
                         variant=""
@@ -102,17 +98,17 @@ const CartPage = () => {
                           handleQuantityChange(item.itemId, item.quantity - 1)
                         }
                       >
-                        <i class="fa-solid fa-minus"></i>
+                        <i className="fa-solid fa-minus"></i>
                       </Button>
-                      <span className="mx-2 float-none">{item.quantity}</span>
+                      <span className="mx-2">{item.quantity}</span>
                       <Button
-                        variant=" "
-                        size="sm" 
+                        variant=""
+                        size="sm"
                         onClick={() =>
                           handleQuantityChange(item.itemId, item.quantity + 1)
                         }
                       >
-                        <i class="fa-solid fa-plus"></i>
+                        <i className="fa-solid fa-plus"></i>
                       </Button>
                     </td>
                     <td>
@@ -141,7 +137,6 @@ const CartPage = () => {
             </Button>
             <Button variant="success" onClick={handleCheckout}>
               Proceed to Checkout
-              
             </Button>
           </div>
         )}
