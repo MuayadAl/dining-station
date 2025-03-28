@@ -5,6 +5,8 @@ import "bootstrap/dist/css/bootstrap.min.css";
 
 function Footer() {
   return (
+    <footer>
+
     <div className="footer_section layout_padding">
       <div className="container">
         <div className="row">
@@ -78,6 +80,7 @@ function Footer() {
       </div>
       {/* copyright section end  */}
     </div>
+    </footer>
   );
 }
 export default Footer;

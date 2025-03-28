@@ -6,7 +6,7 @@ import {
   Navigate,
 } from "react-router-dom";
 import "font-awesome/css/font-awesome.min.css";
-
+import { CartProvider } from "./contexts/CartContext";
 // Pages Imports
 import LandingPage from "./views/pages/LandingPage";
 import Header from "./views/components/Header";
@@ -37,6 +37,8 @@ import OrderPage from "./views/pages/orderPage";
 
 function App() {
   return (
+    <CartProvider>
+
     <Router>
       <Header />
       <Routes>
@@ -91,6 +93,7 @@ function App() {
       </Routes>
       <Footer />
     </Router>
+    </CartProvider>
   );
 }
 
