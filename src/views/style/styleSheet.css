@@ -1288,3 +1288,15 @@ textarea#comment.update_mail::placeholder {
     border-radius: 0.375rem;
   }
   
+
+  /* Cart Hover */
+  .cart_hover {
+    opacity: 0.6;
+    transition: opacity 0.3s ease;
+  }
+  
+  .cart_hover:hover {
+    opacity: 1;
+    cursor: pointer;
+  }
+  

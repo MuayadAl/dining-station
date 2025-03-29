@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import { useParams } from "react-router-dom";
 import { db } from "../../models/firebase";
+import { useNavigate } from "react-router-dom";
 import {
   collection,
   query,
@@ -36,6 +37,8 @@ const MenuPage = () => {
   const { confirmAction, showSuccess, showError } = useAlert();
   const { cartItems, addToCart } = useCart(); // ✅ match context
   const cartIconRef = useRef();
+const navigate = useNavigate();
+
 
   const [menuItems, setMenuItems] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -132,8 +135,8 @@ const MenuPage = () => {
     requestAnimationFrame(() => {
       flyingImg.style.top = cartRect.top + "px";
       flyingImg.style.left = cartRect.left + "px";
-      flyingImg.style.width = "20px";
-      flyingImg.style.height = "20px";
+      flyingImg.style.width = "40px";
+      flyingImg.style.height = "40px";
       flyingImg.style.opacity = "0.3";
     });
   
@@ -142,11 +145,6 @@ const MenuPage = () => {
     }, 900);
   };
   
-  
-  
-  
-  
-
   const handleAddToCart = async (item, e) => {
     try {
       const imgElement = e.currentTarget.closest(".card").querySelector("img");
@@ -281,12 +279,13 @@ const MenuPage = () => {
 
   return (
     <div className="container p-1 ">
-      <div
-        style={{ position: "fixed", bottom: "50px", right: "20px", zIndex: 1050 }}
+      <div className="bg-dark p-2 cart_hover"
+        style={{ position: "fixed", bottom: "50px", right: "20px", zIndex: 1050, borderRadius: "50%" }}
         ref={cartIconRef}
+        onClick={() => navigate("/cart")}
       >
-        <div style={{ position: "relative" }}>
-          <i className="fa fa-shopping-cart fa-2x text-dark"></i>
+        <div className="" style={{ position: "relative" }}>
+          <i className="fa fa-shopping-cart fa-2x text-white"></i>
           {cartItems.length > 0 && (
             <span
               className="badge bg-danger"

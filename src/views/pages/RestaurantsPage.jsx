@@ -50,16 +50,21 @@ function RestaurantsPage() {
 
       const querySnapshot = await getDocs(restaurantQuery);
       const newRestaurants = querySnapshot.docs
-  .map((doc) => {
-    const data = doc.data();
-    return {
-      id: doc.id,
-      ...data,
-      status: getRestaurantStatus(data.openingHours, data.status),
-    };
-  })
-  .filter((restaurant) => restaurant.approvalStatus === "approved");
+        .map((doc) => {
+          const data = doc.data();
+          return {
+            id: doc.id,
+            ...data,
+            status: getRestaurantStatus(data.openingHours, data.status),
+          };
+        })
+        .filter((restaurant) => restaurant.approvalStatus === "approved");
 
+        newRestaurants.sort((a, b) => {
+          const statusPriority = { open: 0, busy: 1, closed: 2 };
+          return statusPriority[a.status] - statusPriority[b.status];
+        });
+        
 
       // Avoid duplicates
       setRestaurants((prevRestaurants) => {
@@ -103,12 +108,20 @@ function RestaurantsPage() {
 
   useEffect(() => {
     const interval = setInterval(() => {
-      setRestaurants((prevRestaurants) =>
-        prevRestaurants.map((r) => ({
+      setRestaurants((prevRestaurants) => {
+        const updated = prevRestaurants.map((r) => ({
           ...r,
           status: getRestaurantStatus(r.openingHours, r.status),
-        }))
-      );
+        }));
+  
+        // ✅ Sort: open > busy > closed
+        updated.sort((a, b) => {
+          const statusPriority = { open: 0, busy: 1, closed: 2 };
+          return statusPriority[a.status] - statusPriority[b.status];
+        });
+  
+        return updated;
+      });
     }, 60000); // Every 60 seconds
   
     return () => clearInterval(interval);
@@ -118,21 +131,20 @@ function RestaurantsPage() {
   const getRestaurantStatus = (openingHours, manualStatus) => {
     if (manualStatus === "closed") return "closed";
     if (manualStatus === "busy") return "busy";
-  
+
     if (!openingHours) return "closed";
-  
+
     const now = new Date();
     const currentDay = now.toLocaleString("en-US", { weekday: "long" });
     const currentTime = now.toLocaleTimeString("en-US", { hour12: false });
-  
+
     const today = openingHours[currentDay];
     if (!today || !today.enabled) return "closed";
-  
+
     return currentTime >= today.open && currentTime <= today.close
       ? "open"
       : "closed";
   };
-  
 
   const handleNavigation = (page) => {
     navigate(`/user/menu-page/${page}`);
@@ -196,25 +208,30 @@ function RestaurantsPage() {
                     style={{ height: "200px", objectFit: "cover" }}
                   />
                   <span
-  title={`Manual: ${restaurant.manualStatus || "N/A"}, Schedule: ${getRestaurantStatus(restaurant.openingHours, "open")}`}
-  className={`position-absolute top-0 start-0 m-2 px-2 py-1 rounded ${
-    restaurant.status === "open"
-      ? "bg-success"
-      : restaurant.status === "closed"
-      ? "bg-danger"
-      : "bg-warning"
-  } text-white fw-bold`}
-  style={{ fontSize: "0.8rem" }}
->
-  <i
-    className={`fa-solid ${
-      restaurant.status === "open" ? "fa-door-open" : "fa-door-closed"
-    } me-1`}
-  ></i>
-  {restaurant.status}
-</span>
-
-
+                    title={`Manual: ${
+                      restaurant.manualStatus || "N/A"
+                    }, Schedule: ${getRestaurantStatus(
+                      restaurant.openingHours,
+                      "open"
+                    )}`}
+                    className={`position-absolute top-0 start-0 m-2 px-2 py-1 rounded ${
+                      restaurant.status === "open"
+                        ? "bg-success"
+                        : restaurant.status === "closed"
+                        ? "bg-danger"
+                        : "bg-warning"
+                    } text-white fw-bold`}
+                    style={{ fontSize: "0.8rem" }}
+                  >
+                    <i
+                      className={`fa-solid ${
+                        restaurant.status === "open"
+                          ? "fa-door-open"
+                          : "fa-door-closed"
+                      } me-1`}
+                    ></i>
+                    {restaurant.status}
+                  </span>
                 </div>
 
                 <div className="restaurant_box">
