@@ -122,7 +122,7 @@ const AddMenuItemPage = () => {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [errors, setErrors] = useState({});
-  const [availability, setAvailability] = useState(false);
+  const [availability, setAvailability] = useState(true);
 
   // Fetch restaurant id from firestore if not available in sessionStorage.
   useEffect(() => {
@@ -518,7 +518,7 @@ const AddMenuItemPage = () => {
 
           <div className="form-check form-switch">
             <input
-              className="form-check-input"
+              className="form-check-input fs-6 "
               type="checkbox"
               role="switch"
               id="flexSwitchCheckChecked"
@@ -529,8 +529,10 @@ const AddMenuItemPage = () => {
               title="Switch on if this item is currently available for orders."
             />
             <label
-              className="form-check-label"
+              className="form-check-label fs-6"
               htmlFor="flexSwitchCheckChecked"
+              title="Switch on if this item is currently available for orders."
+
             >
               Availability
             </label>

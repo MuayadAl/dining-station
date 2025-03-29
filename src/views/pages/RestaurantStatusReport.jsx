@@ -45,9 +45,9 @@ const RestaurantStatusReports = () => {
         (!endDate || orderDate <= new Date(endDate))
       );
     });
-  
+
     let rows = [];
-  
+
     filtered.forEach((order) => {
       const baseInfo = [
         order.id,
@@ -56,7 +56,7 @@ const RestaurantStatusReports = () => {
         `RM${order.total?.toFixed(2) || "0.00"}`,
         order.status,
       ];
-  
+
       if (order.items && Array.isArray(order.items)) {
         order.items.forEach((item) => {
           rows.push([
@@ -70,7 +70,7 @@ const RestaurantStatusReports = () => {
         rows.push([...baseInfo, "N/A", "N/A", "N/A"]);
       }
     });
-  
+
     const headers = [
       "Order ID",
       "Date",
@@ -81,9 +81,9 @@ const RestaurantStatusReports = () => {
       "Quantity",
       "Item Subtotal",
     ];
-  
+
     const csvContent = [headers, ...rows].map((r) => r.join(",")).join("\n");
-  
+
     const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
@@ -93,30 +93,30 @@ const RestaurantStatusReports = () => {
     link.click();
     document.body.removeChild(link);
   };
-  
 
   // Function to check if the restaurant is open or closed
-  const getRestaurantStatus = (openingHours) => {
-    if (!openingHours) return "Closed";
+  const getRestaurantStatus = (openingHours, manualStatus) => {
+    if (manualStatus === "closed") return "closed";
+    if (manualStatus === "busy") return "busy";
+
+    if (!openingHours) return "closed";
 
     const now = new Date();
-    const currentDay = now.toLocaleString("en-US", { weekday: "long" }); // Get current day (e.g., "Monday")
-    const currentTime = now.toLocaleTimeString("en-US", { hour12: false }); // Get current time in 24-hour format
+    const currentDay = now.toLocaleString("en-US", { weekday: "long" });
+    const currentTime = now.toLocaleTimeString("en-US", { hour12: false });
 
     const todayHours = openingHours[currentDay];
 
-    if (!todayHours || !todayHours.enabled) {
-      return "Closed";
-    }
+    if (!todayHours || !todayHours.enabled) return "closed";
 
     const openTime = todayHours.open;
     const closeTime = todayHours.close;
 
     if (currentTime >= openTime && currentTime <= closeTime) {
-      return "Open";
-    } else {
-      return "Closed";
+      return "open";
     }
+
+    return "closed";
   };
 
   // Fetch restaurant data for the logged-in user
@@ -136,8 +136,12 @@ const RestaurantStatusReports = () => {
             setRestaurant(restaurantData);
 
             // Calculate and set the restaurant status
-            const status = getRestaurantStatus(restaurantData.openingHours);
+            const status = getRestaurantStatus(
+              restaurantData.openingHours,
+              restaurantData.status
+            );
             setRestaurantStatus(status);
+
             // Fetch all orders for this restaurant
             const orderQuery = query(
               collection(db, "orders"),
@@ -246,9 +250,7 @@ const RestaurantStatusReports = () => {
   }, []);
 
   if (loading) {
-    return (
-      Loader("Loading")
-    );
+    return Loader("Loading");
   }
 
   if (error) {
@@ -275,332 +277,347 @@ const RestaurantStatusReports = () => {
   return (
     <div className="d-flex container justify-content-center align-items-center mb-4 ">
       <div className="w-100 ">
+        <p className="mt-2 text-center fs-2 fw-bold">
+          Restaurant Status & Reports
+        </p>
 
-      <p className="mt-2 text-center fs-2 fw-bold">Restaurant Status & Reports</p>
-
-      {/* Restaurant Status Section */}
-      <section className="mb-5">
-        <h2 className="mb-4">
-          <FontAwesomeIcon icon={faChartLine} className="me-2" />
-          Restaurant Status
-        </h2>
-        <div className="card shadow-sm">
-          <div className="card-body fs-6">
-            <div className="justify-content-between d-flex align-items-center">
-              <h5 className="card-title text-primary fw-bold">
-                {restaurant.name}
-              </h5>
-              <div>
-                <span
-                  className={`badge py-3 ${
-                    restaurantStatus === "Open" ? "bg-success" : "bg-danger"
-                  }`}
-                >
-                  <FontAwesomeIcon
-                    icon={
-                      restaurantStatus === "Open" ? faDoorOpen : faDoorClosed
-                    }
-                    className="me-2"
-                  />
-                  {restaurantStatus}
-                </span>
-              </div>
-            </div>
-
-            <hr />
-
-            <div className="row">
-              <div className="col-12 col-md-6 mb-3">
-                <p className="card-text">
-                  <FontAwesomeIcon icon={faEnvelope} className="me-2" />
-                  <strong>Email:</strong> {restaurant.email}
-                </p>
-                <p className="card-text">
-                  <FontAwesomeIcon icon={faPhone} className="me-2" />
-                  <strong>Phone:</strong> {restaurant.phone}
-                </p>
-                <p className="card-text">
-                  <FontAwesomeIcon icon={faMapMarkerAlt} className="me-2" />
-                  <strong>Location:</strong> {restaurant.location}
-                </p>
-              </div>
-              <div className="col-md-6">
-                <p className="card-text">
-                  <FontAwesomeIcon icon={faStore} className="me-2" />
-                  <strong>Approval Status:</strong>{" "}
+        {/* Restaurant Status Section */}
+        <section className="mb-5 ">
+          <h2 className="mb-4">
+            <FontAwesomeIcon icon={faChartLine} className="me-2" />
+            Restaurant Status
+          </h2>
+          <div className="card shadow-sm hover_effect">
+            <div className="card-body fs-6">
+              <div className="justify-content-between d-flex align-items-center">
+                <h5 className="card-title text-primary fw-bold">
+                  {restaurant.name}
+                </h5>
+                <div>
                   <span
-                    className={`badge p-2 ${
-                      restaurant.approvalStatus === "approved"
+                    className={`badge py-3 ${
+                      restaurantStatus === "open"
                         ? "bg-success"
-                        : restaurant.approvalStatus === "pending"
+                        : restaurantStatus === "busy"
                         ? "bg-warning"
                         : "bg-danger"
                     }`}
                   >
-                    {restaurant.approvalStatus === "approved" && (
-                      <FontAwesomeIcon icon={faCheckCircle} className="me-1" />
-                    )}
-                    {restaurant.approvalStatus === "pending" && (
-                      <FontAwesomeIcon icon={faHourglass} className="me-1" />
-                    )}
-                    {restaurant.approvalStatus === "rejected" && (
-                      <FontAwesomeIcon icon={faTimesCircle} className="me-1" />
-                    )}
-                    {restaurant.approvalStatus}
+                    <FontAwesomeIcon
+                      icon={
+                        restaurantStatus === "open"
+                          ? faDoorOpen
+                          : restaurantStatus === "busy"
+                          ? faHourglass
+                          : faDoorClosed
+                      }
+                      className="me-2"
+                    />
+                    {restaurantStatus}
                   </span>
-                </p>
-                <p className="card-text">
-                  <FontAwesomeIcon icon={faClock} className="me-2" />
-                  <strong>Created At:</strong>{" "}
-                  {restaurant.createdAt?.toDate().toLocaleString()}
-                </p>
-                <p className="card-text">
-                  <FontAwesomeIcon icon={faStickyNote} className="me-2" />
-                  <strong>Remark:</strong> {restaurant.remark || "N/A"}
-                </p>
+                </div>
               </div>
-            </div>
-            <hr />
-            <div style={{ paddingLeft: "20px" }}>
-              <h6>
-                <FontAwesomeIcon icon={faCalendarDays} className="me-2" />
-                Opening Hours
-              </h6>
-              <ul className="list-unstyled row">
-                {Object.entries(restaurant.openingHours || {})
-                  .sort(([dayA], [dayB]) => {
-                    const order = [
-                      "Monday",
-                      "Tuesday",
-                      "Wednesday",
-                      "Thursday",
-                      "Friday",
-                      "Saturday",
-                      "Sunday",
-                    ];
-                    return order.indexOf(dayA) - order.indexOf(dayB);
-                  })
-                  .map(([day, hours]) => (
-                    <li key={day} className="col-md-4 mb-2">
-                      <strong>{day}:</strong>{" "}
-                      {hours && hours.enabled && hours.open && hours.close ? (
-                        <span className="text-success">
-                          {hours.open} - {hours.close}
-                        </span>
-                      ) : (
-                        <span className="text-danger">Closed</span>
+
+              <hr />
+
+              <div className="row">
+                <div className="col-12 col-md-6 mb-3">
+                  <p className="card-text">
+                    <FontAwesomeIcon icon={faEnvelope} className="me-2" />
+                    <strong>Email:</strong> {restaurant.email}
+                  </p>
+                  <p className="card-text">
+                    <FontAwesomeIcon icon={faPhone} className="me-2" />
+                    <strong>Phone:</strong> {restaurant.phone}
+                  </p>
+                  <p className="card-text">
+                    <FontAwesomeIcon icon={faMapMarkerAlt} className="me-2" />
+                    <strong>Location:</strong> {restaurant.location}
+                  </p>
+                </div>
+                <div className="col-md-6">
+                  <p className="card-text">
+                    <FontAwesomeIcon icon={faStore} className="me-2" />
+                    <strong>Approval Status:</strong>{" "}
+                    <span
+                      className={`badge p-2 ${
+                        restaurant.approvalStatus === "approved"
+                          ? "bg-success"
+                          : restaurant.approvalStatus === "pending"
+                          ? "bg-warning"
+                          : "bg-danger"
+                      }`}
+                    >
+                      {restaurant.approvalStatus === "approved" && (
+                        <FontAwesomeIcon
+                          icon={faCheckCircle}
+                          className="me-1"
+                        />
                       )}
-                    </li>
-                  ))}
-              </ul>
+                      {restaurant.approvalStatus === "pending" && (
+                        <FontAwesomeIcon icon={faHourglass} className="me-1" />
+                      )}
+                      {restaurant.approvalStatus === "rejected" && (
+                        <FontAwesomeIcon
+                          icon={faTimesCircle}
+                          className="me-1"
+                        />
+                      )}
+                      {restaurant.approvalStatus}
+                    </span>
+                  </p>
+                  <p className="card-text">
+                    <FontAwesomeIcon icon={faClock} className="me-2" />
+                    <strong>Created At:</strong>{" "}
+                    {restaurant.createdAt?.toDate().toLocaleString()}
+                  </p>
+                  <p className="card-text">
+                    <FontAwesomeIcon icon={faStickyNote} className="me-2" />
+                    <strong>Remark:</strong> {restaurant.remark || "N/A"}
+                  </p>
+                </div>
+              </div>
+              <hr />
+              <div style={{ paddingLeft: "20px" }}>
+                <h6>
+                  <FontAwesomeIcon icon={faCalendarDays} className="me-2" />
+                  Opening Hours
+                </h6>
+                <ul className="list-unstyled row">
+                  {Object.entries(restaurant.openingHours || {})
+                    .sort(([dayA], [dayB]) => {
+                      const order = [
+                        "Monday",
+                        "Tuesday",
+                        "Wednesday",
+                        "Thursday",
+                        "Friday",
+                        "Saturday",
+                        "Sunday",
+                      ];
+                      return order.indexOf(dayA) - order.indexOf(dayB);
+                    })
+                    .map(([day, hours]) => (
+                      <li key={day} className="col-md-4 mb-2">
+                        <strong>{day}:</strong>{" "}
+                        {hours && hours.enabled && hours.open && hours.close ? (
+                          <span className="text-success">
+                            {hours.open} - {hours.close}
+                          </span>
+                        ) : (
+                          <span className="text-danger">Closed</span>
+                        )}
+                      </li>
+                    ))}
+                </ul>
+              </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* Reports Section (Placeholder) */}
-      <section>
-        <h2 className="mb-4">
-          <FontAwesomeIcon icon={faChartLine} className="me-2" />
-          Reports
-        </h2>
-        {orders.length > 0 && (
-          <div className="text-end mb-3">
-            <button
-              className="btn btn-outline-dark"
-              onClick={() => downloadCSV(orders)}
-            >
-              Export All Orders to CSV
-            </button>
+        {/* Reports Section (Placeholder) */}
+        <section>
+          <h2 className="mb-4">
+            <FontAwesomeIcon icon={faChartLine} className="me-2" />
+            Reports
+          </h2>
+          {orders.length > 0 && (
+            <div className="text-end mb-3">
+              <button
+                className="btn btn-outline-dark"
+                onClick={() => downloadCSV(orders)}
+              >
+                Export All Orders to CSV
+              </button>
+            </div>
+          )}
+          <div className="row mb-3 g-2">
+            <div className="col-md-4">
+              <label className="form-label">Start Date</label>
+              <input
+                type="date"
+                className="form-control"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+              />
+            </div>
+            <div className="col-md-4">
+              <label className="form-label">End Date</label>
+              <input
+                type="date"
+                className="form-control"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+              />
+            </div>
+            <div className="col-md-4 d-flex align-items-end">
+              <button
+                className="btn btn-danger w-100"
+                onClick={() => downloadCSV(orders)}
+              >
+                Export to CSV
+              </button>
+            </div>
           </div>
-        )}
-        <div className="row mb-3 g-2">
-          <div className="col-md-4">
-            <label className="form-label">Start Date</label>
-            <input
-              type="date"
-              className="form-control"
-              value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
-            />
-          </div>
-          <div className="col-md-4">
-            <label className="form-label">End Date</label>
-            <input
-              type="date"
-              className="form-control"
-              value={endDate}
-              onChange={(e) => setEndDate(e.target.value)}
-            />
-          </div>
-          <div className="col-md-4 d-flex align-items-end">
-            <button
-              className="btn btn-danger w-100"
-              onClick={() => downloadCSV(orders)}
-            >
-              Export to CSV
-            </button>
-          </div>
-        </div>
 
-        <div className="row g-3">
-          <div className="col-md-4">
-            <div className="card shadow-sm border-success">
-              <div className="card-body text-success text-center">
-                <h5>Total Income</h5>
-                <h3 className="fw-bold">
-                  RM {orderStats.totalIncome.toFixed(2)}
-                </h3>
+          <div className="row g-3">
+            <div className="col-md-4">
+              <div className="card shadow-sm border-success hover_effect">
+                <div className="card-body text-success text-center">
+                  <h5>Total Income</h5>
+                  <h3 className="fw-bold">
+                    RM {orderStats.totalIncome.toFixed(2)}
+                  </h3>
+                </div>
+              </div>
+            </div>
+
+            <div className="col-md-4">
+              <div className="card shadow-sm border-primary hover_effect">
+                <div className="card-body text-primary text-center">
+                  <h5>Completed Orders</h5>
+                  <h3 className="fw-bold">{orderStats.completedOrders}</h3>
+                </div>
+              </div>
+            </div>
+
+            <div className="col-md-4">
+              <div className="card shadow-sm border-danger hover_effect">
+                <div className="card-body text-danger text-center">
+                  <h5>Cancelled Orders</h5>
+                  <h3 className="fw-bold">{orderStats.cancelledOrders}</h3>
+                </div>
               </div>
             </div>
           </div>
 
-          <div className="col-md-4">
-            <div className="card shadow-sm border-primary">
-              <div className="card-body text-primary text-center">
-                <h5>Completed Orders</h5>
-                <h3 className="fw-bold">{orderStats.completedOrders}</h3>
-              </div>
-            </div>
-          </div>
-
-          <div className="col-md-4">
-            <div className="card shadow-sm border-danger">
-              <div className="card-body text-danger text-center">
-                <h5>Cancelled Orders</h5>
-                <h3 className="fw-bold">{orderStats.cancelledOrders}</h3>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="mt-5">
-          <h4>Top 3 Sold Items</h4>
-          <ul className="list-group">
-            {orderStats.topItems.length === 0 ? (
-              <li className="list-group-item text-muted">No data</li>
-            ) : (
-              orderStats.topItems.map((item, idx) => (
-                <li
-                  key={idx}
-                  className="list-group-item d-flex justify-content-between"
-                >
-                  <strong>{item.name}</strong>
-                  <span>{item.quantity} sold</span>
-                </li>
-              ))
-            )}
-          </ul>
-        </div>
-
-        <div className="mt-5">
-          <h4>Daily Income Summary</h4>
-          <table className="table table-striped table-hover">
-            <thead className="table-dark">
-              <tr>
-                <th>Date</th>
-                <th>Total Income</th>
-              </tr>
-            </thead>
-            <tbody>
-              {orderStats.dailyTotals.length === 0 ? (
-                <tr>
-                  <td colSpan="2" className="text-muted text-center">
-                    No orders yet.
-                  </td>
-                </tr>
+          <div className="mt-5">
+            <h4>Top 3 Sold Items</h4>
+            <ul className="list-group">
+              {orderStats.topItems.length === 0 ? (
+                <li className="list-group-item text-muted">No data</li>
               ) : (
-                orderStats.dailyTotals.map((day, idx) => (
-                  <tr key={idx}>
-                    <td>{day.date}</td>
-                    <td>RM {day.total.toFixed(2)}</td>
-                  </tr>
+                orderStats.topItems.map((item, idx) => (
+                  <li
+                    key={idx}
+                    className="list-group-item d-flex justify-content-between"
+                  >
+                    <strong>{item.name}</strong>
+                    <span>{item.quantity} sold</span>
+                  </li>
                 ))
               )}
-            </tbody>
-          </table>
-        </div>
+            </ul>
+          </div>
 
-        <div className="row mt-4">
-          <div className="col-md-6">
-            <div className="card shadow-sm border-info">
-              <div className="card-body text-info text-center">
-                <h5>Total Orders</h5>
-                <h3 className="fw-bold">{orderStats.totalOrders}</h3>
+          <div className="mt-5">
+            <h4>Daily Income Summary</h4>
+            <table className="table table-striped table-hover">
+              <thead className="table-dark">
+                <tr>
+                  <th>Date</th>
+                  <th>Total Income</th>
+                </tr>
+              </thead>
+              <tbody>
+                {orderStats.dailyTotals.length === 0 ? (
+                  <tr>
+                    <td colSpan="2" className="text-muted text-center">
+                      No orders yet.
+                    </td>
+                  </tr>
+                ) : (
+                  orderStats.dailyTotals.map((day, idx) => (
+                    <tr key={idx}>
+                      <td>{day.date}</td>
+                      <td>RM {day.total.toFixed(2)}</td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          <div className="row mt-4">
+            <div className="col-md-6">
+              <div className="card shadow-sm border-info hover_effect">
+                <div className="card-body text-info text-center">
+                  <h5>Total Orders</h5>
+                  <h3 className="fw-bold">{orderStats.totalOrders}</h3>
+                </div>
+              </div>
+            </div>
+
+            <div className="col-md-6">
+              <div className="card shadow-sm border-secondary hover_effect">
+                <div className="card-body text-secondary text-center">
+                  <h5>Avg Ticket Size</h5>
+                  <h3 className="fw-bold">
+                    RM {orderStats.avgTicket.toFixed(2)}
+                  </h3>
+                </div>
               </div>
             </div>
           </div>
 
-          <div className="col-md-6">
-            <div className="card shadow-sm border-secondary">
-              <div className="card-body text-secondary text-center">
-                <h5>Avg Ticket Size</h5>
-                <h3 className="fw-bold">
-                  RM {orderStats.avgTicket.toFixed(2)}
-                </h3>
-              </div>
-            </div>
+          <div className="mt-5">
+            <h4>Weekly Income Summary</h4>
+            <table className="table table-striped table-hover">
+              <thead className="table-secondary">
+                <tr>
+                  <th>Week</th>
+                  <th>Total Income</th>
+                </tr>
+              </thead>
+              <tbody>
+                {orderStats.weeklyTotals.length === 0 ? (
+                  <tr>
+                    <td colSpan="2" className="text-muted text-center">
+                      No weekly data.
+                    </td>
+                  </tr>
+                ) : (
+                  orderStats.weeklyTotals.map(([week, total], idx) => (
+                    <tr key={idx}>
+                      <td>{week}</td>
+                      <td>RM {total.toFixed(2)}</td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
           </div>
-        </div>
 
-        <div className="mt-5">
-          <h4>Weekly Income Summary</h4>
-          <table className="table table-striped table-hover">
-            <thead className="table-secondary">
-              <tr>
-                <th>Week</th>
-                <th>Total Income</th>
-              </tr>
-            </thead>
-            <tbody>
-              {orderStats.weeklyTotals.length === 0 ? (
+          <div className="mt-5">
+            <h4>Monthly Income Summary</h4>
+            <table className="table table-striped table-hover">
+              <thead className="table-secondary">
                 <tr>
-                  <td colSpan="2" className="text-muted text-center">
-                    No weekly data.
-                  </td>
+                  <th>Month</th>
+                  <th>Total Income</th>
                 </tr>
-              ) : (
-                orderStats.weeklyTotals.map(([week, total], idx) => (
-                  <tr key={idx}>
-                    <td>{week}</td>
-                    <td>RM {total.toFixed(2)}</td>
+              </thead>
+              <tbody>
+                {orderStats.monthlyTotals.length === 0 ? (
+                  <tr>
+                    <td colSpan="2" className="text-muted text-center">
+                      No monthly data.
+                    </td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-
-        <div className="mt-5">
-          <h4>Monthly Income Summary</h4>
-          <table className="table table-striped table-hover">
-            <thead className="table-secondary">
-              <tr>
-                <th>Month</th>
-                <th>Total Income</th>
-              </tr>
-            </thead>
-            <tbody>
-              {orderStats.monthlyTotals.length === 0 ? (
-                <tr>
-                  <td colSpan="2" className="text-muted text-center">
-                    No monthly data.
-                  </td>
-                </tr>
-              ) : (
-                orderStats.monthlyTotals.map(([month, total], idx) => (
-                  <tr key={idx}>
-                    <td>{month}</td>
-                    <td>RM {total.toFixed(2)}</td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      </section>
-    </div>
+                ) : (
+                  orderStats.monthlyTotals.map(([month, total], idx) => (
+                    <tr key={idx}>
+                      <td>{month}</td>
+                      <td>RM {total.toFixed(2)}</td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </section>
       </div>
+    </div>
   );
 };
 

@@ -25,6 +25,7 @@ const OrderPage = () => {
   const [loadingOrders, setLoadingOrders] = useState(false);
   const [ordersLoaded, setOrdersLoaded] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState(null);
+  const [cartCleared, setCartCleared] = useState(false); // 👈 local flag
 
   const location = useLocation();
   const queryParams = new URLSearchParams(location.search);
@@ -33,55 +34,58 @@ const OrderPage = () => {
   const navigate = useNavigate();
   const { confirmAction, showSuccess, showError } = useAlert();
 
-  useEffect(() => {
-    let isMounted = true;
   
-    const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
-      if (user && isMounted) {
-        const orderRef = doc(db, "orders", orderId);
-  
-        const unsubscribeOrder = onSnapshot(orderRef, async (docSnapshot) => {
-          if (isMounted) {
-            if (docSnapshot.exists()) {
-              const fetchedOrder = { id: docSnapshot.id, ...docSnapshot.data() };
-              setOrder(fetchedOrder);
-              setLoading(false);
-  
-              // ✅ Clear cart only if user came from Stripe payment success redirect
-              if (
-                sessionId &&
-                fetchedOrder.status === "Placed" && // Or check for "Paid"
-                !localStorage.getItem(`cartCleared_${orderId}`)
-              ) {
-                await clearCart();
-                localStorage.setItem(`cartCleared_${orderId}`, "true");
-                showSuccess("Payment successful!");
-              }
-            } else {
-              showError("Order not found.");
-              navigate("/orders");
-              setLoading(false);
-            }
+useEffect(() => {
+  let isMounted = true;
+
+  const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
+    if (user && isMounted) {
+      const orderRef = doc(db, "orders", orderId);
+
+      const unsubscribeOrder = onSnapshot(orderRef, async (docSnapshot) => {
+        if (!isMounted) return;
+
+        if (docSnapshot.exists()) {
+          const fetchedOrder = { id: docSnapshot.id, ...docSnapshot.data() };
+          setOrder(fetchedOrder);
+          setLoading(false);
+
+          // ✅ Clear cart once on payment success, no localStorage used
+          if (
+            sessionId &&
+            fetchedOrder.status === "Placed" &&
+            !cartCleared
+          ) {
+            await clearCart();
+            setCartCleared(true); // 👈 prevent duplicate clears
+            showSuccess("Payment successful!");
           }
-        });
-  
-        return () => unsubscribeOrder();
-      } else if (isMounted) {
-        showError("No authenticated user.");
-        navigate("/login");
-        setLoading(false);
-      }
-    });
-  
-    return () => {
-      isMounted = false;
-      unsubscribeAuth();
-    };
-  }, [orderId, navigate, sessionId]);
+        } else {
+          showError("Order not found.");
+          navigate("/orders");
+          setLoading(false);
+        }
+      });
+
+      return () => unsubscribeOrder();
+    } else if (isMounted) {
+      showError("No authenticated user.");
+      navigate("/login");
+      setLoading(false);
+    }
+  });
+
+  return () => {
+    isMounted = false;
+    unsubscribeAuth();
+  };
+}, [orderId, navigate, sessionId, cartCleared]);
 
   const handleClearCart = async () => {
     await clearCart();
   };
+
+  
 
   const fetchPreviousOrders = async () => {
     setLoadingOrders(true);
@@ -91,18 +95,22 @@ const OrderPage = () => {
       const querySnapshot = await getDocs(q);
 
       const orders = querySnapshot.docs
-        .map((doc) => ({ id: doc.id, ...doc.data() }))
-        .filter((o) => o.id !== orderId)
-        .sort((a, b) => new Date(b.time) - new Date(a.time));
+      .map((doc) => ({ id: doc.id, ...doc.data() }))
+      .filter((o) => o.id !== orderId)
+      .sort((a, b) => new Date(b.time) - new Date(a.time)); // ✅ Newest first
 
       setPreviousOrders(orders);
       setOrdersLoaded(true);
+
+
     } catch (error) {
       showError("Error fetching previous orders.");
     } finally {
       setLoadingOrders(false);
     }
   };
+
+
 
   const handleCancelOrder = async () => {
     const isConfirmed = await confirmAction(
@@ -241,60 +249,68 @@ const OrderPage = () => {
         <strong>Total Amount: RM{parseFloat(order.total).toFixed(2)}</strong>
       </h3>
 
-      <h4 className="mt-5">Previous Orders</h4>
-      {!ordersLoaded ? (
-        <button
-          className="btn btn-primary mb-2"
-          onClick={fetchPreviousOrders}
-          disabled={loadingOrders}
-        >
-          {loadingOrders ? "Loading..." : "Load Previous Orders"}
-        </button>
-      ) : previousOrders.length === 0 ? (
-        <p className="text-muted">No previous orders found.</p>
-      ) : (
-        <div className="justify-content-start shadow px-3 mb-3 bg-body rounded-3">
-          <div className="table-responsive pt-3">
-            <table className="table table-bordered table-hover table-striped">
-              <thead className="bg-dark text-white">
-                <tr>
-                  <th>Order ID</th>
-                  <th>Restaurant</th>
-                  <th>Status</th>
-                  <th>Total</th>
-                  <th>Order Date</th>
-                  <th>Action</th>
+      <h4 className="mt-5">All Orders</h4>
+
+{!ordersLoaded ? (
+  <button
+    className="btn btn-primary mb-2"
+    onClick={fetchPreviousOrders}
+    disabled={loadingOrders}
+  >
+    {loadingOrders ? "Loading..." : "Load Orders"}
+  </button>
+) : (
+  (() => {
+    const allOrders = [...previousOrders, order].sort(
+      (a, b) => new Date(b.time) - new Date(a.time)
+    );
+
+    return allOrders.length === 0 ? (
+      <p className="text-muted">No orders found.</p>
+    ) : (
+      <div className="justify-content-start shadow px-3 mb-3 bg-body rounded-3">
+        <div className="table-responsive pt-3">
+          <table className="table table-bordered table-hover table-striped">
+            <thead className="bg-dark text-white">
+              <tr>
+                <th>Order ID</th>
+                <th>Restaurant</th>
+                <th>Status</th>
+                <th>Total</th>
+                <th>Order Date</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {allOrders.map((o) => (
+                <tr key={o.id}>
+                  <td>{o.id}</td>
+                  <td>{o.restaurantName}</td>
+                  <td>
+                    <span className="badge bg-secondary">{o.status}</span>
+                  </td>
+                  <td>RM{parseFloat(o.total).toFixed(2)}</td>
+                  <td>{new Date(o.time).toLocaleString()}</td>
+                  <td>
+                    <button
+                      className="btn btn-primary btn-sm"
+                      onClick={() => setSelectedOrder(o)}
+                      data-bs-toggle="modal"
+                      data-bs-target="#orderModal"
+                    >
+                      View Order
+                    </button>
+                  </td>
                 </tr>
-              </thead>
-              <tbody>
-                {previousOrders.map((prevOrder) => (
-                  <tr key={prevOrder.id}>
-                    <td>{prevOrder.id}</td>
-                    <td>{prevOrder.restaurantName}</td>
-                    <td>
-                      <span className="badge bg-secondary">
-                        {prevOrder.status}
-                      </span>
-                    </td>
-                    <td>RM{parseFloat(prevOrder.total).toFixed(2)}</td>
-                    <td>{new Date(prevOrder.time).toLocaleString()}</td>
-                    <td>
-                      <button
-                        className="btn btn-primary btn-sm"
-                        onClick={() => setSelectedOrder(prevOrder)}
-                        data-bs-toggle="modal"
-                        data-bs-target="#orderModal"
-                      >
-                        View Order
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+              ))}
+            </tbody>
+          </table>
         </div>
-      )}
+      </div>
+    );
+  })()
+)}
+
       {/* Order Modal */}
       <div
         className="modal fade"

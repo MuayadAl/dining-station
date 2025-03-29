@@ -6,6 +6,11 @@ import {
   clearCart,
 } from "../controllers/cartController";
 
+import { addToCart as addToCartController } from "../controllers/cartController";
+
+
+
+
 const CartContext = createContext();
 export const useCart = () => useContext(CartContext);
 
@@ -45,32 +50,21 @@ export const CartProvider = ({ children }) => {
     await clearCart();
     setCartItems([]);
   };
+  
 
   const refreshCart = async () => {
     const updated = await getCart();
     setCartItems(updated);
   };
 
-  const addToCart = async (newItem) => {
-    // Add logic to handle new item in your backend (optional)
-    const currentCart = await getCart();
-    const existingIndex = currentCart.findIndex(
-      (item) => item.itemId === newItem.itemId
-    );
-
-    if (existingIndex !== -1) {
-      await updateCartQuantity(
-        newItem.itemId,
-        currentCart[existingIndex].quantity + 1
-      );
-    } else {
-      // Your backend should support adding new item to cart
-      currentCart.push({ ...newItem, quantity: 1 });
-      // You can create a backend method like `setCart(currentCart)` if needed
+  const addToCart = async (item) => {
+    try {
+      await addToCartController(item);      // ✅ let controller handle logic + Firestore write
+      const updated = await getCart();      // ✅ get the new cart state
+      setCartItems(updated);
+    } catch (error) {
+      console.error("Failed to add item to cart (context):", error);
     }
-
-    const updated = await getCart();
-    setCartItems(updated);
   };
 
   return (

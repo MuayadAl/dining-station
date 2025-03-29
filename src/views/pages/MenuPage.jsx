@@ -14,14 +14,16 @@ import { auth } from "../../models/firebase";
 import "bootstrap/dist/css/bootstrap.min.css";
 import { Modal, Button, Form } from "react-bootstrap";
 
-import useAlert from "../../hooks/userAlert"; 
+import useAlert from "../../hooks/userAlert";
 
-import { addToCart } from "../../controllers/cartController"; 
+import { addToCart } from "../../controllers/cartController";
 
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faDoorOpen, faDoorClosed } from "@fortawesome/free-solid-svg-icons";
 
 import { deleteMenuItem } from "../../controllers/menuController";
+
+import { useCart } from "../../contexts/CartContext";
 
 const MenuPage = () => {
   const { restaurantId } = useParams();
@@ -32,6 +34,8 @@ const MenuPage = () => {
     useState("Checking status...");
 
   const { confirmAction, showSuccess, showError } = useAlert();
+  const { cartItems, addToCart } = useCart(); // ✅ match context
+  const cartIconRef = useRef();
 
   const [menuItems, setMenuItems] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -97,18 +101,65 @@ const MenuPage = () => {
     };
   }, [restaurantId, isOwner]); // Dependency array includes isOwner
 
+  const animateToCart = (imgElement) => {
+    const cartIcon = cartIconRef.current;
+    if (!imgElement || !cartIcon) return;
+  
+    const imgRect = imgElement.getBoundingClientRect();
+    const cartRect = cartIcon.getBoundingClientRect();
+  
+    // ✅ Create new image instead of cloning
+    const flyingImg = document.createElement("img");
+    flyingImg.src = imgElement.src;
+  
+    // ✅ Clean, controlled styles (no Bootstrap, no class inheritance)
+    flyingImg.style.setProperty("position", "fixed", "important");
+    flyingImg.style.setProperty("top", imgRect.top + "px", "important");
+    flyingImg.style.setProperty("left", imgRect.left + "px", "important");
+    flyingImg.style.setProperty("width", "40px", "important");
+    flyingImg.style.setProperty("height", "40px", "important");
+    flyingImg.style.setProperty("border-radius", "50%", "important");
+    flyingImg.style.setProperty("object-fit", "cover", "important");
+    flyingImg.style.setProperty("z-index", "1000", "important");
+    flyingImg.style.setProperty("transition", "all 0.8s ease-in-out", "important");
+    flyingImg.style.setProperty("pointer-events", "none", "important");
+    flyingImg.style.setProperty("aspect-ratio", "1 / 1", "important");
+    flyingImg.style.setProperty("overflow", "hidden", "important");
+  
+    document.body.appendChild(flyingImg);
+  
+    // Trigger the animation
+    requestAnimationFrame(() => {
+      flyingImg.style.top = cartRect.top + "px";
+      flyingImg.style.left = cartRect.left + "px";
+      flyingImg.style.width = "20px";
+      flyingImg.style.height = "20px";
+      flyingImg.style.opacity = "0.3";
+    });
+  
+    setTimeout(() => {
+      document.body.removeChild(flyingImg);
+    }, 900);
+  };
+  
+  
+  
+  
+  
 
-
-  const handleAddToCart = async (item) => {
+  const handleAddToCart = async (item, e) => {
     try {
-      await addToCart(item);
-      showSuccess(`${item.name} added to cart!`);
+      const imgElement = e.currentTarget.closest(".card").querySelector("img");
+      animateToCart(imgElement);
+  
+      await addToCart(item); // ✅ from context
+      // showSuccess(`${item.name} added to cart!`);
     } catch (error) {
-      console.error("Error adding to cart:", error);
+      console.error("Caught error in handleAddToCart:", error);
       showError("Failed to add item to cart.");
     }
   };
-
+  
 
   useEffect(() => {
     let isMounted = true;
@@ -205,7 +256,6 @@ const MenuPage = () => {
     }
   };
 
-
   const getRestaurantStatus = (openingHours) => {
     if (!openingHours) return "Closed";
 
@@ -231,6 +281,30 @@ const MenuPage = () => {
 
   return (
     <div className="container p-1 ">
+      <div
+        style={{ position: "fixed", bottom: "50px", right: "20px", zIndex: 1050 }}
+        ref={cartIconRef}
+      >
+        <div style={{ position: "relative" }}>
+          <i className="fa fa-shopping-cart fa-2x text-dark"></i>
+          {cartItems.length > 0 && (
+            <span
+              className="badge bg-danger"
+              style={{
+                position: "absolute",
+                top: "-8px",
+                right: "-10px",
+                borderRadius: "50%",
+                padding: "4px 8px",
+                fontSize: "0.7rem",
+              }}
+            >
+              {cartItems.length}
+            </span>
+          )}
+        </div>
+      </div>
+
       {/* Restaurant Logo */}
       <div className=" container d-flex justify-content-center align-items-center">
         <img
@@ -419,13 +493,11 @@ const MenuPage = () => {
                                 </div>
                                 <div className="send_bt w-100">
                                   <button
-                                    className=""
-                                    style={{
-                                      display: isOwner ? "none" : "block",
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleAddToCart(item, e);
                                     }}
-                                    onClick={() => handleAddToCart(item)}
                                   >
-                                    {" "}
                                     Add to Cart
                                   </button>
                                 </div>
@@ -537,7 +609,7 @@ const MenuPage = () => {
           <Button
             variant="danger"
             onClick={(e) => {
-              e.stopPropagation(); 
+              e.stopPropagation();
               handleDeleteItem(selectedItem.itemId);
               setShowEditModal(false);
             }}

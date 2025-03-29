@@ -35,7 +35,7 @@ export const getCart = async () => {
 
 // Function to add an item to the cart
 export const addToCart = async (item) => {
-  if (!auth.currentUser) return;
+  if (!auth.currentUser) throw new Error("User not logged in");
 
   try {
     const cartRef = doc(db, "carts", auth.currentUser.uid);
@@ -43,10 +43,9 @@ export const addToCart = async (item) => {
 
     let cartItems = cartSnap.exists() ? cartSnap.data().items || [] : [];
 
-    // Check if the item already exists in the cart
     const existingItemIndex = cartItems.findIndex((i) => i.itemId === item.itemId);
     if (existingItemIndex !== -1) {
-      cartItems[existingItemIndex].quantity += 1; // Increment quantity
+      cartItems[existingItemIndex].quantity = (cartItems[existingItemIndex].quantity || 0) + 1;
     } else {
       cartItems.push({ ...item, quantity: 1 });
     }
@@ -56,8 +55,11 @@ export const addToCart = async (item) => {
     return cartItems;
   } catch (error) {
     console.error("Error adding to cart:", error);
+    throw error;
   }
 };
+
+
 
 // Function to remove an item from the cart
 export const removeFromCart = async (itemId) => {
@@ -123,14 +125,15 @@ export const updateCartQuantity = async (itemId, newQuantity) => {
 
 // Function to clear the cart
 export const clearCart = async () => {
-  if (!auth.currentUser) return;
+  if (!auth.currentUser) return [];
 
   try {
     const cartRef = doc(db, "carts", auth.currentUser.uid);
     await setDoc(cartRef, { items: [] });
-
-    return [];
+    return []; 
   } catch (error) {
     console.error("Error clearing cart:", error);
+    throw error;
   }
 };
+

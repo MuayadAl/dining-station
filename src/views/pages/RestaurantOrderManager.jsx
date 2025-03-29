@@ -29,7 +29,13 @@ function RestaurantOrderManager() {
   const [restaurantId, setRestaurantId] = useState("");
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("new");
-  const [restaurantStatus, setRestaurantStatus] = useState("Open");
+  const [restaurantStatus, setRestaurantStatus] = useState("open");
+  const [manualStatus, setManualStatus] = useState("open");
+  const [showToast, setShowToast] = useState(false);
+  const [toastMessage, setToastMessage] = useState("");
+  const [openingHours, setOpeningHours] = useState({});
+  const [prevAutoStatus, setPrevAutoStatus] = useState(null);
+
 
   useEffect(() => {
     const auth = getAuth();
@@ -58,13 +64,17 @@ function RestaurantOrderManager() {
 
           if (!restaurantQuerySnapshot.empty) {
             const docSnap = restaurantQuerySnapshot.docs[0];
+            const restaurantData = docSnap.data();
             userRestaurantId = docSnap.id;
 
-            // ✅ Fetch current restaurant status
-            const restaurantData = docSnap.data();
-            if (restaurantData.status) {
-              setRestaurantStatus(restaurantData.status);
-            }
+            setOpeningHours(restaurantData.openingHours || {});
+            setManualStatus(restaurantData.status || "open");
+
+            const computedStatus = getRestaurantStatus(
+              restaurantData.openingHours,
+              restaurantData.status
+            );
+            setRestaurantStatus(computedStatus);
           } else {
             console.warn("Restaurant document does not exist for this user.");
           }
@@ -101,13 +111,69 @@ function RestaurantOrderManager() {
     return () => unsubscribeAuth();
   }, []);
 
+  useEffect(() => {
+    if (manualStatus !== "auto") return;
+  
+    const interval = setInterval(() => {
+      const updated = getRestaurantStatus(openingHours, manualStatus);
+  
+      setRestaurantStatus((prev) => {
+        if (prev !== updated) {
+          setToastMessage(`Status changed automatically to "${updated.toUpperCase()}"`);
+          setShowToast(true);
+          setTimeout(() => setShowToast(false), 3000);
+        }
+        return updated;
+      });
+  
+      setPrevAutoStatus(updated);
+    }, 60000);
+  
+    return () => clearInterval(interval);
+  }, [openingHours, manualStatus]);
+  
+
+  const getRestaurantStatus = (openingHours, manualStatus) => {
+    if (manualStatus === "closed") return "closed";
+    if (manualStatus === "busy") return "busy";
+    if (manualStatus === "open") return "open"; // ✅ this is the fix
+
+    // If manualStatus is "auto", evaluate time
+    if (manualStatus !== "auto") return "closed";
+    if (!openingHours) return "closed";
+
+    const now = new Date();
+    const currentDay = now.toLocaleString("en-US", { weekday: "long" });
+    const currentTime = now.toLocaleTimeString("en-US", { hour12: false });
+
+    const todayHours = openingHours[currentDay];
+    if (!todayHours || !todayHours.enabled) return "closed";
+
+    return currentTime >= todayHours.open && currentTime <= todayHours.close
+      ? "open"
+      : "closed";
+  };
+
   const handleStatusChange = async (newStatus) => {
     try {
       const restaurantRef = doc(db, "restaurants", restaurantId);
       await updateDoc(restaurantRef, { status: newStatus });
-      setRestaurantStatus(newStatus);
+
+      setManualStatus(newStatus);
+      const combined = getRestaurantStatus(openingHours, newStatus);
+      setRestaurantStatus(combined);
+
+      // Show success toast
+      setToastMessage(
+        `Restaurant status updated to "${combined.toUpperCase()}"`
+      );
+      setShowToast(true);
+      setTimeout(() => setShowToast(false), 3000);
     } catch (error) {
       console.error("Failed to update restaurant status:", error);
+      setToastMessage("Failed to update restaurant status.");
+      setShowToast(true);
+      setTimeout(() => setShowToast(false), 3000);
     }
   };
 
@@ -155,10 +221,11 @@ function RestaurantOrderManager() {
   };
 
   const isToday = (timestamp) => {
-    const orderDate = timestamp instanceof Date
-      ? timestamp
-      : timestamp?.toDate?.() || new Date(timestamp);
-  
+    const orderDate =
+      timestamp instanceof Date
+        ? timestamp
+        : timestamp?.toDate?.() || new Date(timestamp);
+
     const today = new Date();
     return (
       orderDate.getDate() === today.getDate() &&
@@ -166,7 +233,6 @@ function RestaurantOrderManager() {
       orderDate.getFullYear() === today.getFullYear()
     );
   };
-  
 
   const newCount = orders.filter((o) => o.status === "Placed").length;
   const kitchenCount = orders.filter((o) => o.status === "In Kitchen").length;
@@ -286,8 +352,9 @@ function RestaurantOrderManager() {
             >
               Status: {restaurantStatus}
             </button>
+
             <ul className="dropdown-menu" aria-labelledby="statusDropdown">
-              {["open", "busy", "closed"].map((status) => (
+              {["open", "busy", "closed", "auto"].map((status) => (
                 <li key={status}>
                   <button
                     className="dropdown-item"
@@ -302,7 +369,7 @@ function RestaurantOrderManager() {
         </div>
 
         {/* Tabs */}
-        <ul className="nav nav-pills mb-4 overflow-auto flex-nowrap">
+        <ul className="nav nav-pills mb-4 overflow-auto flex-nowrap justify-content-center align-items-center">
           <li className="nav-item">
             <button
               className={`nav-link ${activeTab === "new" ? "active" : ""}`}
@@ -344,7 +411,7 @@ function RestaurantOrderManager() {
             {newCount === 0 ? (
               <p className="text-muted">Great! No new orders at the moment.</p>
             ) : (
-              <div className="row g-3 shadow p-3 rounded-3 pt-2">
+              <div className="row g-3 shadow p-3 rounded-3 pt-2 ">
                 {orders
                   .filter((order) => order.status === "Placed")
                   .map(renderOrderCard)}
@@ -417,6 +484,30 @@ function RestaurantOrderManager() {
             )}
           </>
         )}
+      </div>
+      {/* Toast Notification */}
+      <div
+        className="toast-container position-fixed bottom-0 end-0 p-3"
+        style={{ zIndex: 9999 }}
+      >
+        <div
+          className={`toast align-items-center text-white bg-success border-0 ${
+            showToast ? "show" : ""
+          }`}
+          role="alert"
+          aria-live="assertive"
+          aria-atomic="true"
+        >
+          <div className="d-flex">
+            <div className="toast-body">{toastMessage}</div>
+            <button
+              type="button"
+              className="btn-close btn-close-white me-2 m-auto"
+              aria-label="Close"
+              onClick={() => setShowToast(false)}
+            ></button>
+          </div>
+        </div>
       </div>
     </div>
   );

@@ -10,32 +10,19 @@ import { Button, Table } from "react-bootstrap";
 import useAlert from "../../hooks/userAlert";
 
 const CartPage = () => {
-  const [cartItems, setCartItems] = useState(() => {
-    // Initialize state with data from localStorage if available
-    const savedCart = localStorage.getItem("cart");
-    return savedCart ? JSON.parse(savedCart) : [];
-  });
+  const [cartItems, setCartItems] = useState([]);
   const { showSuccess, showError } = useAlert();
   const navigate = useNavigate();
 
+  // ✅ Always fetch cart from Firebase on mount
   useEffect(() => {
     const fetchCart = async () => {
       const cartData = await getCart();
       setCartItems(cartData);
-      // Save fetched cart data to localStorage
-      localStorage.setItem("cart", JSON.stringify(cartData));
     };
 
-    // Fetch cart only if localStorage is empty
-    if (cartItems.length === 0) {
-      fetchCart();
-    }
+    fetchCart();
   }, []);
-
-  useEffect(() => {
-    // Update localStorage whenever cartItems state changes
-    localStorage.setItem("cart", JSON.stringify(cartItems));
-  }, [cartItems]);
 
   const handleRemoveItem = async (itemId) => {
     const updatedCart = await removeFromCart(itemId);

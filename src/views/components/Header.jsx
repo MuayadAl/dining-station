@@ -173,12 +173,12 @@ function Header() {
 
             {/* ✅ Dark Offcanvas Sidebar */}
             <div
-              className="offcanvas offcanvas-end text-bg-dark w-75"
+              className="offcanvas offcanvas-end text-bg-dark w-75 "
               tabIndex="-1"
               id="offcanvasNavbar"
               aria-labelledby="offcanvasNavbarLabel"
             >
-              <div className="offcanvas-header">
+              <div className="offcanvas-header border-bottom">
                 <h5
                   className="offcanvas-title text-white"
                   id="offcanvasNavbarLabel"
@@ -187,37 +187,36 @@ function Header() {
                 </h5>
                 <button
                   type="button"
-                  className="btn-close btn-close-white"
+                  className="btn-close btn-close-white "
                   data-bs-dismiss="offcanvas"
                   aria-label="Close"
                 ></button>
               </div>
-              <div className="offcanvas-body">
+              <div className="offcanvas-body ">
                 {/* ✅ Navbar Links */}
-                <ul className="navbar-nav me-auto mb-2 mb-lg-0">
-
+                <ul className="navbar-nav me-auto mb-2 mb-lg-0 "> {/* border-bottom*/}
                   <li className="nav-item">
                     <NavLink className="nav-link text-white" to="/landing">
                       Home
                     </NavLink>
                   </li>
                   {/* Customer Dashboard */}
-                  {!loading && user && userRole === "customer" &&(
+                  {!loading && user && userRole === "customer" && (
                     <>
-                    <li className="nav-item">
-                      <NavLink
-                        className="nav-link text-white"
-                        to="/restaurants"
-                      >
-                        Restaurants
-                      </NavLink>
-                    </li>
-                    </>
-                    )}
-                  
-                  {/* Restaurant-staff Dashboard */}
-                  {!loading && user && userRole=== "restaurant-staff" &&(
                       <li className="nav-item">
+                        <NavLink
+                          className="nav-link text-white"
+                          to="/restaurants"
+                        >
+                          Restaurants
+                        </NavLink>
+                      </li>
+                    </>
+                  )}
+
+                  {/* Restaurant-staff Dashboard */}
+                  {!loading && user && userRole === "restaurant-staff" && (
+                    <li className="nav-item">
                       <NavLink
                         className="nav-link text-white"
                         to="/my-restaurant/orders"
@@ -245,7 +244,10 @@ function Header() {
                           </NavLink>
                         </li>
                         <li>
-                          <NavLink className="dropdown-item" to="/admin/user-management">
+                          <NavLink
+                            className="dropdown-item"
+                            to="/admin/user-management"
+                          >
                             View & Manage Users
                           </NavLink>
                         </li>
@@ -274,7 +276,7 @@ function Header() {
                       </ul>
                     </li>
                   )}
-                
+
                   {!loading && user && userRole === "customer" && (
                     <>
                       <li className="nav-item">
@@ -286,7 +288,6 @@ function Header() {
                           My Orders
                         </NavLink>
                       </li>
-                     
                     </>
                   )}
 
@@ -366,12 +367,10 @@ function Header() {
                             Restaurant Status & Report
                           </NavLink>
                         </li>
-                        
                       </ul>
                     </li>
-                    
                   )}
-                    <li className="nav-item">
+                  <li className="nav-item">
                     <NavLink className="nav-link text-white" to="/about">
                       About
                     </NavLink>
@@ -383,54 +382,60 @@ function Header() {
                   </li>
 
                   {/* Cart for customer dashboard */}
-                  {userRole === "customer" &&(
-                     <li className="nav-item">
-                     <NavLink className="nav-link text-white" to="/cart" onClick={closeNavbar}>
-                       <i class="fa-solid fa-cart-shopping"></i>
-                       <span className=""> Cart</span>
-                     </NavLink>
-                   </li>
+                  {userRole === "customer" && (
+                    <li className="nav-item">
+                      <NavLink
+                        className="nav-link text-white"
+                        to="/cart"
+                        onClick={closeNavbar}
+                      >
+                        <i class="fa-solid fa-cart-shopping"></i>
+                        <span className=""> Cart</span>
+                      </NavLink>
+                    </li>
                   )}
                 </ul>
 
-                {/* Login & Logout Section */}
-                <div className="login_bt mt-1">
+                {/* Profile Dropdown - aligned and styled to match nav */}
+                <div className="" style={{ marginTop: "30px"}}>
                   {user ? (
-                    <>
-                      <li>
-                        <NavLink to="/profile" onClick={closeNavbar}>
-                          <span className="user_icon"></span>
-                          <i class="fa-solid fa-user"></i> Profile
-                        </NavLink>
-                      </li>
-                      <li className="text-white lato-regular ">
-                        <span className="">
-                          <i
-                            className="fa fa-face-smile text-white me-2"
-                            aria-hidden="true"
-                          ></i>
-                          Welcome, {userName}
-                        </span>
-                      </li>
-                      <li>
-                        <button
-                          className="text-white bg-transparent logout_icon_transition "
-                          onClick={handleUserLogout}
-                        >
-                          <i className="fa fa-sign-out" aria-hidden="true">
-                            {" "}
-                          </i>{" "}
-                          Logout
-                        </button>
-                      </li>
-                    </>
+                    <li className="nav-item dropdown ">
+                      <button
+                        className="nav-link dropdown-toggle text-white"
+                        type="button"
+                        data-bs-toggle="dropdown"
+                        aria-expanded="false"
+                      >
+                        <i className="fa-solid fa-user me-2"></i>
+                        {userName}
+                      </button>
+                      <ul className="dropdown-menu dropdown-menu-dark ">
+                        <li>
+                          <NavLink className="dropdown-item " to="/profile">
+                          <i className="fa fa-user me-2"></i> Profile
+                          </NavLink>
+                        </li>
+                        <li>
+                          <hr className="dropdown-divider" />
+                        </li>
+                        <li>
+                          <button
+                            className="dropdown-item"
+                            onClick={handleUserLogout}
+                          >
+                            <i class="fa-solid fa-right-from-bracket"></i> Logout
+                          </button>
+                        </li>
+                      </ul>
+                    </li>
                   ) : (
-                    <li>
-                      <NavLink to="/login">
-                        <span className="user_icon">
-                          <i className="fa fa-user" aria-hidden="true"></i>
-                        </span>
-                        Login
+                    <li className="nav-item">
+                      <NavLink
+                        className="nav-link text-white"
+                        to="/login"
+                        onClick={closeNavbar}
+                      >
+                        <i className="fa fa-user me-2"></i> Login
                       </NavLink>
                     </li>
                   )}
