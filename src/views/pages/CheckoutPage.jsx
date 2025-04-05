@@ -6,7 +6,6 @@ import useAlert from "../../hooks/userAlert";
 import { auth, db } from "../../models/firebase";
 import { doc, getDoc } from "firebase/firestore";
 import { getUserDetails } from "../../controllers/userController";
-import {clearCart} from "../../controllers/cartController"
 
 const CheckoutForm = ({ cartItems, total, user, restaurant }) => {
   const { showError } = useAlert();
@@ -39,7 +38,6 @@ const CheckoutForm = ({ cartItems, total, user, restaurant }) => {
       });
 
       const data = await response.json();
-      // await clearCart();
 
       if (!response.ok || !data.url) {
         showError(data.error || "Payment failed. Please try again.");

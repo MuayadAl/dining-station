@@ -8,13 +8,14 @@ import {
 import { useNavigate } from "react-router-dom";
 import { Button, Table } from "react-bootstrap";
 import useAlert from "../../hooks/userAlert";
+import { doc, getDoc } from "firebase/firestore";
+import { db } from "../../models/firebase";
 
 const CartPage = () => {
   const [cartItems, setCartItems] = useState([]);
   const { showSuccess, showError } = useAlert();
   const navigate = useNavigate();
 
-  // ✅ Always fetch cart from Firebase on mount
   useEffect(() => {
     const fetchCart = async () => {
       const cartData = await getCart();
@@ -30,12 +31,50 @@ const CartPage = () => {
     showSuccess("Item removed from cart!");
   };
 
-  const handleQuantityChange = async (itemId, quantity) => {
-    if (quantity < 1) return;
-
-    await updateCartQuantity(itemId, quantity);
-    const updatedCart = await getCart();
-    setCartItems(updatedCart);
+  const handleQuantityChange = async (itemId, newQuantity) => {
+    if (newQuantity < 1) return;
+  
+    try {
+      const restaurantId = localStorage.getItem("restaurantId");
+      if (!restaurantId) {
+        showError("Restaurant not found.");
+        return;
+      }
+  
+      // Fetch the menu document
+      const menuRef = doc(db, "menu", restaurantId);
+      const menuSnap = await getDoc(menuRef);
+  
+      if (!menuSnap.exists()) {
+        showError("Menu not found.");
+        return;
+      }
+  
+      const menuData = menuSnap.data();
+      const allItems = menuData.items || [];
+  
+      const menuItem = allItems.find(item => item.itemId === itemId);
+  
+      if (!menuItem) {
+        showError("Item no longer exists.");
+        return;
+      }
+  
+      const availableQty = typeof menuItem.availableQuantity === "number" ? menuItem.availableQuantity : 0;
+  
+      if (newQuantity > availableQty) {
+        showError(`Only ${availableQty} ${menuItem.name} in stock.`);
+        return;
+      }
+  
+      // Update quantity if valid
+      await updateCartQuantity(itemId, newQuantity);
+      const updatedCart = await getCart();
+      setCartItems(updatedCart);
+    } catch (error) {
+      console.error("Error updating quantity:", error);
+      showError("Failed to update item quantity.");
+    }
   };
 
   const handleClearCart = async () => {

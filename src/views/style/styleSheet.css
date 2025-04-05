@@ -1300,3 +1300,66 @@ textarea#comment.update_mail::placeholder {
     cursor: pointer;
   }
   
+
+  /* Order Page */
+
+  .circular-progress-wrapper {
+    width: 150px;
+    height: 150px;
+    margin: auto;
+    text-align: center;
+    padding-bottom: 10px;
+
+  }
+  
+  .circular-progress {
+    width: 100%;
+    height: 100%;
+
+  }
+  
+  .circle-bg {
+    fill: none;
+    stroke: #eee;
+    stroke-width: 3.8;
+  }
+  
+  .circle-progress {
+    fill: none;
+    stroke-width: 3.8;
+    stroke-linecap: round;
+    transition: stroke-dasharray 0.5s ease;
+  }
+  
+  .stroke-info {
+    stroke: #0dcaf0;
+  }
+  .stroke-warning {
+    stroke: #ffc107;
+  }
+  .stroke-primary {
+    stroke: #49cd71;
+  }
+  .stroke-success {
+    stroke: #198754;
+  }
+  .stroke-danger {
+    stroke: #dc3545;
+  }
+  
+  .circle-percent {
+    fill: #333;
+    font-size: 0.5em;
+    text-anchor: middle;
+    dominant-baseline: middle;
+    font-weight: bold;
+  }
+  
+  .status-label {
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin-top: 0.5rem;
+
+  }
+  
+      

@@ -9,8 +9,6 @@ import {
 import { addToCart as addToCartController } from "../controllers/cartController";
 
 
-
-
 const CartContext = createContext();
 export const useCart = () => useContext(CartContext);
 

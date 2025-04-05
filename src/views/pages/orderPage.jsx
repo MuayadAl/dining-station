@@ -17,6 +17,12 @@ import useAlert from "../../hooks/userAlert";
 import Loader from "../components/Loader";
 import { clearCart } from "../../controllers/cartController";
 
+import {
+  CircularProgressbarWithChildren,
+  buildStyles,
+} from "react-circular-progressbar";
+import "react-circular-progressbar/dist/styles.css";
+
 const OrderPage = () => {
   const { orderId } = useParams();
   const [order, setOrder] = useState(null);
@@ -25,7 +31,7 @@ const OrderPage = () => {
   const [loadingOrders, setLoadingOrders] = useState(false);
   const [ordersLoaded, setOrdersLoaded] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState(null);
-  const [cartCleared, setCartCleared] = useState(false); // 👈 local flag
+  const [cartCleared, setCartCleared] = useState(false); 
 
   const location = useLocation();
   const queryParams = new URLSearchParams(location.search);
@@ -34,58 +40,51 @@ const OrderPage = () => {
   const navigate = useNavigate();
   const { confirmAction, showSuccess, showError } = useAlert();
 
-  
-useEffect(() => {
-  let isMounted = true;
+  useEffect(() => {
+    let isMounted = true;
 
-  const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
-    if (user && isMounted) {
-      const orderRef = doc(db, "orders", orderId);
+    const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
+      if (user && isMounted) {
+        const orderRef = doc(db, "orders", orderId);
 
-      const unsubscribeOrder = onSnapshot(orderRef, async (docSnapshot) => {
-        if (!isMounted) return;
+        const unsubscribeOrder = onSnapshot(orderRef, async (docSnapshot) => {
+          if (!isMounted) return;
 
-        if (docSnapshot.exists()) {
-          const fetchedOrder = { id: docSnapshot.id, ...docSnapshot.data() };
-          setOrder(fetchedOrder);
-          setLoading(false);
+          if (docSnapshot.exists()) {
+            const fetchedOrder = { id: docSnapshot.id, ...docSnapshot.data() };
+            setOrder(fetchedOrder);
+            setLoading(false);
 
-          // ✅ Clear cart once on payment success, no localStorage used
-          if (
-            sessionId &&
-            fetchedOrder.status === "Placed" &&
-            !cartCleared
-          ) {
-            await clearCart();
-            setCartCleared(true); // 👈 prevent duplicate clears
-            showSuccess("Payment successful!");
+            // ✅ Clear cart once on payment success, no localStorage used
+            if (sessionId && fetchedOrder.status === "Placed" && !cartCleared) {
+              await clearCart();
+              setCartCleared(true); // 👈 prevent duplicate clears
+              showSuccess("Payment successful!");
+            }
+          } else {
+            showError("Order not found.");
+            navigate("/orders");
+            setLoading(false);
           }
-        } else {
-          showError("Order not found.");
-          navigate("/orders");
-          setLoading(false);
-        }
-      });
+        });
 
-      return () => unsubscribeOrder();
-    } else if (isMounted) {
-      showError("No authenticated user.");
-      navigate("/login");
-      setLoading(false);
-    }
-  });
+        return () => unsubscribeOrder();
+      } else if (isMounted) {
+        showError("No authenticated user.");
+        navigate("/login");
+        setLoading(false);
+      }
+    });
 
-  return () => {
-    isMounted = false;
-    unsubscribeAuth();
-  };
-}, [orderId, navigate, sessionId, cartCleared]);
+    return () => {
+      isMounted = false;
+      unsubscribeAuth();
+    };
+  }, [orderId, navigate, sessionId, cartCleared]);
 
   const handleClearCart = async () => {
     await clearCart();
   };
-
-  
 
   const fetchPreviousOrders = async () => {
     setLoadingOrders(true);
@@ -95,22 +94,18 @@ useEffect(() => {
       const querySnapshot = await getDocs(q);
 
       const orders = querySnapshot.docs
-      .map((doc) => ({ id: doc.id, ...doc.data() }))
-      .filter((o) => o.id !== orderId)
-      .sort((a, b) => new Date(b.time) - new Date(a.time)); // ✅ Newest first
+        .map((doc) => ({ id: doc.id, ...doc.data() }))
+        .filter((o) => o.id !== orderId)
+        .sort((a, b) => new Date(b.time) - new Date(a.time)); // ✅ Newest first
 
       setPreviousOrders(orders);
       setOrdersLoaded(true);
-
-
     } catch (error) {
       showError("Error fetching previous orders.");
     } finally {
       setLoadingOrders(false);
     }
   };
-
-
 
   const handleCancelOrder = async () => {
     const isConfirmed = await confirmAction(
@@ -144,6 +139,29 @@ useEffect(() => {
     }
   };
 
+  const handlePickedOrder = async () => {
+    try {
+      const currentUser = auth.currentUser;
+      if (!currentUser) {
+        showError("You need to be logged in to pick up an order.");
+        return;
+      }
+
+      if (order.userId !== currentUser.uid) {
+        showError("Unauthorized action.");
+        return;
+      }
+
+      const orderRef = doc(db, "orders", orderId);
+
+      await updateDoc(orderRef, { status: "Picked Up" });
+
+      showSuccess("Enjoy your meal!");
+    } catch (error) {
+      showError("Failed to picked up order.");
+    }
+  };
+
   if (loading) return Loader("Loading order details");
   if (!order)
     return (
@@ -160,9 +178,25 @@ useEffect(() => {
   const getProgressColor = () => {
     if (currentStepIndex === 0) return "info";
     if (currentStepIndex === 1) return "warning";
-    if (currentStepIndex === 2) return "success-emphasis";
+    if (currentStepIndex === 2) return "primary";
     if (currentStepIndex === 3) return "success";
     return "danger";
+  };
+
+  const getStatusText = () => {
+    if (currentStepIndex === 0) return "Placed";
+    if (currentStepIndex === 1) return "In Kitchen";
+    if (currentStepIndex === 2) return "Ready to Pick Up";
+    if (currentStepIndex === 3) return "Picked Up";
+    return "Unknown";
+  };
+
+  const getProgressColorCode = () => {
+    if (currentStepIndex === 0) return "#0dcaf0"; // info
+    if (currentStepIndex === 1) return "#ffc107"; // warning
+    if (currentStepIndex === 2) return "#0d6efd"; // primary
+    if (currentStepIndex === 3) return "#198754"; // success
+    return "#dc3545"; // danger
   };
 
   return (
@@ -199,10 +233,19 @@ useEffect(() => {
           </p>
         </div>
 
-        {order.status === "Placed" && (
+        {(order.status === "Placed" || order.status === "Ready to Pick Up") && (
           <div className="col-12 mt-3">
-            <button className="btn btn-danger" onClick={handleCancelOrder}>
-              Cancel Order
+            <button
+              className={`btn ${
+                order.status === "Placed" ? "btn-danger" : "btn-success"
+              }`}
+              onClick={
+                order.status === "Placed"
+                  ? handleCancelOrder
+                  : handlePickedOrder
+              }
+            >
+              {order.status === "Placed" ? "Cancel Order" : "Picked Up"}
             </button>
           </div>
         )}
@@ -212,27 +255,28 @@ useEffect(() => {
         <h3>Order Status</h3>
       </div>
 
+      {/* Progress Circle */}
       <div className="bg-body shadow p-4 rounded-3 d-flex flex-column justify-content-center align-items-center">
-        <div className="progress w-100">
-          <div
-            className={`progress-bar progress-bar-striped progress-bar-animated bg-${getProgressColor()}`}
-            style={{ width: `${progressPercentage}%` }}
-          >
-            {progressPercentage}%
-          </div>
-        </div>
 
-        <div className="d-flex justify-content-between w-100 mt-2">
-          {statusSteps.map((step, index) => (
-            <span
-              key={index}
-              className={`fw-bold ${
-                index <= currentStepIndex ? "text-primary" : "text-muted"
-              }`}
-            >
-              {step}
-            </span>
-          ))}
+        <div style={{ width: 150, height: 150 }}>
+          <CircularProgressbarWithChildren
+            value={progressPercentage}
+            styles={buildStyles({
+              pathColor: getProgressColorCode(),
+              trailColor: "#eee",
+              strokeLinecap: "round",
+            })}
+          >
+            <div style={{ fontSize: "1.2rem", fontWeight: 600 }}>
+              {progressPercentage}%
+            </div>
+          </CircularProgressbarWithChildren>
+        </div>
+        <div
+          className={`mt-3 fw-semibold text-${getProgressColor()}`}
+          style={{ fontSize: "1rem" }}
+        >
+          {getStatusText()}
         </div>
       </div>
 
@@ -251,65 +295,65 @@ useEffect(() => {
 
       <h4 className="mt-5">All Orders</h4>
 
-{!ordersLoaded ? (
-  <button
-    className="btn btn-primary mb-2"
-    onClick={fetchPreviousOrders}
-    disabled={loadingOrders}
-  >
-    {loadingOrders ? "Loading..." : "Load Orders"}
-  </button>
-) : (
-  (() => {
-    const allOrders = [...previousOrders, order].sort(
-      (a, b) => new Date(b.time) - new Date(a.time)
-    );
+      {!ordersLoaded ? (
+        <button
+          className="btn btn-primary mb-2"
+          onClick={fetchPreviousOrders}
+          disabled={loadingOrders}
+        >
+          {loadingOrders ? "Loading..." : "Load Orders"}
+        </button>
+      ) : (
+        (() => {
+          const allOrders = [...previousOrders, order].sort(
+            (a, b) => new Date(b.time) - new Date(a.time)
+          );
 
-    return allOrders.length === 0 ? (
-      <p className="text-muted">No orders found.</p>
-    ) : (
-      <div className="justify-content-start shadow px-3 mb-3 bg-body rounded-3">
-        <div className="table-responsive pt-3">
-          <table className="table table-bordered table-hover table-striped">
-            <thead className="bg-dark text-white">
-              <tr>
-                <th>Order ID</th>
-                <th>Restaurant</th>
-                <th>Status</th>
-                <th>Total</th>
-                <th>Order Date</th>
-                <th>Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {allOrders.map((o) => (
-                <tr key={o.id}>
-                  <td>{o.id}</td>
-                  <td>{o.restaurantName}</td>
-                  <td>
-                    <span className="badge bg-secondary">{o.status}</span>
-                  </td>
-                  <td>RM{parseFloat(o.total).toFixed(2)}</td>
-                  <td>{new Date(o.time).toLocaleString()}</td>
-                  <td>
-                    <button
-                      className="btn btn-primary btn-sm"
-                      onClick={() => setSelectedOrder(o)}
-                      data-bs-toggle="modal"
-                      data-bs-target="#orderModal"
-                    >
-                      View Order
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    );
-  })()
-)}
+          return allOrders.length === 0 ? (
+            <p className="text-muted">No orders found.</p>
+          ) : (
+            <div className="justify-content-start shadow px-3 mb-3 bg-body rounded-3">
+              <div className="table-responsive pt-3">
+                <table className="table table-bordered table-hover table-striped">
+                  <thead className="bg-dark text-white">
+                    <tr>
+                      <th>Order ID</th>
+                      <th>Restaurant</th>
+                      <th>Status</th>
+                      <th>Total</th>
+                      <th>Order Date</th>
+                      <th>Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {allOrders.map((o) => (
+                      <tr key={o.id}>
+                        <td>{o.id}</td>
+                        <td>{o.restaurantName}</td>
+                        <td>
+                          <span className="badge bg-secondary">{o.status}</span>
+                        </td>
+                        <td>RM{parseFloat(o.total).toFixed(2)}</td>
+                        <td>{new Date(o.time).toLocaleString()}</td>
+                        <td>
+                          <button
+                            className="btn btn-primary btn-sm"
+                            onClick={() => setSelectedOrder(o)}
+                            data-bs-toggle="modal"
+                            data-bs-target="#orderModal"
+                          >
+                            View Order
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          );
+        })()
+      )}
 
       {/* Order Modal */}
       <div

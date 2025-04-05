@@ -147,16 +147,32 @@ const navigate = useNavigate();
   
   const handleAddToCart = async (item, e) => {
     try {
+      const existingCartItem = cartItems.find(ci => ci.itemId === item.itemId);
+      const currentQuantityInCart = existingCartItem ? existingCartItem.quantity : 0;
+  
+      // Defensive: fallback to 0 if quantity is missing
+      const availableQty = typeof item.availableQuantity === "number" ? item.availableQuantity : 0;
+  
+      if (availableQty <= 0) {
+        showError(`${item.name} is currently out of stock.`);
+        return;
+      }
+  
+      if (currentQuantityInCart + 1 > availableQty) {
+        showError(`Only ${availableQty} of ${item.name} available. You've reached the limit.`);
+        return;
+      }
+  
       const imgElement = e.currentTarget.closest(".card").querySelector("img");
       animateToCart(imgElement);
   
-      await addToCart(item); // ✅ from context
-      // showSuccess(`${item.name} added to cart!`);
+      await addToCart(item);
     } catch (error) {
       console.error("Caught error in handleAddToCart:", error);
       showError("Failed to add item to cart.");
     }
   };
+  
   
 
   useEffect(() => {
