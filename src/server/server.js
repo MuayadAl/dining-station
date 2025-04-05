@@ -149,6 +149,7 @@ app.post("/create-checkout-session", async (req, res) => {
       time: new Date().toISOString(),
       items: cartItems,
       status: "Placed",
+      paymentMethod: "Stripe"
     };
 
     // 🔥 Save order in Firestore

@@ -55,10 +55,10 @@ const OrderPage = () => {
             setOrder(fetchedOrder);
             setLoading(false);
 
-            // ✅ Clear cart once on payment success, no localStorage used
+            // Clear cart once on payment success.
             if (sessionId && fetchedOrder.status === "Placed" && !cartCleared) {
               await clearCart();
-              setCartCleared(true); // 👈 prevent duplicate clears
+              setCartCleared(true);
               showSuccess("Payment successful!");
             }
           } else {
@@ -82,9 +82,9 @@ const OrderPage = () => {
     };
   }, [orderId, navigate, sessionId, cartCleared]);
 
-  const handleClearCart = async () => {
-    await clearCart();
-  };
+  // const handleClearCart = async () => {
+  //   await clearCart();
+  // };
 
   const fetchPreviousOrders = async () => {
     setLoadingOrders(true);
@@ -188,7 +188,7 @@ const OrderPage = () => {
     if (currentStepIndex === 1) return "In Kitchen";
     if (currentStepIndex === 2) return "Ready to Pick Up";
     if (currentStepIndex === 3) return "Picked Up";
-    return "Unknown";
+    return "Cancelled";
   };
 
   const getProgressColorCode = () => {

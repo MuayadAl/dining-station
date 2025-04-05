@@ -1,14 +1,16 @@
 import React, { useEffect, useState } from "react";
 import { getCart } from "../../controllers/cartController";
 import { useNavigate, useParams } from "react-router-dom";
-import { Button, Table } from "react-bootstrap";
+import { Button, Table, Form } from "react-bootstrap";
 import useAlert from "../../hooks/userAlert";
 import { auth, db } from "../../models/firebase";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, setDoc, collection } from "firebase/firestore";
 import { getUserDetails } from "../../controllers/userController";
+import { clearCart } from "../../controllers/cartController";
 
 const CheckoutForm = ({ cartItems, total, user, restaurant }) => {
-  const { showError } = useAlert();
+  const { showError, showSuccess } = useAlert();
+  const [paymentMethod, setPaymentMethod] = useState("Stripe");
 
   const handlePayment = async () => {
     if (cartItems.length === 0) {
@@ -22,6 +24,41 @@ const CheckoutForm = ({ cartItems, total, user, restaurant }) => {
       return;
     }
 
+    if (paymentMethod === "ApCard") {
+      try {
+        const orderRef = doc(collection(db, "orders")); 
+        const orderId = orderRef.id;
+    
+        const orderData = {
+          orderId, 
+          userId: user.id,
+          userName: user.name,
+          restaurantId: restaurant.id,
+          restaurantName: restaurant.name,
+          total: parseFloat(total.toFixed(2)),
+          time: new Date().toISOString(),
+          items: cartItems,
+          status: "Placed",
+          paymentMethod, 
+        };
+    
+        await setDoc(orderRef, orderData, { merge: true });
+        await clearCart();
+    
+        showSuccess(`Your order has been placed with ${paymentMethod}.`);
+        setTimeout(() => {
+          window.location.href = `/order/${orderId}`;
+        }, 1500);
+      } catch (error) {
+        console.error(`🔥 Firebase Order Error (${paymentMethod}):`, error);
+        showError("Failed to place order. Please try again.");
+      }
+      return;
+    }
+    
+    
+
+    // Stripe Payment
     try {
       const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || "http://localhost:5000";
       const response = await fetch(`${API_BASE_URL}/create-checkout-session`, {
@@ -46,15 +83,28 @@ const CheckoutForm = ({ cartItems, total, user, restaurant }) => {
 
       window.location.href = data.url; // Redirect to Stripe
     } catch (err) {
-      console.error("❌ Network error:", err);
+      console.error("Network error:", err);
       showError("Network error: Unable to reach Stripe.");
     }
   };
 
   return (
-    <Button variant="success" className="mt-3" onClick={handlePayment}>
-      Pay with Stripe
-    </Button>
+    <>
+      <Form.Group className="mt-3">
+        <Form.Label>Select Payment Method:</Form.Label>
+        <Form.Select value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)}>
+          <option value="Stripe">Credit/debit card</option>
+          <option value="ApCard">ApCard in store</option>
+          <option value="" disabled>ApCard balance</option>
+        </Form.Select>
+      </Form.Group>
+    <div className=" justify-content-center align-items-center d-flex">
+
+      <Button variant="success" className="mt-3 col-lg-6 " onClick={handlePayment}>
+        Pay with {paymentMethod}
+      </Button>
+    </div>
+    </>
   );
 };
 
@@ -75,41 +125,29 @@ const CheckoutPage = () => {
       try {
         setLoading(true);
 
-        // Fetch Cart Data
         const cartData = await getCart();
         setCartItems(cartData);
         setTotal(cartData.reduce((sum, item) => sum + item.price * item.quantity, 0));
 
-        // Fetch User Data
         const currentUser = auth.currentUser;
         if (currentUser) {
-          console.log("👤 User ID:", currentUser.uid);
           const userDetails = await getUserDetails(currentUser.uid);
           setUser({
             id: currentUser.uid,
             name: userDetails?.name || "Unknown User",
             email: userDetails?.email || "",
           });
-        } else {
-          console.warn("⚠ No user is logged in.");
         }
 
-        // Fetch Restaurant Data
         if (restaurantId) {
-          console.log(`📢 Fetching restaurant details for ID: ${restaurantId}`);
           const restaurantRef = doc(db, "restaurants", restaurantId);
           const restaurantSnap = await getDoc(restaurantRef);
-
           if (restaurantSnap.exists()) {
             setRestaurant({ id: restaurantId, ...restaurantSnap.data() });
-          } else {
-            console.error("❌ Restaurant not found in Firestore.");
           }
-        } else {
-          console.warn("⚠ No restaurantId found.");
         }
       } catch (error) {
-        console.error("❌ Fetching error:", error);
+        console.error("Fetching error:", error);
       } finally {
         setLoading(false);
       }
@@ -120,7 +158,6 @@ const CheckoutPage = () => {
 
   useEffect(() => {
     if (!restaurantId) {
-      console.error("❌ No restaurantId found. Redirecting user.");
       setTimeout(() => navigate("/restaurants"), 2000);
     }
   }, [restaurantId, navigate]);
@@ -155,7 +192,6 @@ const CheckoutPage = () => {
             </Table>
             <h4 className="text-right">Total: RM{total.toFixed(2)}</h4>
 
-            {/* Stripe Payment Button */}
             {loading ? (
               <p className="text-center text-warning">Loading user and restaurant details...</p>
             ) : restaurant ? (
