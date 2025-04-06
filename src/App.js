@@ -87,7 +87,7 @@ function App() {
           path="/admin/restaurants-requests"
           element={<AdminRestaurantApprovalPage />}
         />
-        <Route path="/messagesadmin" element={<AdminMessages />} />
+        <Route path="/admin-messages" element={<AdminMessages />} />
         <Route path="/admin/report" element={<AdminReportPage />} />
         <Route path="/admin/user-management" element={<AdminManageUsers />} />
       </Routes>

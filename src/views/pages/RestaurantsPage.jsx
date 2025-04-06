@@ -15,7 +15,7 @@ import "./../style/responsive.css";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "bootstrap/dist/js/bootstrap.bundle.min.js";
 import { NavLink } from "react-router-dom";
-
+import "../style/responsive.css"
 const BATCH_SIZE = 6; // Number of restaurants loaded per batch
 
 function RestaurantsPage() {
@@ -177,7 +177,7 @@ function RestaurantsPage() {
 
   return (
     <div className="container p-4 text-center">
-      <h1 className="restaurant_title">OUR RESTAURANTS</h1>
+      <h1 className="restaurant_title">RESTAURANTS</h1>
       <div className="row justify-content-start shadow p-3 mb-5 bg-body rounded-3">
         {restaurants.length > 0 ? (
           restaurants.map((restaurant) => (
@@ -186,7 +186,7 @@ function RestaurantsPage() {
               className="col-lg-3 col-md-6 d-flex justify-content-center"
             >
               <div
-                className={`restaurant_card ${
+                className={`restaurant_card mb-4 mx-2 ${
                   restaurant.status === "open"
                     ? ""
                     : "disabled pointer-event-none opacity-75"
@@ -202,8 +202,7 @@ function RestaurantsPage() {
                     src={restaurant.imgUrl}
                     alt={restaurant.name}
                     loading="lazy"
-                    className="w-100"
-                    style={{ height: "200px", objectFit: "cover" }}
+                    className="w-100 mt-0"
                   />
                   <span
                     title={`Manual: ${

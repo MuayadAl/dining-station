@@ -125,6 +125,8 @@
     .mean-container .mean-nav ul li a.mean-expand {
         top: 0;
     }
+
+      
 }
 
 @media (min-width: 992px) and (max-width: 1199px) {

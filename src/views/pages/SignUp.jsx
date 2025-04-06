@@ -25,7 +25,7 @@ export default function SignUp({ isStaffRegistration = false }) {
   const errorRef = useRef(null); // 🔁 Ref for scrolling to error
 
   const navigate = useNavigate();
-  const { confirmAction, showSuccess, showError } = useAlert();
+  const { showSuccess, showError } = useAlert();
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {

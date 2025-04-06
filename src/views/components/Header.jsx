@@ -194,10 +194,12 @@ function Header() {
               </div>
               <div className="offcanvas-body ">
                 {/* ✅ Navbar Links */}
-                <ul className="navbar-nav me-auto mb-2 mb-lg-0 "> {/* border-bottom*/}
+                <ul className="navbar-nav me-auto mb-2 mb-lg-0 ">
+                  {" "}
+                  {/* border-bottom*/}
                   <li className="nav-item">
                     <NavLink className="nav-link text-white" to="/landing">
-                    <i class="fa-solid fa-house-user"></i> Home
+                      <i class="fa-solid fa-house-user"></i> Home
                     </NavLink>
                   </li>
                   {/* Customer Dashboard */}
@@ -213,7 +215,6 @@ function Header() {
                       </li>
                     </>
                   )}
-
                   {/* Restaurant-staff Dashboard */}
                   {!loading && user && userRole === "restaurant-staff" && (
                     <li className="nav-item">
@@ -221,11 +222,10 @@ function Header() {
                         className="nav-link text-white"
                         to="/my-restaurant/orders"
                       >
-                       <i class="fa-solid fa-receipt"></i> Manage Orders
+                        <i class="fa-solid fa-receipt"></i> Manage Orders
                       </NavLink>
                     </li>
                   )}
-
                   {/* Admin Drop down menu */}
                   {!loading && user && userRole === "admin" && (
                     <li className="nav-item dropdown">
@@ -240,7 +240,8 @@ function Header() {
                       <ul className="dropdown-menu dropdown-menu-dark">
                         <li>
                           <NavLink className="dropdown-item" to="/signup">
-                          <i class="fa-solid fa-user-plus"></i> Register new user
+                            <i class="fa-solid fa-user-plus"></i> Register new
+                            user
                           </NavLink>
                         </li>
                         <li>
@@ -248,7 +249,8 @@ function Header() {
                             className="dropdown-item"
                             to="/admin/user-management"
                           >
-                            <i class="fa-solid fa-users"></i> View & Manage Users
+                            <i class="fa-solid fa-users"></i> View & Manage
+                            Users
                           </NavLink>
                         </li>
                         <li>
@@ -256,29 +258,28 @@ function Header() {
                             className="dropdown-item"
                             to="/admin/restaurants-requests"
                           >
-                            <i class="fa-solid fa-store"></i> Restaurants opening requests
+                            <i class="fa-solid fa-store"></i> Restaurants
+                            opening requests
                           </NavLink>
                         </li>
 
                         <li className="nav-item">
                           <NavLink
                             className="dropdown-item"
-                            to="/messagesadmin"
+                            to="/admin-messages"
                           >
-                            <i class="fa-solid fa-comments"></i> Customer Messages
+                            <i class="fa-solid fa-comments"></i> Customer
+                            Messages
                           </NavLink>
                         </li>
                         <li className="nav-item">
                           <NavLink className="dropdown-item" to="/admin/report">
-                          <i class="fa-solid fa-chart-bar"></i> Reports
+                            <i class="fa-solid fa-chart-bar"></i> Reports
                           </NavLink>
                         </li>
                       </ul>
                     </li>
                   )}
-
-                  
-
                   {/*restaurant-owner Dashboard */}
                   {!loading && user && userRole === "restaurant-owner" && (
                     <li className="nav-item dropdown">
@@ -304,7 +305,8 @@ function Header() {
                             className="dropdown-item"
                             to="/my-restaurant/add"
                           >
-                            <i class="fa-solid fa-envelope"></i> Request opening new restaurant
+                            <i class="fa-solid fa-envelope"></i> Request opening
+                            new restaurant
                           </NavLink>
                         </li>
                         <li>
@@ -312,7 +314,8 @@ function Header() {
                             className="dropdown-item"
                             to="/my-restaurant/edit"
                           >
-                            <i class="fa-solid fa-pen-to-square"></i> Edit Restaurant
+                            <i class="fa-solid fa-pen-to-square"></i> Edit
+                            Restaurant
                           </NavLink>
                         </li>
                         <li>
@@ -344,7 +347,7 @@ function Header() {
                             className="dropdown-item"
                             to="/admin/user-management"
                           >
-                           <i class="fa-solid fa-users"></i> Manage Staff Users
+                            <i class="fa-solid fa-users"></i> Manage Staff Users
                           </NavLink>
                         </li>
                         <li>
@@ -352,7 +355,8 @@ function Header() {
                             className="dropdown-item"
                             to="/my-restaurant/status-report"
                           >
-                            <i class="fa-solid fa-chart-bar"></i> Restaurant Status & Report
+                            <i class="fa-solid fa-chart-bar"></i> Restaurant
+                            Status & Report
                           </NavLink>
                         </li>
                       </ul>
@@ -360,15 +364,14 @@ function Header() {
                   )}
                   <li className="nav-item">
                     <NavLink className="nav-link text-white" to="/about">
-                    <i class="fa-solid fa-info"></i> About
+                      <i class="fa-solid fa-info"></i> About
                     </NavLink>
                   </li>
                   <li className="nav-item">
                     <NavLink className="nav-link text-white" to="/contact">
-                    <i class="fa-solid fa-phone"></i> Contact
+                      <i class="fa-solid fa-phone"></i> Contact
                     </NavLink>
                   </li>
-
                   {/* Cart for customer dashboard */}
                   {userRole === "customer" && (
                     <li className="nav-item">
@@ -385,7 +388,7 @@ function Header() {
                 </ul>
 
                 {/* Profile Dropdown - aligned and styled to match nav */}
-                <div className="" style={{ marginTop: "30px"}}>
+                <div className="" style={{ marginTop: "30px" }}>
                   {user ? (
                     <li className="nav-item dropdown ">
                       <button
@@ -398,22 +401,26 @@ function Header() {
                         {userName}
                       </button>
                       <ul className="dropdown-menu dropdown-menu-dark ">
-                      {!loading && user && userRole === "customer" && (
-                    <>
-                      <li className="">
-                        <NavLink
-                          className="dropdown-item"
-                          to={lastOrderId ? `/order/${lastOrderId}` : "/orders"}
-                          onClick={closeNavbar}
-                        >
-                          <i class="fa-solid fa-receipt"></i> My Orders
-                        </NavLink>
-                      </li>
-                    </>
-                  )}
+                        {!loading && user && userRole === "customer" && (
+                          <>
+                            <li className="">
+                              <NavLink
+                                className="dropdown-item"
+                                to={
+                                  lastOrderId
+                                    ? `/order/${lastOrderId}`
+                                    : "/orders"
+                                }
+                                onClick={closeNavbar}
+                              >
+                                <i class="fa-solid fa-receipt"></i> My Orders
+                              </NavLink>
+                            </li>
+                          </>
+                        )}
                         <li>
                           <NavLink className="dropdown-item " to="/profile">
-                          <i className="fa fa-user me-2"></i> Profile
+                            <i className="fa fa-user me-2"></i> Profile
                           </NavLink>
                         </li>
                         <li>
@@ -424,7 +431,8 @@ function Header() {
                             className="dropdown-item"
                             onClick={handleUserLogout}
                           >
-                            <i class="fa-solid fa-right-from-bracket"></i> Logout
+                            <i class="fa-solid fa-right-from-bracket"></i>{" "}
+                            Logout
                           </button>
                         </li>
                       </ul>
