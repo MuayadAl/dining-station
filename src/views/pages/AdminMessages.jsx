@@ -18,32 +18,34 @@ function AdminMessages() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [activeTab, setActiveTab] = useState("new"); // 'new' | 'responded'
+  const [sortOrder, setSortOrder] = useState("desc"); // 'asc' | 'desc'
 
   const { showError, showSuccess } = useAlert();
 
+  const fetchMessages = async (order = "desc") => {
+    setLoading(true);
+    try {
+      const messagesRef = collection(db, "messages");
+      const q = query(messagesRef, orderBy("timestamp", order));
+      const querySnapshot = await getDocs(q);
+
+      const messagesData = querySnapshot.docs.map((doc) => ({
+        id: doc.id,
+        responded: false,
+        ...doc.data(),
+      }));
+
+      setMessages(messagesData);
+    } catch (error) {
+      console.error("Error fetching messages:", error);
+      showError("Failed to fetch messages. Please try again.");
+    }
+    setLoading(false);
+  };
+
   useEffect(() => {
-    const fetchMessages = async () => {
-      try {
-        const messagesRef = collection(db, "messages");
-        const q = query(messagesRef, orderBy("timestamp", "desc"));
-        const querySnapshot = await getDocs(q);
-
-        const messagesData = querySnapshot.docs.map((doc) => ({
-          id: doc.id,
-          responded: false, // default if missing
-          ...doc.data(),
-        }));
-
-        setMessages(messagesData);
-      } catch (error) {
-        console.error("Error fetching messages:", error);
-        showError("Failed to fetch messages. Please try again.");
-      }
-      setLoading(false);
-    };
-
-    fetchMessages();
-  }, []);
+    fetchMessages(sortOrder);
+  }, [sortOrder]);
 
   const handleMarkAsResponded = async (msgId) => {
     try {
@@ -77,8 +79,8 @@ function AdminMessages() {
     <div className="container-fluid px-4 py-4">
       <h2 className="text-center mb-4">User Messages</h2>
 
-      {/* Search */}
-      <div className="d-flex justify-content-center mb-3">
+      {/* Search Section - Full Width */}
+      <div className="d-flex justify-content-center align-items-center mb-3">
         <div className="input-group w-50">
           <input
             className="form-control"
@@ -91,6 +93,31 @@ function AdminMessages() {
             <i className="fa fa-search"></i>
           </span>
         </div>
+      </div>
+
+      {/* Sort Section - Separate Line, Aligned Left */}
+      <div
+        className="mb-4 d-flex align-items-center"
+        style={{ maxWidth: "200px" }}
+      >
+        <label className="form-label fw-semibold me-2 mb-0 d-flex align-items-center">
+          <i
+            className={`me-1 ${
+              sortOrder === "desc"
+                ? "fa fa-sort-amount-down"
+                : "fa fa-sort-amount-up"
+            }`}
+          ></i>
+          Sort
+        </label>
+        <select
+          className="form-select"
+          value={sortOrder}
+          onChange={(e) => setSortOrder(e.target.value)}
+        >
+          <option value="desc">Newest First</option>
+          <option value="asc">Oldest First</option>
+        </select>
       </div>
 
       {/* Tabs */}
@@ -126,10 +153,18 @@ function AdminMessages() {
               <div className="card h-100 shadow-sm">
                 <div className="card-body">
                   <h5 className="card-title">{msg.subject}</h5>
-                  <p className="card-text mb-1"><strong>Name:</strong> {msg.name}</p>
-                  <p className="card-text mb-1"><strong>Email:</strong> {msg.email}</p>
-                  <p className="card-text mb-1"><strong>Phone:</strong> {msg.phone}</p>
-                  <p className="card-text"><strong>Message:</strong> {msg.message}</p>
+                  <p className="card-text mb-1">
+                    <strong>Name:</strong> {msg.name}
+                  </p>
+                  <p className="card-text mb-1">
+                    <strong>Email:</strong> {msg.email}
+                  </p>
+                  <p className="card-text mb-1">
+                    <strong>Phone:</strong> {msg.phone}
+                  </p>
+                  <p className="card-text">
+                    <strong>Message:</strong> {msg.message}
+                  </p>
                   <p className="text-muted small">
                     {new Date(msg.timestamp?.toDate()).toLocaleString()}
                   </p>

@@ -11,10 +11,10 @@ import { CartProvider } from "./contexts/CartContext";
 import LandingPage from "./views/pages/LandingPage";
 import Header from "./views/components/Header";
 import Footer from "./views/components/Footer";
-import Login from "./views/components/Login";
-import SignUp from "./views/components/SignUp";
+import Login from "./views/pages/Login";
+import SignUp from "./views/pages/SignUp";
 import AboutPage from "./views/pages/AboutPage";
-import ResturantsPage from "./views/pages/RestaurantsPage";
+import RestaurantsPage from "./views/pages/RestaurantsPage";
 import Contact from "./views/pages/Contact";
 import RegisteredSuccess from "./views/pages/RegisteredSuccess";
 import Profile from "./views/pages/Profile";
@@ -48,7 +48,7 @@ function App() {
 
         {/* Common navigation starts*/}
         <Route path="/landing" element={<LandingPage />} />
-        <Route path="/restaurants" element={<ResturantsPage />} />
+        <Route path="/restaurants" element={<RestaurantsPage />} />
         <Route path="/about" element={<AboutPage />} />
         <Route path="/contact" element={<Contact />} />
         <Route path="/login" element={<Login />} />
