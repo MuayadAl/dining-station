@@ -25,50 +25,50 @@ const CartPage = () => {
     fetchCart();
   }, []);
 
-  const handleRemoveItem = async (itemId) => {
-    const updatedCart = await removeFromCart(itemId);
+  const handleRemoveItem = async (itemId, selectedSize) => {
+    const updatedCart = await removeFromCart(itemId, selectedSize); // pass size
     setCartItems(updatedCart);
     showSuccess("Item removed from cart!");
   };
 
-  const handleQuantityChange = async (itemId, newQuantity) => {
+  const handleQuantityChange = async (itemId, selectedSize, newQuantity) => {
     if (newQuantity < 1) return;
-  
+
     try {
       const restaurantId = localStorage.getItem("restaurantId");
       if (!restaurantId) {
         showError("Restaurant not found.");
         return;
       }
-  
-      // Fetch the menu document
+
       const menuRef = doc(db, "menu", restaurantId);
       const menuSnap = await getDoc(menuRef);
-  
+
       if (!menuSnap.exists()) {
         showError("Menu not found.");
         return;
       }
-  
+
       const menuData = menuSnap.data();
       const allItems = menuData.items || [];
-  
-      const menuItem = allItems.find(item => item.itemId === itemId);
-  
+
+      const menuItem = allItems.find((item) => item.itemId === itemId);
       if (!menuItem) {
         showError("Item no longer exists.");
         return;
       }
-  
-      const availableQty = typeof menuItem.availableQuantity === "number" ? menuItem.availableQuantity : 0;
-  
+
+      const availableQty =
+        typeof menuItem.availableQuantity === "number"
+          ? menuItem.availableQuantity
+          : 0;
+
       if (newQuantity > availableQty) {
         showError(`Only ${availableQty} ${menuItem.name} in stock.`);
         return;
       }
-  
-      // Update quantity if valid
-      await updateCartQuantity(itemId, newQuantity);
+
+      await updateCartQuantity(itemId, selectedSize, newQuantity); // pass size
       const updatedCart = await getCart();
       setCartItems(updatedCart);
     } catch (error) {
@@ -86,7 +86,9 @@ const CartPage = () => {
   const handleCheckout = () => {
     const storedRestaurantId = localStorage.getItem("restaurantId");
     if (!storedRestaurantId) {
-      showError("Error: No restaurant selected. Please select a restaurant first.");
+      showError(
+        "Error: No restaurant selected. Please select a restaurant first."
+      );
       return;
     }
 
@@ -112,16 +114,28 @@ const CartPage = () => {
                 </tr>
               </thead>
               <tbody>
-                {cartItems.map((item) => (
-                  <tr key={item.itemId}>
-                    <td>{item.name}</td>
-                    <td>RM{parseFloat(item.price).toFixed(2)}</td>
+                {cartItems.map((item, index) => (
+                  <tr key={`${item.itemId}_${item.selectedSize || index}`}>
+                    <td>
+                      {item.name}
+                      <br />
+                      {item.selectedSize && (
+                        <span className="text-muted">
+                          Size: {item.selectedSize}
+                        </span>
+                      )}
+                    </td>
+                    <td>RM{parseFloat(item.selectedPrice).toFixed(2)}</td>{" "}
                     <td>
                       <Button
                         variant=""
                         size="sm"
                         onClick={() =>
-                          handleQuantityChange(item.itemId, item.quantity - 1)
+                          handleQuantityChange(
+                            item.itemId,
+                            item.selectedSize,
+                            item.quantity - 1
+                          )
                         }
                       >
                         <i className="fa-solid fa-minus"></i>
@@ -131,20 +145,29 @@ const CartPage = () => {
                         variant=""
                         size="sm"
                         onClick={() =>
-                          handleQuantityChange(item.itemId, item.quantity + 1)
+                          handleQuantityChange(
+                            item.itemId,
+                            item.selectedSize,
+                            item.quantity + 1
+                          )
                         }
                       >
                         <i className="fa-solid fa-plus"></i>
                       </Button>
                     </td>
                     <td>
-                      RM{(item.quantity * parseFloat(item.price)).toFixed(2)}
+                      RM
+                      {(item.quantity * parseFloat(item.selectedPrice)).toFixed(
+                        2
+                      )}
                     </td>
                     <td>
                       <Button
                         variant="danger"
                         size="sm"
-                        onClick={() => handleRemoveItem(item.itemId)}
+                        onClick={() =>
+                          handleRemoveItem(item.itemId, item.selectedSize)
+                        }
                       >
                         Remove
                       </Button>

@@ -133,7 +133,7 @@ const OrderPage = () => {
 
       await updateDoc(orderRef, { status: "Cancelled" });
 
-      showSuccess("Order canceled successfully!");
+      showSuccess("Order canceled successfully!. Amount will be refunded to your payment method (if any).");
     } catch (error) {
       showError("Failed to cancel order.");
     }
@@ -188,7 +188,7 @@ const OrderPage = () => {
     if (currentStepIndex === 1) return "In Kitchen";
     if (currentStepIndex === 2) return "Ready to Pick Up";
     if (currentStepIndex === 3) return "Picked Up";
-    return "Cancelled";
+    return "Order Cancelled. Amount will be refunded to your payment method (if any).";
   };
 
   const getProgressColorCode = () => {

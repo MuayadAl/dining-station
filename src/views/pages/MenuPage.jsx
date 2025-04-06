@@ -33,12 +33,13 @@ const MenuPage = () => {
   const [openingHours, setOpeningHours] = useState({});
   const [restaurantStatus, setRestaurantStatus] =
     useState("Checking status...");
+  const modalImgRef = useRef();
 
   const { confirmAction, showSuccess, showError } = useAlert();
   const { cartItems, addToCart } = useCart(); // ✅ match context
   const cartIconRef = useRef();
-const navigate = useNavigate();
-
+  const navigate = useNavigate();
+  const itemImageRefs = useRef({});
 
   const [menuItems, setMenuItems] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -48,6 +49,10 @@ const navigate = useNavigate();
   const [selectedItem, setSelectedItem] = useState(null);
   const [showEditModal, setShowEditModal] = useState(false);
   const [isOwner, setIsOwner] = useState(null);
+
+  const [showViewModal, setShowViewModal] = useState(false);
+  const [viewingItem, setViewingItem] = useState(null);
+  const [selectedSize, setSelectedSize] = useState(null);
 
   useEffect(() => {
     if (restaurantId) {
@@ -107,15 +112,13 @@ const navigate = useNavigate();
   const animateToCart = (imgElement) => {
     const cartIcon = cartIconRef.current;
     if (!imgElement || !cartIcon) return;
-  
+
     const imgRect = imgElement.getBoundingClientRect();
     const cartRect = cartIcon.getBoundingClientRect();
-  
-    // ✅ Create new image instead of cloning
+
     const flyingImg = document.createElement("img");
     flyingImg.src = imgElement.src;
-  
-    // ✅ Clean, controlled styles (no Bootstrap, no class inheritance)
+
     flyingImg.style.setProperty("position", "fixed", "important");
     flyingImg.style.setProperty("top", imgRect.top + "px", "important");
     flyingImg.style.setProperty("left", imgRect.left + "px", "important");
@@ -124,13 +127,17 @@ const navigate = useNavigate();
     flyingImg.style.setProperty("border-radius", "50%", "important");
     flyingImg.style.setProperty("object-fit", "cover", "important");
     flyingImg.style.setProperty("z-index", "1000", "important");
-    flyingImg.style.setProperty("transition", "all 0.8s ease-in-out", "important");
+    flyingImg.style.setProperty(
+      "transition",
+      "all 0.8s ease-in-out",
+      "important"
+    );
     flyingImg.style.setProperty("pointer-events", "none", "important");
     flyingImg.style.setProperty("aspect-ratio", "1 / 1", "important");
     flyingImg.style.setProperty("overflow", "hidden", "important");
-  
+
     document.body.appendChild(flyingImg);
-  
+
     // Trigger the animation
     requestAnimationFrame(() => {
       flyingImg.style.top = cartRect.top + "px";
@@ -139,19 +146,44 @@ const navigate = useNavigate();
       flyingImg.style.height = "40px";
       flyingImg.style.opacity = "0.3";
     });
-  
+
     setTimeout(() => {
       document.body.removeChild(flyingImg);
     }, 900);
   };
+
+  const handleAddToCart = async (item, e = null, manualImgElement = null) => {
+    const defaultSize = item.sizes?.[0];
   
-  const handleAddToCart = async (item, e) => {
     try {
-      const existingCartItem = cartItems.find(ci => ci.itemId === item.itemId);
-      const currentQuantityInCart = existingCartItem ? existingCartItem.quantity : 0;
+      const restaurantRef = doc(db, "restaurants", restaurantId);
+      const restaurantSnap = await getDoc(restaurantRef);
   
-      // Defensive: fallback to 0 if quantity is missing
-      const availableQty = typeof item.availableQuantity === "number" ? item.availableQuantity : 0;
+      if (!restaurantSnap.exists()) {
+        showError("Restaurant not found.");
+        navigate("/restaurants");
+        return;
+      }
+  
+      const restaurantData = restaurantSnap.data();
+      const currentStatus = getRestaurantStatus(
+        restaurantData.openingHours,
+        restaurantData.status
+      );
+  
+      if (currentStatus.toLowerCase() !== "open") {
+        showError("This restaurant is currently closed. Redirecting...");
+        navigate("/restaurants");
+        return;
+      }
+  
+      const existingCartItem = cartItems.find(
+        (ci) =>
+          ci.itemId === item.itemId && ci.selectedSize === defaultSize?.size
+      );
+      const currentQuantityInCart = existingCartItem?.quantity || 0;
+      const availableQty =
+        typeof item.availableQuantity === "number" ? item.availableQuantity : 0;
   
       if (availableQty <= 0) {
         showError(`${item.name} is currently out of stock.`);
@@ -159,22 +191,42 @@ const navigate = useNavigate();
       }
   
       if (currentQuantityInCart + 1 > availableQty) {
-        showError(`Only ${availableQty} of ${item.name} available. You've reached the limit.`);
+        showError(
+          `Only ${availableQty} of ${item.name} available. You've reached the limit.`
+        );
         return;
       }
   
-      const imgElement = e.currentTarget.closest(".card").querySelector("img");
-      animateToCart(imgElement);
+      if (!defaultSize || !defaultSize.size || defaultSize.price == null) {
+        showError("This item does not have a valid default size or price.");
+        return;
+      }
   
-      await addToCart(item);
+      const itemWithSize = {
+        ...item,
+        selectedSize: defaultSize.size,
+        selectedPrice: defaultSize.price,
+      };
+  
+      await addToCart(itemWithSize);
+  
+      // 🩹 Fix: Wait a tick for the image ref to be available
+      setTimeout(() => {
+        const img = manualImgElement || itemImageRefs.current[item.itemId];
+        if (img) animateToCart(img);
+      }, 0);
+  
+      if (manualImgElement) {
+        setTimeout(() => {
+          setShowViewModal(false);
+        }, 800);
+      }
     } catch (error) {
       console.error("Caught error in handleAddToCart:", error);
       showError("Failed to add item to cart.");
     }
   };
   
-  
-
   useEffect(() => {
     let isMounted = true;
 
@@ -190,7 +242,11 @@ const navigate = useNavigate();
           setRestaurantName(restaurantData.name || "");
           setOpeningHours(restaurantData.openingHours || {}); // Store opening hours
 
-          const status = getRestaurantStatus(restaurantData.openingHours);
+          const status = getRestaurantStatus(
+            restaurantData.openingHours,
+            restaurantData.status
+          );
+
           setRestaurantStatus(status);
         }
       } catch (error) {
@@ -270,33 +326,37 @@ const navigate = useNavigate();
     }
   };
 
-  const getRestaurantStatus = (openingHours) => {
+  const getRestaurantStatus = (openingHours, manualStatus) => {
+    if (manualStatus === "closed") return "Closed";
+    if (manualStatus === "busy") return "Busy";
+    if (manualStatus === "open") return "Open";
+
+    if (manualStatus !== "auto") return "Closed"; // fallback
     if (!openingHours) return "Closed";
 
     const now = new Date();
-    const currentDay = now.toLocaleString("en-US", { weekday: "long" }); // Get current day (e.g., "Monday")
-    const currentTime = now.toLocaleTimeString("en-US", { hour12: false }); // Get current time in 24-hour format
+    const currentDay = now.toLocaleString("en-US", { weekday: "long" });
+    const currentTime = now.toLocaleTimeString("en-US", { hour12: false });
 
     const todayHours = openingHours[currentDay];
+    if (!todayHours || !todayHours.enabled) return "Closed";
 
-    if (!todayHours || !todayHours.enabled) {
-      return "Closed";
-    }
-
-    const openTime = todayHours.open;
-    const closeTime = todayHours.close;
-
-    if (currentTime >= openTime && currentTime <= closeTime) {
-      return "Open";
-    } else {
-      return "Closed";
-    }
+    return currentTime >= todayHours.open && currentTime <= todayHours.close
+      ? "Open"
+      : "Closed";
   };
 
   return (
     <div className="container p-1 ">
-      <div className="bg-dark p-2 cart_hover"
-        style={{ position: "fixed", bottom: "50px", right: "20px", zIndex: 1050, borderRadius: "50%" }}
+      <div
+        className="bg-dark p-2 cart_hover"
+        style={{
+          position: "fixed",
+          bottom: "50px",
+          right: "20px",
+          zIndex: 1050,
+          borderRadius: "50%",
+        }}
         ref={cartIconRef}
         onClick={() => navigate("/cart")}
       >
@@ -466,11 +526,22 @@ const navigate = useNavigate();
                               : "bg-black text-white"
                           }`}
                           style={{ maxWidth: "540px" }}
-                          onClick={() => isOwner && handleEditItem(item)}
+                          onClick={() => {
+                            if (isOwner) {
+                              handleEditItem(item);
+                            } else {
+                              setViewingItem(item);
+                              setSelectedSize(null);
+                              setShowViewModal(true);
+                            }
+                          }}
                         >
                           <div className="row g-0">
                             <div className="col-4">
                               <img
+                                ref={(el) =>
+                                  (itemImageRefs.current[item.itemId] = el)
+                                }
                                 src={item.imgUrl}
                                 className="img-fluid rounded-start"
                                 alt={item.name}
@@ -507,14 +578,29 @@ const navigate = useNavigate();
                                   </span>
                                 </div>
                                 <div className="send_bt w-100">
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      handleAddToCart(item, e);
-                                    }}
-                                  >
-                                    Add to Cart
-                                  </button>
+                                  {isOwner ? (
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleEditItem(item);
+                                      }}
+                                    >
+                                      Edit Item
+                                    </button>
+                                  ) : (
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleAddToCart(
+                                          item,
+                                          null,
+                                          itemImageRefs.current[item.itemId]
+                                        );
+                                      }}
+                                    >
+                                      Add to Cart
+                                    </button>
+                                  )}
                                 </div>
                               </div>
                             </div>
@@ -637,6 +723,78 @@ const navigate = useNavigate();
           </Button>
           <Button variant="primary" onClick={handleSaveChanges}>
             Save Changes
+          </Button>
+        </Modal.Footer>
+      </Modal>
+
+      {/* View Modal for Regular Users */}
+      <Modal show={showViewModal} onHide={() => setShowViewModal(false)}>
+        <Modal.Header closeButton>
+          <Modal.Title>{viewingItem?.name}</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          {viewingItem && (
+            <>
+              <img
+                ref={modalImgRef} // ✅ Place ref here
+                src={viewingItem.imgUrl}
+                alt={viewingItem.name}
+                className="img-fluid mb-3 rounded"
+                style={{
+                  width: "100%",
+                  maxHeight: "200px",
+                  objectFit: "cover",
+                }}
+              />
+              <p>{viewingItem.description}</p>
+              <p>
+                <strong>Preparation Time:</strong>{" "}
+                {viewingItem.estimatedPreparationTime} min
+              </p>
+              <Form>
+                <Form.Group>
+                  <Form.Label>Select Size:</Form.Label>
+                  {viewingItem.sizes?.map((sizeObj, idx) => (
+                    <Form.Check
+                      key={idx}
+                      type="radio"
+                      name="sizeOption"
+                      id={`size-${idx}`}
+                      label={`${sizeObj.size} - RM${parseFloat(
+                        sizeObj.price
+                      ).toFixed(2)}`}
+                      value={sizeObj.size}
+                      onChange={() => setSelectedSize(sizeObj)}
+                      checked={selectedSize?.size === sizeObj.size}
+                    />
+                  ))}
+                </Form.Group>
+              </Form>
+            </>
+          )}
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowViewModal(false)}>
+            Cancel
+          </Button>
+          <Button
+            variant="danger"
+            onClick={async () => {
+              if (!selectedSize) return showError("Please select a size.");
+              const itemWithSize = {
+                ...viewingItem,
+                sizes: [selectedSize], // important for defaultSize
+                selectedSize: selectedSize.size,
+                selectedPrice: selectedSize.price,
+              };
+              await handleAddToCart(itemWithSize); // ✅ use unified function
+              animateToCart(modalImgRef.current);
+              setTimeout(() => {
+                setShowViewModal(false);
+              }, 900); // Wait for animation to finish
+            }}
+          >
+            Add to Cart
           </Button>
         </Modal.Footer>
       </Modal>

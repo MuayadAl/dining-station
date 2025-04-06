@@ -57,13 +57,14 @@ export const CartProvider = ({ children }) => {
 
   const addToCart = async (item) => {
     try {
-      await addToCartController(item);      // ✅ let controller handle logic + Firestore write
-      const updated = await getCart();      // ✅ get the new cart state
+      await addToCartController(item); // item must contain selectedSize & selectedPrice
+      const updated = await getCart();
       setCartItems(updated);
     } catch (error) {
       console.error("Failed to add item to cart (context):", error);
     }
   };
+  
 
   return (
     <CartContext.Provider

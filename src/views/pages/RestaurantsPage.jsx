@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-
 import {
   collection,
   getDocs,
@@ -114,7 +113,6 @@ function RestaurantsPage() {
           status: getRestaurantStatus(r.openingHours, r.status),
         }));
   
-        // ✅ Sort: open > busy > closed
         updated.sort((a, b) => {
           const statusPriority = { open: 0, busy: 1, closed: 2 };
           return statusPriority[a.status] - statusPriority[b.status];

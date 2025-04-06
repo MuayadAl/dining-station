@@ -127,7 +127,8 @@ const CheckoutPage = () => {
 
         const cartData = await getCart();
         setCartItems(cartData);
-        setTotal(cartData.reduce((sum, item) => sum + item.price * item.quantity, 0));
+        setTotal(cartData.reduce((sum, item) => sum + item.selectedPrice * item.quantity, 0));
+
 
         const currentUser = auth.currentUser;
         if (currentUser) {
@@ -180,17 +181,23 @@ const CheckoutPage = () => {
                 </tr>
               </thead>
               <tbody>
-                {cartItems.map((item) => (
-                  <tr key={item.itemId}>
-                    <td>{item.name}</td>
-                    <td>RM{parseFloat(item.price).toFixed(2)}</td>
-                    <td>{item.quantity}</td>
-                    <td>RM{(item.quantity * parseFloat(item.price)).toFixed(2)}</td>
-                  </tr>
-                ))}
-              </tbody>
+  {cartItems.map((item) => (
+    <tr key={`${item.itemId}_${item.selectedSize}`}>
+      <td>{item.name}</td>
+      <td>
+        RM{parseFloat(item.selectedPrice).toFixed(2)}
+        <br />
+        <small className="text-muted">({item.selectedSize})</small>
+      </td>
+      <td>{item.quantity}</td>
+      <td>RM{(item.quantity * parseFloat(item.selectedPrice)).toFixed(2)}</td>
+    </tr>
+  ))}
+</tbody>
+
             </Table>
             <h4 className="text-right">Total: RM{total.toFixed(2)}</h4>
+
 
             {loading ? (
               <p className="text-center text-warning">Loading user and restaurant details...</p>

@@ -183,7 +183,7 @@ function Header() {
                   className="offcanvas-title text-white"
                   id="offcanvasNavbarLabel"
                 >
-                  Menu
+                  <i class="fa-solid fa-utensils"></i> Menu
                 </h5>
                 <button
                   type="button"
@@ -197,7 +197,7 @@ function Header() {
                 <ul className="navbar-nav me-auto mb-2 mb-lg-0 "> {/* border-bottom*/}
                   <li className="nav-item">
                     <NavLink className="nav-link text-white" to="/landing">
-                      Home
+                    <i class="fa-solid fa-house-user"></i> Home
                     </NavLink>
                   </li>
                   {/* Customer Dashboard */}
@@ -208,7 +208,7 @@ function Header() {
                           className="nav-link text-white"
                           to="/restaurants"
                         >
-                          Restaurants
+                          <i class="fa-solid fa-store"></i> Restaurants
                         </NavLink>
                       </li>
                     </>
@@ -221,7 +221,7 @@ function Header() {
                         className="nav-link text-white"
                         to="/my-restaurant/orders"
                       >
-                        Manage Orders
+                       <i class="fa-solid fa-receipt"></i> Manage Orders
                       </NavLink>
                     </li>
                   )}
@@ -235,12 +235,12 @@ function Header() {
                         data-bs-toggle="dropdown"
                         aria-expanded="false"
                       >
-                        Management
+                        <i class="fa-solid fa-microscope"></i> Management
                       </button>
                       <ul className="dropdown-menu dropdown-menu-dark">
                         <li>
                           <NavLink className="dropdown-item" to="/signup">
-                            Register new user
+                          <i class="fa-solid fa-user-plus"></i> Register new user
                           </NavLink>
                         </li>
                         <li>
@@ -248,7 +248,7 @@ function Header() {
                             className="dropdown-item"
                             to="/admin/user-management"
                           >
-                            View & Manage Users
+                            <i class="fa-solid fa-users"></i> View & Manage Users
                           </NavLink>
                         </li>
                         <li>
@@ -256,7 +256,7 @@ function Header() {
                             className="dropdown-item"
                             to="/admin/restaurants-requests"
                           >
-                            Restaurants opening requests
+                            <i class="fa-solid fa-store"></i> Restaurants opening requests
                           </NavLink>
                         </li>
 
@@ -265,31 +265,19 @@ function Header() {
                             className="dropdown-item"
                             to="/messagesadmin"
                           >
-                            Customer Messages
+                            <i class="fa-solid fa-comments"></i> Customer Messages
                           </NavLink>
                         </li>
                         <li className="nav-item">
                           <NavLink className="dropdown-item" to="/admin/report">
-                            Reports
+                          <i class="fa-solid fa-chart-bar"></i> Reports
                           </NavLink>
                         </li>
                       </ul>
                     </li>
                   )}
 
-                  {!loading && user && userRole === "customer" && (
-                    <>
-                      <li className="nav-item">
-                        <NavLink
-                          className="nav-link text-white"
-                          to={lastOrderId ? `/order/${lastOrderId}` : "/orders"}
-                          onClick={closeNavbar}
-                        >
-                          My Orders
-                        </NavLink>
-                      </li>
-                    </>
-                  )}
+                  
 
                   {/*restaurant-owner Dashboard */}
                   {!loading && user && userRole === "restaurant-owner" && (
@@ -308,7 +296,7 @@ function Header() {
                             className="dropdown-item"
                             to="/my-restaurant/orders"
                           >
-                            Manage Orders
+                            <i class="fa-solid fa-receipt"></i> Manage Orders
                           </NavLink>
                         </li>
                         <li>
@@ -316,7 +304,7 @@ function Header() {
                             className="dropdown-item"
                             to="/my-restaurant/add"
                           >
-                            Request opening new restaurant
+                            <i class="fa-solid fa-envelope"></i> Request opening new restaurant
                           </NavLink>
                         </li>
                         <li>
@@ -324,7 +312,7 @@ function Header() {
                             className="dropdown-item"
                             to="/my-restaurant/edit"
                           >
-                            Edit Restaurant
+                            <i class="fa-solid fa-pen-to-square"></i> Edit Restaurant
                           </NavLink>
                         </li>
                         <li>
@@ -332,7 +320,7 @@ function Header() {
                             className="dropdown-item"
                             to={`/user/menu-page/${restaurantId}`}
                           >
-                            Manage Menu Item
+                            <i class="fa-solid fa-burger"></i> Manage Menu Item
                           </NavLink>
                         </li>
                         <li>
@@ -340,7 +328,7 @@ function Header() {
                             className="dropdown-item"
                             to="/my-restaurant-add-menu"
                           >
-                            Add Menu Item
+                            <i class="fa-solid fa-plus"></i> Add Menu Item
                           </NavLink>
                         </li>
                         <li>
@@ -348,7 +336,7 @@ function Header() {
                             className="dropdown-item"
                             to="/my-restaurant/register-staff"
                           >
-                            Register Staff
+                            <i class="fa-solid fa-user-plus"></i> Register Staff
                           </NavLink>
                         </li>
                         <li>
@@ -356,7 +344,7 @@ function Header() {
                             className="dropdown-item"
                             to="/admin/user-management"
                           >
-                            Manage Staff Users
+                           <i class="fa-solid fa-users"></i> Manage Staff Users
                           </NavLink>
                         </li>
                         <li>
@@ -364,7 +352,7 @@ function Header() {
                             className="dropdown-item"
                             to="/my-restaurant/status-report"
                           >
-                            Restaurant Status & Report
+                            <i class="fa-solid fa-chart-bar"></i> Restaurant Status & Report
                           </NavLink>
                         </li>
                       </ul>
@@ -372,12 +360,12 @@ function Header() {
                   )}
                   <li className="nav-item">
                     <NavLink className="nav-link text-white" to="/about">
-                      About
+                    <i class="fa-solid fa-info"></i> About
                     </NavLink>
                   </li>
                   <li className="nav-item">
                     <NavLink className="nav-link text-white" to="/contact">
-                      Contact
+                    <i class="fa-solid fa-phone"></i> Contact
                     </NavLink>
                   </li>
 
@@ -410,6 +398,19 @@ function Header() {
                         {userName}
                       </button>
                       <ul className="dropdown-menu dropdown-menu-dark ">
+                      {!loading && user && userRole === "customer" && (
+                    <>
+                      <li className="">
+                        <NavLink
+                          className="dropdown-item"
+                          to={lastOrderId ? `/order/${lastOrderId}` : "/orders"}
+                          onClick={closeNavbar}
+                        >
+                          <i class="fa-solid fa-receipt"></i> My Orders
+                        </NavLink>
+                      </li>
+                    </>
+                  )}
                         <li>
                           <NavLink className="dropdown-item " to="/profile">
                           <i className="fa fa-user me-2"></i> Profile
