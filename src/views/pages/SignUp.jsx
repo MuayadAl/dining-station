@@ -186,7 +186,7 @@ export default function SignUp({ isStaffRegistration = false }) {
               name="name"
               value={formData.name}
               onChange={handleChange}
-              placeholder="Enter your full name"
+              placeholder="Full name"
               required
             />
           </div>
@@ -271,7 +271,7 @@ export default function SignUp({ isStaffRegistration = false }) {
                 name="password"
                 value={formData.password}
                 onChange={handleChange}
-                placeholder="Enter your password"
+                placeholder="Password"
                 required
               />
               <button
@@ -299,7 +299,7 @@ export default function SignUp({ isStaffRegistration = false }) {
                 name="confirmPassword"
                 value={formData.confirmPassword}
                 onChange={handleChange}
-                placeholder="Confirm your password"
+                placeholder="Confirm password"
                 required
               />
               <button

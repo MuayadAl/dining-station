@@ -40,7 +40,7 @@ function App() {
     <CartProvider>
 
     <Router>
-      <Header />
+      <Header/>
       <Routes>
         {/* Logo navigation starts */}
         <Route path="/" element={<Navigate to="/landing" />} />

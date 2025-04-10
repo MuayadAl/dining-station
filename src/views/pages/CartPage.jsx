@@ -96,7 +96,8 @@ const CartPage = () => {
   };
 
   return (
-    <div className="container">
+    <div className="page-wrapper flex-column min-vh-100">
+    <div className="container flex-grow-1">
       <h2 className="text-center">Your Cart</h2>
       <div className="card shadow p-4 w-100 my-3">
         {cartItems.length === 0 ? (
@@ -190,6 +191,7 @@ const CartPage = () => {
           </div>
         )}
       </div>
+    </div>
     </div>
   );
 };

@@ -200,7 +200,7 @@ button {
 
 .layout_padding {
     padding-top: 10px;
-    padding-bottom: 0px;
+    padding-bottom: 10px;
 }
 
 .padding_0 {
@@ -224,7 +224,7 @@ button {
     background-image: url(../../assets/dining_station_bg.jpg);
     background-size: 100% 100%;
     background-repeat: no-repeat;
-}
+    }
 
 .header_bg {
     width: 100%;
@@ -357,7 +357,31 @@ button {
     width: 100%;
     float: left;
     padding: 100px 0px 140px 0px;
+    height: 90vh;
+    
 }
+
+@media (max-width: 768px) {
+    .banner_section {
+      padding: 60px 15px 80px 15px;
+      height: auto; /* let content define height on small screens */
+      text-align: left;
+    }
+  
+    .banner_taital {
+      font-size: 2rem; /* reduce heading size */
+    }
+  
+    .banner_text {
+      font-size: 1rem;
+      margin-top: 10px;
+    }
+  
+    .btn_main {
+      flex-direction: column;
+      gap: 10px;
+    }
+  }
 
 .banner_taital_main {
     width: 100%;
@@ -415,11 +439,24 @@ button {
     color: #fefefd;
     background-color: #f01c1c;
 }
+.main_btn.active:hover a, .main_btn.active:hover button:hover {
+    color: #f01c1c;
+    background-color: #fefefd;
+    border: 1px solid #f01c1c;
+}
 
 .callnow_bt {
     width: 175px;
     float: left;
 }
+/* This is for landing page */
+.btn_main,
+.callnow_bt {
+  position: relative;
+  z-index: 10;
+}
+/* Ends */
+
 
 .callnow_bt a {
     width: 100%;
@@ -512,7 +549,10 @@ button {
 
 .about_img {
     width: 100%;
+    margin-left: auto;
+    margin-right: 0;
 }
+
 
 .about_taital_1 {
     width: 100%;
@@ -528,6 +568,8 @@ button {
     font-size: 16px;
     color: #232222;
     margin: 0px;
+    text-align: justify;
+    
 }
 
 .readmore_btn {
@@ -974,6 +1016,7 @@ textarea#comment.massage-bt::placeholder {
     background-color: #1d1d1d;
     background-size: 100%;
     padding: 50px 0px;
+    margin-top: auto;
 }
 
 .address_text {

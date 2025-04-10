@@ -111,46 +111,48 @@ const MenuPage = () => {
 
   const animateToCart = (imgElement) => {
     const cartIcon = cartIconRef.current;
-    if (!imgElement || !cartIcon) return;
-
+    if (!imgElement || !cartIcon || !imgElement.complete || imgElement.naturalHeight === 0) return;
+  
     const imgRect = imgElement.getBoundingClientRect();
     const cartRect = cartIcon.getBoundingClientRect();
-
+  
+    const imgTop = imgRect.top + window.scrollY;
+    const imgLeft = imgRect.left + window.scrollX;
+    const cartTop = cartRect.top + window.scrollY;
+    const cartLeft = cartRect.left + window.scrollX;
+  
     const flyingImg = document.createElement("img");
     flyingImg.src = imgElement.src;
-
-    flyingImg.style.setProperty("position", "fixed", "important");
-    flyingImg.style.setProperty("top", imgRect.top + "px", "important");
-    flyingImg.style.setProperty("left", imgRect.left + "px", "important");
-    flyingImg.style.setProperty("width", "40px", "important");
-    flyingImg.style.setProperty("height", "40px", "important");
-    flyingImg.style.setProperty("border-radius", "50%", "important");
-    flyingImg.style.setProperty("object-fit", "cover", "important");
-    flyingImg.style.setProperty("z-index", "1000", "important");
-    flyingImg.style.setProperty(
-      "transition",
-      "all 0.8s ease-in-out",
-      "important"
-    );
-    flyingImg.style.setProperty("pointer-events", "none", "important");
-    flyingImg.style.setProperty("aspect-ratio", "1 / 1", "important");
-    flyingImg.style.setProperty("overflow", "hidden", "important");
-
+    flyingImg.style.position = "absolute";
+    flyingImg.style.top = imgTop + "px";
+    flyingImg.style.left = imgLeft + "px";
+    flyingImg.style.width = "40px";
+    flyingImg.style.height = "40px";
+    flyingImg.style.borderRadius = "50%";
+    flyingImg.style.objectFit = "cover";
+    flyingImg.style.zIndex = "9999";
+    flyingImg.style.transition = "all 0.8s ease-in-out";
+    flyingImg.style.pointerEvents = "none";
+    flyingImg.style.aspectRatio = "1 / 1";
+    flyingImg.style.overflow = "hidden";
+  
     document.body.appendChild(flyingImg);
-
-    // Trigger the animation
+  
     requestAnimationFrame(() => {
-      flyingImg.style.top = cartRect.top + "px";
-      flyingImg.style.left = cartRect.left + "px";
-      flyingImg.style.width = "40px";
-      flyingImg.style.height = "40px";
-      flyingImg.style.opacity = "0.3";
+      requestAnimationFrame(() => {
+        flyingImg.style.top = cartTop + "px";
+        flyingImg.style.left = cartLeft + "px";
+        flyingImg.style.opacity = "0.3";
+      });
     });
-
+  
     setTimeout(() => {
-      document.body.removeChild(flyingImg);
+      if (flyingImg?.parentNode) {
+        flyingImg.parentNode.removeChild(flyingImg);
+      }
     }, 900);
   };
+  
 
   const handleAddToCart = async (item, e = null, manualImgElement = null) => {
     const defaultSize = item.sizes?.[0];
@@ -783,15 +785,14 @@ const MenuPage = () => {
               if (!selectedSize) return showError("Please select a size.");
               const itemWithSize = {
                 ...viewingItem,
-                sizes: [selectedSize], // important for defaultSize
+                sizes: [selectedSize], 
                 selectedSize: selectedSize.size,
                 selectedPrice: selectedSize.price,
               };
-              await handleAddToCart(itemWithSize); // ✅ use unified function
-              animateToCart(modalImgRef.current);
+              await handleAddToCart(itemWithSize); 
               setTimeout(() => {
                 setShowViewModal(false);
-              }, 900); // Wait for animation to finish
+              }, 600); 
             }}
           >
             Add to Cart

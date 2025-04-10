@@ -4,6 +4,7 @@ import "bootstrap/dist/css/bootstrap.min.css";
 import React, { useState, useEffect } from "react";
 import { auth, db } from "../../models/firebase";
 import { collection, getDocs } from "firebase/firestore";
+import { Link } from 'react-router-dom';
 
 function LandingPage() {
   const [user, setUser] = useState(null);
@@ -52,9 +53,9 @@ function LandingPage() {
   }, []);
 
   return (
-    <div>
-      <div className="img-fluid header_section ">
-        <div className="banner_section layout_padding">
+    <div className="">
+      <div className="img-fluid header_section  mb-3">
+        <div className=" banner_section layout_padding ">
           <div className="container">
             <div
               id="banner_slider"
@@ -78,11 +79,11 @@ function LandingPage() {
                         <div className="btn_main">
                           <div className="main_btn active">
                             {/* Hide the Register link if the user is logged in */}
-                            {!user && <a href="signup">Register</a>}
+                            {!user && <Link to="/signup">Register</Link>}
                           </div>
                           <div className="callnow_bt">
                             {/* Hide the Login link if the user is logged in */}
-                            {!user && <a href="/login">Login</a>}
+                            {!user && <Link to="/login">Login</Link>}
                           </div>
                         </div>
                       </div>
@@ -94,17 +95,18 @@ function LandingPage() {
           </div>
         </div>
       </div>
-      <section className="container py-4">
-        <h2
-          className="text-center "
-          style={{ fontSize: "2.2rem", fontWeight: "600" }}
-        >
-          Top 5 Ordered Items
-        </h2>
+      <section className="container py-4 vh-75">
+        
+          <h2
+            className="text-center"
+            style={{ fontSize: "2.2rem", fontWeight: "600" }}
+          >
+            Top Ordered Items
+          </h2>
 
         {topItems.length === 0 ? (
           <div className="text-center">
-            <p>No top items found yet. Be the first to order something!</p>
+            <p>Please, login to view the top ordered items.</p>
           </div>
         ) : (
           <div
@@ -152,9 +154,6 @@ function LandingPage() {
                     </div>
                     <div className="carousel-text">
                       <h4>{item.name}</h4>
-                      <p>
-                        Ordered <span>{item.total}</span> times
-                      </p>
                     </div>
                   </div>
                 </div>

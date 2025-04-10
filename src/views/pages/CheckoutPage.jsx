@@ -11,6 +11,8 @@ import { clearCart } from "../../controllers/cartController";
 const CheckoutForm = ({ cartItems, total, user, restaurant }) => {
   const { showError, showSuccess } = useAlert();
   const [paymentMethod, setPaymentMethod] = useState("Stripe");
+  const [loading, setLoading] = useState(false);
+
 
   const handlePayment = async () => {
     if (cartItems.length === 0) {
@@ -25,12 +27,13 @@ const CheckoutForm = ({ cartItems, total, user, restaurant }) => {
     }
 
     if (paymentMethod === "ApCard") {
+      setLoading(true);
       try {
-        const orderRef = doc(collection(db, "orders")); 
+        const orderRef = doc(collection(db, "orders"));
         const orderId = orderRef.id;
-    
+
         const orderData = {
-          orderId, 
+          orderId,
           userId: user.id,
           userName: user.name,
           restaurantId: restaurant.id,
@@ -39,12 +42,12 @@ const CheckoutForm = ({ cartItems, total, user, restaurant }) => {
           time: new Date().toISOString(),
           items: cartItems,
           status: "Placed",
-          paymentMethod, 
+          paymentMethod,
         };
-    
+
         await setDoc(orderRef, orderData, { merge: true });
         await clearCart();
-    
+
         showSuccess(`Your order has been placed with ${paymentMethod}.`);
         setTimeout(() => {
           window.location.href = `/order/${orderId}`;
@@ -52,15 +55,17 @@ const CheckoutForm = ({ cartItems, total, user, restaurant }) => {
       } catch (error) {
         console.error(`🔥 Firebase Order Error (${paymentMethod}):`, error);
         showError("Failed to place order. Please try again.");
+      } finally{
+        setLoading(false);
       }
       return;
     }
-    
-    
 
     // Stripe Payment
+    setLoading(true);
     try {
-      const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || "http://localhost:5000";
+      const API_BASE_URL =
+        process.env.REACT_APP_API_BASE_URL || "http://localhost:5000";
       const response = await fetch(`${API_BASE_URL}/create-checkout-session`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -85,6 +90,8 @@ const CheckoutForm = ({ cartItems, total, user, restaurant }) => {
     } catch (err) {
       console.error("Network error:", err);
       showError("Network error: Unable to reach Stripe.");
+    } finally{
+      setLoading(false);
     }
   };
 
@@ -92,18 +99,38 @@ const CheckoutForm = ({ cartItems, total, user, restaurant }) => {
     <>
       <Form.Group className="mt-3">
         <Form.Label>Select Payment Method:</Form.Label>
-        <Form.Select value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)}>
+        <Form.Select
+          value={paymentMethod}
+          onChange={(e) => setPaymentMethod(e.target.value)}
+        >
           <option value="Stripe">Credit/debit card</option>
           <option value="ApCard">ApCard in store</option>
-          <option value="" disabled>ApCard balance</option>
+          <option value="" disabled>
+            ApCard balance
+          </option>
         </Form.Select>
       </Form.Group>
-    <div className=" justify-content-center align-items-center d-flex">
+      <div className=" justify-content-center align-items-center d-flex">
+        {loading? (
 
-      <Button variant="success" className="mt-3 col-lg-6 " onClick={handlePayment}>
-        Pay with {paymentMethod}
-      </Button>
-    </div>
+          <Button
+            variant="success"
+            className="mt-3 col-lg-6 "
+            disabled
+          >
+            <i className="fas fa-spinner fa-spin me-2"></i> Processing Payment...
+          </Button>
+        ):(
+        <Button
+          variant="success"
+          className="mt-3 col-lg-6 "
+          onClick={handlePayment}
+        >
+          Pay with {paymentMethod}
+        </Button>
+
+        )}
+      </div>
     </>
   );
 };
@@ -127,8 +154,12 @@ const CheckoutPage = () => {
 
         const cartData = await getCart();
         setCartItems(cartData);
-        setTotal(cartData.reduce((sum, item) => sum + item.selectedPrice * item.quantity, 0));
-
+        setTotal(
+          cartData.reduce(
+            (sum, item) => sum + item.selectedPrice * item.quantity,
+            0
+          )
+        );
 
         const currentUser = auth.currentUser;
         if (currentUser) {
@@ -181,30 +212,44 @@ const CheckoutPage = () => {
                 </tr>
               </thead>
               <tbody>
-  {cartItems.map((item) => (
-    <tr key={`${item.itemId}_${item.selectedSize}`}>
-      <td>{item.name}</td>
-      <td>
-        RM{parseFloat(item.selectedPrice).toFixed(2)}
-        <br />
-        <small className="text-muted">({item.selectedSize})</small>
-      </td>
-      <td>{item.quantity}</td>
-      <td>RM{(item.quantity * parseFloat(item.selectedPrice)).toFixed(2)}</td>
-    </tr>
-  ))}
-</tbody>
-
+                {cartItems.map((item) => (
+                  <tr key={`${item.itemId}_${item.selectedSize}`}>
+                    <td>{item.name}</td>
+                    <td>
+                      RM{parseFloat(item.selectedPrice).toFixed(2)}
+                      <br />
+                      <small className="text-muted">
+                        ({item.selectedSize})
+                      </small>
+                    </td>
+                    <td>{item.quantity}</td>
+                    <td>
+                      RM
+                      {(item.quantity * parseFloat(item.selectedPrice)).toFixed(
+                        2
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
             </Table>
             <h4 className="text-right">Total: RM{total.toFixed(2)}</h4>
 
-
             {loading ? (
-              <p className="text-center text-warning">Loading user and restaurant details...</p>
+              <p className="text-center text-warning">
+                Loading user and restaurant details...
+              </p>
             ) : restaurant ? (
-              <CheckoutForm cartItems={cartItems} total={total} user={user} restaurant={restaurant} />
+              <CheckoutForm
+                cartItems={cartItems}
+                total={total}
+                user={user}
+                restaurant={restaurant}
+              />
             ) : (
-              <p className="text-danger text-center">Error: Unable to fetch restaurant details. Redirecting...</p>
+              <p className="text-danger text-center">
+                Error: Unable to fetch restaurant details. Redirecting...
+              </p>
             )}
           </>
         )}

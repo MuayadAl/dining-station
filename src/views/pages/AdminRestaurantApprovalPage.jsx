@@ -8,19 +8,19 @@ import {
   doc,
   getDoc,
 } from "firebase/firestore";
-import { db } from "../../models/firebase"; // Adjust the import path as needed
+import { db } from "../../models/firebase";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faCheckCircle,
   faTimesCircle,
-  faSpinner,
   faUser,
   faEnvelope,
-  faStore,
   faClock,
-  faStickyNote,
   faPhone,
   faMapMarkerAlt,
+  faBan,
+  faUndo,
+  faStickyNote,
 } from "@fortawesome/free-solid-svg-icons";
 import Swal from "sweetalert2";
 
@@ -28,71 +28,66 @@ const AdminRestaurantApprovalPage = () => {
   const [restaurants, setRestaurants] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [activeTab, setActiveTab] = useState("pending");
+  const [searchTerm, setSearchTerm] = useState("");
+  
 
-  // Fetch all pending restaurant requests with user details
   useEffect(() => {
-    const fetchPendingRestaurants = async () => {
-      try {
+    fetchRestaurants();
+  }, [activeTab]);
+
+  const fetchRestaurants = async () => {
+    setLoading(true);
+    try {
+      const statuses = ["pending", "approved", "rejected", "suspended"];
+      const allRestaurants = [];
+
+      for (const status of statuses) {
         const q = query(
           collection(db, "restaurants"),
-          where("approvalStatus", "==", "pending")
+          where("approvalStatus", "==", status)
         );
         const querySnapshot = await getDocs(q);
-        const restaurantsList = [];
 
         for (const docSnap of querySnapshot.docs) {
           const restaurantData = docSnap.data();
           const userRef = doc(db, "users", restaurantData.userId);
           const userDoc = await getDoc(userRef);
 
-          if (userDoc.exists()) {
-            restaurantsList.push({
-              id: docSnap.id,
-              ...restaurantData,
-              userName: userDoc.data().name,
-              userEmail: userDoc.data().email,
-            });
-          } else {
-            restaurantsList.push({
-              id: docSnap.id,
-              ...restaurantData,
-              userName: "Unknown",
-              userEmail: "Unknown",
-            });
-          }
+          allRestaurants.push({
+            id: docSnap.id,
+            ...restaurantData,
+            userName: userDoc.exists() ? userDoc.data().name : "Unknown",
+            userEmail: userDoc.exists() ? userDoc.data().email : "Unknown",
+          });
         }
-
-        setRestaurants(restaurantsList);
-      } catch (err) {
-        setError("Error fetching pending restaurants: " + err.message);
-      } finally {
-        setLoading(false);
       }
-    };
 
-    fetchPendingRestaurants();
-  }, []);
+      setRestaurants(allRestaurants);
+    } catch (err) {
+      setError("Error fetching restaurants: " + err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  // Handle approval or rejection of a restaurant
-  const handleApproval = async (restaurantId, status, remark = "") => {
+  const updateStatus = async (restaurantId, newStatus, remark = "") => {
     try {
-      const restaurantRef = doc(db, "restaurants", restaurantId); // Correct usage of `doc`
+      const restaurantRef = doc(db, "restaurants", restaurantId);
       await updateDoc(restaurantRef, {
-        approvalStatus: status,
+        approvalStatus: newStatus,
         remark: remark,
       });
 
-      // Update the UI by removing the approved/rejected restaurant
-      setRestaurants((prev) => prev.filter((rest) => rest.id !== restaurantId));
+      await fetchRestaurants(); // ⬅️ refresh data after update
 
-      // Show success message
       Swal.fire({
         icon: "success",
-        title: `Restaurant ${status}`,
-        text: `The restaurant has been ${status}.`,
+        title: `Restaurant ${newStatus}`,
+        text: `The restaurant has been marked as ${newStatus}.`,
       });
     } catch (err) {
-      setError("Error updating restaurant status: " + err.message);
+      setError("Error updating status: " + err.message);
       Swal.fire({
         icon: "error",
         title: "Error",
@@ -101,143 +96,244 @@ const AdminRestaurantApprovalPage = () => {
     }
   };
 
-  // Handle rejection with SweetAlert2
-  const handleReject = (restaurantId) => {
+  const handleStatusWithRemark = (restaurantId, newStatus, title) => {
     Swal.fire({
-      title: "Reject Restaurant",
+      title: title,
       input: "textarea",
       inputPlaceholder: "Add a remark (optional)",
       showCancelButton: true,
-      confirmButtonText: "Reject",
+      confirmButtonText: newStatus.charAt(0).toUpperCase() + newStatus.slice(1),
       cancelButtonText: "Cancel",
+      confirmButtonColor: "#f01c1c", 
+      cancelButtonColor: "#3085d6", 
       icon: "warning",
     }).then((result) => {
       if (result.isConfirmed) {
         const remark = result.value || "";
-        handleApproval(restaurantId, "rejected", remark);
+        updateStatus(restaurantId, newStatus, remark);
       }
     });
   };
+  
 
-  if (loading) {
+  const filteredRestaurants = restaurants
+  .filter((rest) => rest.approvalStatus === activeTab)
+  .filter((rest) => {
+    const term = searchTerm.toLowerCase();
     return (
-      <div className="min-vh-100 container-fluid d-flex align-items-center justify-content-center">
-        <div className="spinner-border text-primary" role="status">
-          <span className="visually-hidden">Loading...</span>
-        </div>
-      </div>
+      rest.name?.toLowerCase().includes(term) ||
+      rest.userName?.toLowerCase().includes(term) ||
+      rest.userEmail?.toLowerCase().includes(term) ||
+      rest.email?.toLowerCase().includes(term) ||
+      rest.location?.toLowerCase().includes(term)
     );
-  }
+  });
 
-  if (error) {
-    return (
-      <div className="min-vh-100 container-fluid">
-        <div
-          className="container-fluid float-start alert alert-danger text-center my-5 py-5 fs-5"
-          role="alert"
-        >
-          {error}
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="container-fluid mb-4 float-start">
       <h1 className="text-center mb-4">Restaurant Approval Requests</h1>
 
-      {restaurants.length === 0 ? (
-        <div className="min-vh-100 container-fluid">
-          <div
-            className="alert alert-info text-center my-5 py-5 fs-5"
-            role="alert"
-          >
-            <i class="fa-solid fa-hourglass-start fa-spin"></i> No pending
-            restaurant requests.
+      
+      {/* Search Box */}
+      <div className="container mb-4">
+        <div className="row justify-content-center">
+          <div className="col-md-6 mt-4">
+            <form className="d-flex">
+              <div className="input-group">
+                <input
+                  className="form-control"
+                  type="search"
+                  placeholder="Search"
+                  aria-label="Search"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+                <span className="input-group-text bg-black">
+                  <i className="fa fa-search text-white"></i>
+                </span>
+              </div>
+            </form>
           </div>
+        </div>
+      </div>
+
+      {/* Tabs */}
+      <ul className="nav nav-tabs mb-3 justify-content-center align-items-center">
+        {["pending", "approved", "rejected", "suspended"].map((status) => (
+          <li className="nav-item" key={status}>
+            <button
+              className={`nav-link ${activeTab === status ? "active" : ""}`}
+              onClick={() => setActiveTab(status)}
+            >
+              {status.charAt(0).toUpperCase() + status.slice(1)}
+            </button>
+          </li>
+        ))}
+      </ul>
+
+      {/* Loading/Error */}
+      {loading ? (
+        <div className="d-flex justify-content-center align-items-center min-vh-50">
+          <div className="spinner-border text-primary" role="status" />
+        </div>
+      ) : error ? (
+        <div className="alert alert-danger text-center">{error}</div>
+      ) : filteredRestaurants.length === 0 ? (
+        <div className="alert alert-info text-center">
+          No {activeTab} restaurant requests.
         </div>
       ) : (
         <div className="row">
-         
-          {restaurants.map((restaurant) => (
+          {filteredRestaurants.map((restaurant) => (
             <div key={restaurant.id} className="col-md-6 mb-4">
               <div className="card shadow-sm">
                 <div className="card-body">
-                  {/* Restaurant Image */}
+                  {/* Optional image */}
                   {restaurant.imgUrl && (
                     <div className="text-center mb-3">
                       <img
                         src={restaurant.imgUrl}
                         alt={restaurant.name}
-                        className="img-fluid"
-                        style={{
-                          maxWidth: "150px",
-                          height: "150px",
-                          borderRadius: "50%",
-                        }}
+                        className="img-fluid rounded-circle"
+                        style={{ width: "150px", height: "150px" }}
                       />
                     </div>
                   )}
 
-                  {/* Restaurant Details */}
-                  <h5 className="card-title text-primary text-center fw-bold">
+                  <h5 className="text-primary text-center fw-bold">
                     {restaurant.name}
                   </h5>
                   <hr />
 
                   <div className="row">
-                    <div className="col-12 col-md-6 mb-3">
-                      <p className="card-text">
+                    <div className="col-md-6">
+                      <p>
                         <FontAwesomeIcon icon={faUser} className="me-2" />
                         <strong>Requested By:</strong> {restaurant.userName}
                       </p>
-                      <p className="card-text">
+                      <p>
                         <FontAwesomeIcon icon={faEnvelope} className="me-2" />
                         <strong>User Email:</strong> {restaurant.userEmail}
                       </p>
-
-                      <p className="card-text">
+                      <p>
                         <FontAwesomeIcon icon={faEnvelope} className="me-2" />
                         <strong>Restaurant Email:</strong> {restaurant.email}
                       </p>
                     </div>
-
                     <div className="col-md-6">
-                      <p className="card-text">
+                      <p>
                         <FontAwesomeIcon icon={faPhone} className="me-2" />
                         <strong>Phone:</strong> {restaurant.phone}
                       </p>
-                      <p className="card-text">
+                      <p>
                         <FontAwesomeIcon
                           icon={faMapMarkerAlt}
                           className="me-2"
                         />
                         <strong>Location:</strong> {restaurant.location}
                       </p>
-                      <p className="card-text">
+                      <p>
                         <FontAwesomeIcon icon={faClock} className="me-2" />
                         <strong>Created At:</strong>{" "}
                         {restaurant.createdAt?.toDate().toLocaleString()}
                       </p>
+                      <p>
+                        <FontAwesomeIcon icon={faStickyNote} className="me-2" />
+                        <strong>Remark:</strong>{" "}
+                        {restaurant.remark}
+                      </p>
                     </div>
                   </div>
 
-                  {/* Approve/Reject Buttons */}
-                  <div className="d-flex gap-3 mt-2">
-                    <button
-                      className="btn btn-success btn-sm"
-                      onClick={() => handleApproval(restaurant.id, "approved")}
-                    >
-                      <FontAwesomeIcon icon={faCheckCircle} className="me-2" />
-                      Approve
-                    </button>
-                    <button
-                      className="btn btn-danger btn-sm"
-                      onClick={() => handleReject(restaurant.id)}
-                    >
-                      <FontAwesomeIcon icon={faTimesCircle} className="me-2" />
-                      Reject
-                    </button>
+                  {/* Action Buttons */}
+                  <div className="d-flex gap-2 mt-3 flex-wrap">
+                    {activeTab === "pending" && (
+                      <>
+                        <button
+                          className="btn btn-success btn-sm"
+                          onClick={() =>
+                            updateStatus(restaurant.id, "approved")
+                          }
+                        >
+                          <FontAwesomeIcon
+                            icon={faCheckCircle}
+                            className="me-2"
+                          />
+                          Approve
+                        </button>
+                        <button
+                          className="btn btn-danger btn-sm"
+                          onClick={() => handleStatusWithRemark(restaurant.id, "rejected", "Reject Restaurant")}
+                        >
+                          <FontAwesomeIcon
+                            icon={faTimesCircle}
+                            className="me-2"
+                          />
+                          Reject
+                        </button>
+                      </>
+                    )}
+
+                    {activeTab === "approved" && (
+                      <button
+                        className="btn btn-warning btn-sm"
+                        onClick={() => handleStatusWithRemark(restaurant.id, "suspended", "Suspend Restaurant")}
+                      >
+                        <FontAwesomeIcon icon={faBan} className="me-2" />
+                        Suspend
+                      </button>
+                    )}
+
+                    {activeTab === "rejected" && (
+                      <>
+                        <button
+                          className="btn btn-success btn-sm"
+                          onClick={() =>
+                            updateStatus(restaurant.id, "approved")
+                          }
+                        >
+                          <FontAwesomeIcon
+                            icon={faCheckCircle}
+                            className="me-2"
+                          />
+                          Mark as Approved
+                        </button>
+                        <button
+                          className="btn btn-secondary btn-sm"
+                          onClick={() => updateStatus(restaurant.id, "pending")}
+                        >
+                          <FontAwesomeIcon icon={faUndo} className="me-2" />
+                          Move to Pending
+                        </button>
+                      </>
+                    )}
+
+                    {/* Suspended action */}
+
+                    {activeTab === "suspended" && (
+                      <>
+                        <button
+                          className="btn btn-success btn-sm"
+                          onClick={() =>
+                            updateStatus(restaurant.id, "approved")
+                          }
+                        >
+                          <FontAwesomeIcon
+                            icon={faCheckCircle}
+                            className="me-2"
+                          />
+                          Reactivate
+                        </button>
+                        <button
+                          className="btn btn-secondary btn-sm"
+                          onClick={() => updateStatus(restaurant.id, "pending")}
+                        >
+                          <FontAwesomeIcon icon={faUndo} className="me-2" />
+                          Move to Pending
+                        </button>
+                      </>
+                    )}
                   </div>
                 </div>
               </div>

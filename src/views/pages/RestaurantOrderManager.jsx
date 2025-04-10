@@ -36,7 +36,6 @@ function RestaurantOrderManager() {
   const [openingHours, setOpeningHours] = useState({});
   const [prevAutoStatus, setPrevAutoStatus] = useState(null);
 
-
   useEffect(() => {
     const auth = getAuth();
     const unsubscribeAuth = auth.onAuthStateChanged(async (user) => {
@@ -113,25 +112,26 @@ function RestaurantOrderManager() {
 
   useEffect(() => {
     if (manualStatus !== "auto") return;
-  
+
     const interval = setInterval(() => {
       const updated = getRestaurantStatus(openingHours, manualStatus);
-  
+
       setRestaurantStatus((prev) => {
         if (prev !== updated) {
-          setToastMessage(`Status changed automatically to "${updated.toUpperCase()}"`);
+          setToastMessage(
+            `Status changed automatically to "${updated.toUpperCase()}"`
+          );
           setShowToast(true);
           setTimeout(() => setShowToast(false), 3000);
         }
         return updated;
       });
-  
+
       setPrevAutoStatus(updated);
     }, 60000);
-  
+
     return () => clearInterval(interval);
   }, [openingHours, manualStatus]);
-  
 
   const getRestaurantStatus = (openingHours, manualStatus) => {
     if (manualStatus === "closed") return "closed";
@@ -414,6 +414,7 @@ function RestaurantOrderManager() {
               <div className="row g-3 shadow p-3 rounded-3 pt-2 ">
                 {orders
                   .filter((order) => order.status === "Placed")
+                  .sort((a, b) => new Date(a.time) - new Date(b.time))
                   .map(renderOrderCard)}
               </div>
             )}
@@ -438,6 +439,7 @@ function RestaurantOrderManager() {
                     <div className="row g-3">
                       {orders
                         .filter((order) => order.status === "In Kitchen")
+                        .sort((a, b) => new Date(a.time) - new Date(b.time))
                         .map(renderOrderCard)}
                     </div>
                   )}
@@ -459,6 +461,7 @@ function RestaurantOrderManager() {
                     <div className="row g-3">
                       {orders
                         .filter((order) => order.status === "Ready to Pick Up")
+                        .sort((a, b) => new Date(a.time) - new Date(b.time)) 
                         .map(renderOrderCard)}
                     </div>
                   )}

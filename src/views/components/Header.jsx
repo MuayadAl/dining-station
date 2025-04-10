@@ -202,8 +202,9 @@ function Header() {
                       <i class="fa-solid fa-house-user"></i> Home
                     </NavLink>
                   </li>
+
                   {/* Customer Dashboard */}
-                  {!loading && user && userRole === "customer" && (
+                  {!loading && user && userRole === "customer" || userRole ==="admin"&& (
                     <>
                       <li className="nav-item">
                         <NavLink
@@ -280,6 +281,7 @@ function Header() {
                       </ul>
                     </li>
                   )}
+
                   {/*restaurant-owner Dashboard */}
                   {!loading && user && userRole === "restaurant-owner" && (
                     <li className="nav-item dropdown">
@@ -289,7 +291,7 @@ function Header() {
                         data-bs-toggle="dropdown"
                         aria-expanded="false"
                       >
-                        My Restaurant
+                        <i class="fa-solid fa-store"></i> My Restaurant
                       </button>
                       <ul className="dropdown-menu dropdown-menu-dark">
                         <li>
@@ -362,18 +364,7 @@ function Header() {
                       </ul>
                     </li>
                   )}
-                  <li className="nav-item">
-                    <NavLink className="nav-link text-white" to="/about">
-                      <i class="fa-solid fa-info"></i> About
-                    </NavLink>
-                  </li>
-                  <li className="nav-item">
-                    <NavLink className="nav-link text-white" to="/contact">
-                      <i class="fa-solid fa-phone"></i> Contact
-                    </NavLink>
-                  </li>
-                  {/* Cart for customer dashboard */}
-                  {userRole === "customer" && (
+                     {userRole === "customer" && (
                     <li className="nav-item">
                       <NavLink
                         className="nav-link text-white"
@@ -385,6 +376,18 @@ function Header() {
                       </NavLink>
                     </li>
                   )}
+                  <li className="nav-item">
+                    <NavLink className="nav-link text-white" to="/about">
+                      <i class="fa-solid fa-info"></i> About
+                    </NavLink>
+                  </li>
+                  <li className="nav-item">
+                    <NavLink className="nav-link text-white" to="/contact">
+                      <i class="fa-solid fa-phone"></i> Contact
+                    </NavLink>
+                  </li>
+                  {/* Cart for customer dashboard */}
+               
                 </ul>
 
                 {/* Profile Dropdown - aligned and styled to match nav */}
