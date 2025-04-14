@@ -26,6 +26,9 @@ import { deleteMenuItem } from "../../controllers/menuController";
 
 import { useCart } from "../../contexts/CartContext";
 
+import imagePlaceHolder from "../../assets/image-placeholder.jpg";
+import Loader from "../components/Loader";
+
 const MenuPage = () => {
   const { restaurantId } = useParams();
   const [restaurantImgUrl, setRestaurantImgUrl] = useState("");
@@ -111,16 +114,22 @@ const MenuPage = () => {
 
   const animateToCart = (imgElement) => {
     const cartIcon = cartIconRef.current;
-    if (!imgElement || !cartIcon || !imgElement.complete || imgElement.naturalHeight === 0) return;
-  
+    if (
+      !imgElement ||
+      !cartIcon ||
+      !imgElement.complete ||
+      imgElement.naturalHeight === 0
+    )
+      return;
+
     const imgRect = imgElement.getBoundingClientRect();
     const cartRect = cartIcon.getBoundingClientRect();
-  
+
     const imgTop = imgRect.top + window.scrollY;
     const imgLeft = imgRect.left + window.scrollX;
     const cartTop = cartRect.top + window.scrollY;
     const cartLeft = cartRect.left + window.scrollX;
-  
+
     const flyingImg = document.createElement("img");
     flyingImg.src = imgElement.src;
     flyingImg.style.position = "absolute";
@@ -135,9 +144,9 @@ const MenuPage = () => {
     flyingImg.style.pointerEvents = "none";
     flyingImg.style.aspectRatio = "1 / 1";
     flyingImg.style.overflow = "hidden";
-  
+
     document.body.appendChild(flyingImg);
-  
+
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
         flyingImg.style.top = cartTop + "px";
@@ -145,40 +154,39 @@ const MenuPage = () => {
         flyingImg.style.opacity = "0.3";
       });
     });
-  
+
     setTimeout(() => {
       if (flyingImg?.parentNode) {
         flyingImg.parentNode.removeChild(flyingImg);
       }
     }, 900);
   };
-  
 
   const handleAddToCart = async (item, e = null, manualImgElement = null) => {
     const defaultSize = item.sizes?.[0];
-  
+
     try {
       const restaurantRef = doc(db, "restaurants", restaurantId);
       const restaurantSnap = await getDoc(restaurantRef);
-  
+
       if (!restaurantSnap.exists()) {
         showError("Restaurant not found.");
         navigate("/restaurants");
         return;
       }
-  
+
       const restaurantData = restaurantSnap.data();
       const currentStatus = getRestaurantStatus(
         restaurantData.openingHours,
         restaurantData.status
       );
-  
+
       if (currentStatus.toLowerCase() !== "open") {
         showError("This restaurant is currently closed. Redirecting...");
         navigate("/restaurants");
         return;
       }
-  
+
       const existingCartItem = cartItems.find(
         (ci) =>
           ci.itemId === item.itemId && ci.selectedSize === defaultSize?.size
@@ -186,38 +194,38 @@ const MenuPage = () => {
       const currentQuantityInCart = existingCartItem?.quantity || 0;
       const availableQty =
         typeof item.availableQuantity === "number" ? item.availableQuantity : 0;
-  
+
       if (availableQty <= 0) {
         showError(`${item.name} is currently out of stock.`);
         return;
       }
-  
+
       if (currentQuantityInCart + 1 > availableQty) {
         showError(
           `Only ${availableQty} of ${item.name} available. You've reached the limit.`
         );
         return;
       }
-  
+
       if (!defaultSize || !defaultSize.size || defaultSize.price == null) {
         showError("This item does not have a valid default size or price.");
         return;
       }
-  
+
       const itemWithSize = {
         ...item,
         selectedSize: defaultSize.size,
         selectedPrice: defaultSize.price,
       };
-  
+
       await addToCart(itemWithSize);
-  
+
       // 🩹 Fix: Wait a tick for the image ref to be available
       setTimeout(() => {
         const img = manualImgElement || itemImageRefs.current[item.itemId];
         if (img) animateToCart(img);
       }, 0);
-  
+
       if (manualImgElement) {
         setTimeout(() => {
           setShowViewModal(false);
@@ -228,36 +236,68 @@ const MenuPage = () => {
       showError("Failed to add item to cart.");
     }
   };
-  
+
   useEffect(() => {
     let isMounted = true;
 
-    const fetchRestaurantDetails = async () => {
+    const fetchData = async () => {
       try {
         const restaurantRef = doc(db, "restaurants", restaurantId);
         const restaurantSnap = await getDoc(restaurantRef);
 
-        if (restaurantSnap.exists() && isMounted) {
-          const restaurantData = restaurantSnap.data();
-          setIsOwner(restaurantData.userId === auth.currentUser?.uid);
-          setRestaurantImgUrl(restaurantData.imgUrl || "");
-          setRestaurantName(restaurantData.name || "");
-          setOpeningHours(restaurantData.openingHours || {}); // Store opening hours
+        if (!restaurantSnap.exists() || !isMounted) return;
 
-          const status = getRestaurantStatus(
-            restaurantData.openingHours,
-            restaurantData.status
+        const restaurantData = restaurantSnap.data();
+
+        const ownerCheck = restaurantData.userId === auth.currentUser?.uid;
+        setIsOwner(ownerCheck);
+        setRestaurantImgUrl(restaurantData.imgUrl || "");
+        setRestaurantName(restaurantData.name || "");
+        setOpeningHours(restaurantData.openingHours || {});
+
+        const status = getRestaurantStatus(
+          restaurantData.openingHours,
+          restaurantData.status
+        );
+        setRestaurantStatus(status);
+
+        // Fetch Menu after owner check
+        const q = query(
+          collection(db, "menu"),
+          where("restaurantId", "==", restaurantId)
+        );
+        const querySnapshot = await getDocs(q);
+
+        let fetchedItems = [];
+        let fetchedCategories = new Set();
+
+        querySnapshot.forEach((doc) => {
+          const items = doc.data().items || [];
+          const availableItems = ownerCheck
+            ? items.map((item) => ({
+                ...item,
+                availability: item.availability ?? false,
+              }))
+            : items.filter((item) => item?.availability === true);
+
+          fetchedItems = [...fetchedItems, ...availableItems];
+          availableItems.forEach((item) =>
+            fetchedCategories.add(item.category)
           );
+        });
 
-          setRestaurantStatus(status);
-        }
+        setMenuItems(fetchedItems);
+        setCategories(Array.from(fetchedCategories));
       } catch (error) {
-        if (isMounted)
-          console.error("Error fetching restaurant details:", error);
+        console.error("Error loading restaurant or menu:", error);
+      } finally {
+        if (isMounted) setLoading(false); // ✅ Ensure we stop the spinner
       }
     };
 
-    fetchRestaurantDetails();
+    if (restaurantId) {
+      fetchData();
+    }
 
     return () => {
       isMounted = false;
@@ -294,10 +334,24 @@ const MenuPage = () => {
   const handleSaveChanges = async () => {
     try {
       const menuRef = doc(db, "menu", restaurantId);
+  
+      // 🔁 Convert availableQuantity to number
+      if (selectedItem?.availableQuantity !== undefined) {
+        selectedItem.availableQuantity = Number(selectedItem.availableQuantity);
+      }
+  
+      // 🔁 Convert each price to number in sizes array
+      if (Array.isArray(selectedItem?.sizes)) {
+        selectedItem.sizes = selectedItem.sizes.map((sizeObj) => ({
+          ...sizeObj,
+          price: Number(sizeObj.price),
+        }));
+      }
+  
       const updatedItems = menuItems.map((item) =>
         item.itemId === selectedItem.itemId ? selectedItem : item
       );
-
+  
       await updateDoc(menuRef, { items: updatedItems });
       setMenuItems(updatedItems);
       setShowEditModal(false);
@@ -305,6 +359,8 @@ const MenuPage = () => {
       console.error("Error updating item:", error);
     }
   };
+  
+  
 
   // Delete function
   const handleDeleteItem = async (itemId) => {
@@ -348,44 +404,55 @@ const MenuPage = () => {
       : "Closed";
   };
 
+  if (loading) {
+    return Loader("Loading...");
+  }
+
   return (
     <div className="container p-1 ">
-      <div
-        className="bg-dark p-2 cart_hover"
-        style={{
-          position: "fixed",
-          bottom: "50px",
-          right: "20px",
-          zIndex: 1050,
-          borderRadius: "50%",
-        }}
-        ref={cartIconRef}
-        onClick={() => navigate("/cart")}
-      >
-        <div className="" style={{ position: "relative" }}>
-          <i className="fa fa-shopping-cart fa-2x text-white"></i>
-          {cartItems.length > 0 && (
-            <span
-              className="badge bg-danger"
-              style={{
-                position: "absolute",
-                top: "-8px",
-                right: "-10px",
-                borderRadius: "50%",
-                padding: "4px 8px",
-                fontSize: "0.7rem",
-              }}
-            >
-              {cartItems.length}
-            </span>
-          )}
+      {/* Floating cart */}
+      {!isOwner && (
+        <div
+          className="bg-dark p-2 cart_hover"
+          style={{
+            position: "fixed",
+            bottom: "50px",
+            right: "20px",
+            zIndex: 1050,
+            borderRadius: "50%",
+          }}
+          ref={cartIconRef}
+          onClick={() => navigate("/cart")}
+        >
+          <div className="" style={{ position: "relative" }}>
+            <i className="fa fa-shopping-cart fa-2x text-white"></i>
+            {cartItems.length > 0 && (
+              <span
+                className="badge bg-danger"
+                style={{
+                  position: "absolute",
+                  top: "-8px",
+                  right: "-10px",
+                  borderRadius: "50%",
+                  padding: "4px 8px",
+                  fontSize: "0.7rem",
+                }}
+              >
+                {cartItems.length}
+              </span>
+            )}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Restaurant Logo */}
-      <div className=" container d-flex justify-content-center align-items-center">
+      <div className="container d-flex justify-content-center align-items-center">
         <img
-          src={restaurantImgUrl || "https://via.placeholder.com/50"}
+          src={restaurantImgUrl || imagePlaceHolder}
+          onError={(e) => {
+            e.target.onerror = null;
+            e.target.src = { imagePlaceHolder };
+          }}
           alt="restaurant logo"
           className="img-fluid mt-2"
           style={{ height: "100px", width: "100px", borderRadius: "50%" }}
@@ -394,59 +461,66 @@ const MenuPage = () => {
 
       {/* Restaurant Name */}
 
-      <p className="text-center mt-1 fs-5 fw-bold">{restaurantName}</p>
+      <p className="text-center mt-1 fs-5 fw-bold">
+        {restaurantName || "No restaurant added yet"}
+      </p>
 
       {/* Restaurant Working hours */}
-      <div
-        className="shadow pt-3 mb-4 bg-body rounded-3 row"
-        style={{ paddingLeft: "20px" }}
-      >
-        <div className="d-flex justify-content-between align-items-center">
-          <h6>
-            <i className="fa-solid fa-calendar-days"></i> Working Hours
-          </h6>
-          <div>
-            <span
-              className={`badge py-3 ${
-                restaurantStatus === "Open" ? "bg-success" : "bg-danger"
-              }`}
-            >
-              <FontAwesomeIcon
-                icon={restaurantStatus === "Open" ? faDoorOpen : faDoorClosed}
-                className="me-2"
-              />
-              {restaurantStatus}
-            </span>
+      {Object.values(openingHours || {}).some(
+        (hours) => hours?.enabled && hours.open && hours.close
+      ) && (
+        <div
+          className="shadow pt-3 mb-4 bg-body rounded-3 row"
+          style={{ paddingLeft: "20px" }}
+        >
+          <div className="d-flex justify-content-between align-items-center">
+            <h6>
+              <i className="fa-solid fa-calendar-days"></i> Working Hours
+            </h6>
+            <div>
+              <span
+                className={`badge py-3 ${
+                  restaurantStatus === "Open" ? "bg-success" : "bg-danger"
+                }`}
+              >
+                <FontAwesomeIcon
+                  icon={restaurantStatus === "Open" ? faDoorOpen : faDoorClosed}
+                  className="me-2"
+                />
+                {restaurantStatus}
+              </span>
+            </div>
           </div>
+
+          <ul className="list-unstyled row">
+            {Object.entries(openingHours || {})
+              .sort(([dayA], [dayB]) => {
+                const order = [
+                  "Monday",
+                  "Tuesday",
+                  "Wednesday",
+                  "Thursday",
+                  "Friday",
+                  "Saturday",
+                  "Sunday",
+                ];
+                return order.indexOf(dayA) - order.indexOf(dayB);
+              })
+              .map(([day, hours]) => (
+                <li key={day} className="col-lg-4 col-md-6 mb-2">
+                  <strong>{day}:</strong>{" "}
+                  {hours?.enabled && hours.open && hours.close ? (
+                    <span className="text-success">
+                      {hours.open} - {hours.close}
+                    </span>
+                  ) : (
+                    <span className="text-danger">Closed</span>
+                  )}
+                </li>
+              ))}
+          </ul>
         </div>
-        <ul className="list-unstyled row">
-          {Object.entries(openingHours || {})
-            .sort(([dayA], [dayB]) => {
-              const order = [
-                "Monday",
-                "Tuesday",
-                "Wednesday",
-                "Thursday",
-                "Friday",
-                "Saturday",
-                "Sunday",
-              ];
-              return order.indexOf(dayA) - order.indexOf(dayB);
-            })
-            .map(([day, hours]) => (
-              <li key={day} className="col-lg-4 col-md-6 mb-2">
-                <strong>{day}:</strong>{" "}
-                {hours?.enabled && hours.open && hours.close ? (
-                  <span className="text-success">
-                    {hours.open} - {hours.close}
-                  </span>
-                ) : (
-                  <span className="text-danger">Closed</span>
-                )}
-              </li>
-            ))}
-        </ul>
-      </div>
+      )}
 
       {/* Search Box */}
       <div className="container">
@@ -493,6 +567,21 @@ const MenuPage = () => {
           <div className="text-center">
             <div className="spinner-border text-primary" role="status"></div>
             <p>Loading menu...</p>
+          </div>
+        ) : menuItems.length === 0 ? (
+          <div className="text-center mt-4">
+            <h5 className="text-muted">
+              No menu has been added for this restaurant yet.
+            </h5>
+            {isOwner && (
+              <p className="text-muted">
+                You can add menu items using the "Add Menu Item" section.
+              </p>
+            )}
+          </div>
+        ) : filteredItems.length === 0 ? (
+          <div className="text-center mt-4">
+            <h5 className="text-warning">No items match your search.</h5>
           </div>
         ) : filteredItems.length > 0 ? (
           filteredCategories.map((category, index) => (
@@ -644,6 +733,21 @@ const MenuPage = () => {
               />
             </Form.Group>
             <Form.Group>
+              <Form.Label>Available Quantity</Form.Label>
+              <Form.Control
+                type="number"
+                name="availableQuantity"
+                value={
+                  selectedItem?.availableQuantity !== undefined
+                    ? selectedItem.availableQuantity
+                    : ""
+                }
+                onChange={handleEditChange}
+                min={0}
+              />
+            </Form.Group>
+
+            <Form.Group>
               <Form.Label>Est prep Time</Form.Label>
               <Form.Control
                 type="number"
@@ -749,10 +853,27 @@ const MenuPage = () => {
                 }}
               />
               <p>{viewingItem.description}</p>
+
+              {viewingItem?.availableQuantity !== undefined && (
+                <p>
+                  <strong>Available Quantity:</strong>{" "}
+                  <span
+                    className={
+                      viewingItem.availableQuantity > 0
+                        ? "text-success"
+                        : "text-danger"
+                    }
+                  >
+                    {viewingItem.availableQuantity}
+                  </span>
+                </p>
+              )}
+
               <p>
                 <strong>Preparation Time:</strong>{" "}
                 {viewingItem.estimatedPreparationTime} min
               </p>
+
               <Form>
                 <Form.Group>
                   <Form.Label>Select Size:</Form.Label>
@@ -785,14 +906,14 @@ const MenuPage = () => {
               if (!selectedSize) return showError("Please select a size.");
               const itemWithSize = {
                 ...viewingItem,
-                sizes: [selectedSize], 
+                sizes: [selectedSize],
                 selectedSize: selectedSize.size,
                 selectedPrice: selectedSize.price,
               };
-              await handleAddToCart(itemWithSize); 
+              await handleAddToCart(itemWithSize);
               setTimeout(() => {
                 setShowViewModal(false);
-              }, 600); 
+              }, 600);
             }}
           >
             Add to Cart

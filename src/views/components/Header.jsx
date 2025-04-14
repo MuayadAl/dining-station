@@ -1,33 +1,80 @@
 import "bootstrap/dist/css/bootstrap.min.css";
-import React, { useState, useRef, useEffect } from "react";
+import "bootstrap/dist/js/bootstrap.bundle.min.js";
+import React, { useState, useEffect, useRef } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { handleLogout } from "../../controllers/authController";
 import { auth, db } from "../../models/firebase";
-import {
-  doc,
-  getDoc,
-  collection,
-  getDocs,
-  query,
-  where,
-} from "firebase/firestore";
-
+import { doc, getDoc, collection, getDocs, query, where } from "firebase/firestore";
 import logo from "../../assets/dining-station-logo.png";
 
 function Header() {
   const [restaurantId, setRestaurantId] = useState(null);
-  const [isOpen, setIsOpen] = useState(false);
   const [user, setUser] = useState(null);
   const [userName, setUserName] = useState("");
   const [userRole, setUserRole] = useState(null);
-  const [loading, setLoading] = useState(true); // Track loading state
-  const navbarRef = useRef(null);
-  const navigate = useNavigate();
+  const [loading, setLoading] = useState(true);
   const [lastOrderId, setLastOrderId] = useState(null);
+  const navigate = useNavigate();
+  const offcanvasRef = useRef(null);
 
-  const closeNavbar = () => setIsOpen(false);
+  // Close offcanvas when a link is clicked
+  const closeOffcanvas = () => {
+    try {
+      // Close all dropdowns first
+      document.querySelectorAll('.dropdown-menu').forEach(menu => {
+        menu.classList.remove('show');
+      });
+  
+      // Then close the offcanvas
+      if (typeof window !== 'undefined' && window.bootstrap) {
+        const offcanvasEl = offcanvasRef.current;
+        if (offcanvasEl) {
+          const offcanvas = window.bootstrap.Offcanvas.getInstance(offcanvasEl) || 
+                           new window.bootstrap.Offcanvas(offcanvasEl);
+          offcanvas.hide();
+        }
+      }
+    } catch (error) {
+      console.error("Error closing offcanvas:", error);
+    }
+  };
 
-  // Fetch the latest order ID for the logged-in user
+  const toggleDropdown = (e) => {
+    e.preventDefault();
+    e.stopPropagation(); // Add this to prevent event bubbling
+    const dropdownMenu = e.currentTarget.nextElementSibling;
+    if (dropdownMenu) {
+      // Close all other dropdowns first
+      document.querySelectorAll('.dropdown-menu').forEach(menu => {
+        if (menu !== dropdownMenu) menu.classList.remove('show');
+      });
+      // Toggle current dropdown
+      dropdownMenu.classList.toggle('show');
+    }
+  };
+
+  // Close dropdowns when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      // If clicking outside of navbar toggler or offcanvas
+      if (!event.target.closest('.navbar-toggler') && 
+          !event.target.closest('.offcanvas')) {
+        closeOffcanvas();
+      }
+      
+      // Close dropdowns when clicking outside
+      if (!event.target.closest('.dropdown-toggle')) {
+        document.querySelectorAll('.dropdown-menu').forEach(menu => {
+          menu.classList.remove('show');
+        });
+      }
+    };
+    
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, []);
+
+  // Fetch the latest order ID
   useEffect(() => {
     const fetchLatestOrder = async () => {
       if (user) {
@@ -36,110 +83,67 @@ function Header() {
         const querySnapshot = await getDocs(q);
 
         if (!querySnapshot.empty) {
-          // Get the most recent order based on time
           const latestOrder = querySnapshot.docs
             .map((doc) => ({ id: doc.id, ...doc.data() }))
             .sort((a, b) => new Date(b.time) - new Date(a.time))[0];
-
           setLastOrderId(latestOrder.id);
         } else {
           setLastOrderId(null);
         }
       }
     };
-
     fetchLatestOrder();
   }, [user]);
 
-  // Close navbar if clicked outside
+  // Fetch user data
   useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (navbarRef.current && !navbarRef.current.contains(event.target)) {
-        closeNavbar();
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+    const unsubscribe = auth.onAuthStateChanged(async (authUser) => {
+      if (authUser) {
+        setUser(authUser);
+        setLoading(true);
+        try {
+          const userRef = doc(db, "users", authUser.uid);
+          const userDoc = await getDoc(userRef);
 
-  // Fetch user data & role from Firestore
-  useEffect(() => {
-    if (!user) {
-      // Prevent redundant calls
-      const unsubscribe = auth.onAuthStateChanged(async (authUser) => {
-        if (authUser) {
-          setUser(authUser);
-          setLoading(true);
-          try {
-            const userRef = doc(db, "users", authUser.uid);
-            const userDoc = await getDoc(userRef);
+          if (userDoc.exists()) {
+            const data = userDoc.data();
+            setUserName(data.name);
+            setUserRole(data.userRole);
 
-            if (userDoc.exists()) {
-              setUserName(userDoc.data().name);
-              setUserRole(userDoc.data().userRole);
-            }
-            // Add this inside the onAuthStateChanged logic, after you set the userRole
-            if (userDoc.exists()) {
-              const data = userDoc.data();
-              setUserName(data.name);
-              setUserRole(data.userRole);
-
-              // If the user is a restaurant owner, get their restaurantId
-              if (data.userRole === "restaurant-owner") {
-                const q = query(
-                  collection(db, "restaurants"),
-                  where("userId", "==", authUser.uid)
-                );
-                const snapshot = await getDocs(q);
-                if (!snapshot.empty) {
-                  const restaurantDoc = snapshot.docs[0];
-                  setRestaurantId(restaurantDoc.id); // ✅ Set the ID
-                }
+            if (data.userRole === "restaurant-owner") {
+              const q = query(
+                collection(db, "restaurants"),
+                where("userId", "==", authUser.uid)
+              );
+              const snapshot = await getDocs(q);
+              if (!snapshot.empty) {
+                const restaurantDoc = snapshot.docs[0];
+                setRestaurantId(restaurantDoc.id);
               }
             }
-            // Add this inside the onAuthStateChanged logic, after you set the userRole
-            if (userDoc.exists()) {
-              const data = userDoc.data();
-              setUserName(data.name);
-              setUserRole(data.userRole);
-
-              // If the user is a restaurant owner, get their restaurantId
-              if (data.userRole === "restaurant-owner") {
-                const q = query(
-                  collection(db, "restaurants"),
-                  where("userId", "==", authUser.uid)
-                );
-                const snapshot = await getDocs(q);
-                if (!snapshot.empty) {
-                  const restaurantDoc = snapshot.docs[0];
-                  setRestaurantId(restaurantDoc.id); // ✅ Set the ID
-                }
-              }
-            }
-          } catch (error) {
-            console.error("Error fetching user:", error);
-          } finally {
-            setLoading(false);
           }
-        } else {
-          setUser(null);
-          setUserName("");
-          setUserRole(null);
+        } catch (error) {
+          console.error("Error fetching user:", error);
+        } finally {
           setLoading(false);
         }
-      });
+      } else {
+        setUser(null);
+        setUserName("");
+        setUserRole(null);
+        setLoading(false);
+      }
+    });
 
-      return () => unsubscribe();
-    }
-  }, [user]); // Add user as dependency
+    return () => unsubscribe();
+  }, []);
 
-  // Handle Logout
   const handleUserLogout = async () => {
     try {
       await handleLogout();
-      setUser(null); // Reset user state
-      setUserName(""); // Reset userName state
-      setUserRole(null); // Reset userRole state
+      setUser(null);
+      setUserName("");
+      setUserRole(null);
       navigate("/login");
     } catch (error) {
       console.error("Error logging out:", error);
@@ -147,19 +151,14 @@ function Header() {
   };
 
   return (
-    <div
-      className="d-flex header_section header_bg navbar-light"
-      style={{ position: "sticky", top: "0", zIndex: "1000" }}
-    >
+    <div className="header_section header_bg navbar-light" style={{ position: "sticky", top: "0", zIndex: "1000" }}>
       <div className="container">
         <nav className="navbar navbar-expand-lg navbar-dark">
           <div className="container-fluid">
-            {/* ✅ Brand Logo */}
             <NavLink className="navbar-brand" to="/landing">
               <img src={logo} alt="Logo" />
             </NavLink>
 
-            {/* ✅ Offcanvas Toggle Button */}
             <button
               className="navbar-toggler"
               type="button"
@@ -171,258 +170,191 @@ function Header() {
               <i className="fa fa-bars" style={{ color: "black" }}></i>
             </button>
 
-            {/* ✅ Dark Offcanvas Sidebar */}
             <div
-              className="offcanvas offcanvas-end text-bg-dark w-75 "
+              className="offcanvas offcanvas-end text-bg-dark w-75"
               tabIndex="-1"
               id="offcanvasNavbar"
               aria-labelledby="offcanvasNavbarLabel"
+              ref={offcanvasRef}
             >
               <div className="offcanvas-header border-bottom">
-                <h5
-                  className="offcanvas-title text-white"
-                  id="offcanvasNavbarLabel"
-                >
-                  <i class="fa-solid fa-utensils"></i> Menu
+                <h5 className="offcanvas-title text-white" id="offcanvasNavbarLabel">
+                  <i className="fa-solid fa-utensils"></i> Menu
                 </h5>
                 <button
                   type="button"
-                  className="btn-close btn-close-white "
+                  className="btn-close btn-close-white"
                   data-bs-dismiss="offcanvas"
                   aria-label="Close"
                 ></button>
               </div>
-              <div className="offcanvas-body ">
-                {/* ✅ Navbar Links */}
-                <ul className="navbar-nav me-auto mb-2 mb-lg-0 ">
-                  {" "}
-                  {/* border-bottom*/}
+              <div className="offcanvas-body">
+                <ul className="navbar-nav flex-grow-1">
                   <li className="nav-item">
-                    <NavLink className="nav-link text-white" to="/landing">
-                      <i class="fa-solid fa-house-user"></i> Home
-                    </NavLink>
+                  <NavLink 
+  className="nav-link text-white" 
+  to="/landing" 
+  onClick={() => {
+    closeOffcanvas();
+    // Add any other click handlers here if needed
+  }}
+>
+  <i className="fa-solid fa-house-user"></i> Home
+</NavLink>
                   </li>
 
-                  {/* Customer Dashboard */}
-                  {!loading && user && userRole === "customer" || userRole ==="admin"&& (
-                    <>
-                      <li className="nav-item">
-                        <NavLink
-                          className="nav-link text-white"
-                          to="/restaurants"
-                        >
-                          <i class="fa-solid fa-store"></i> Restaurants
-                        </NavLink>
-                      </li>
-                    </>
-                  )}
-                  {/* Restaurant-staff Dashboard */}
-                  {!loading && user && userRole === "restaurant-staff" && (
+                  {!loading && user && (userRole === "customer" || userRole === "admin") && (
                     <li className="nav-item">
-                      <NavLink
-                        className="nav-link text-white"
-                        to="/my-restaurant/orders"
-                      >
-                        <i class="fa-solid fa-receipt"></i> Manage Orders
+                      <NavLink className="nav-link text-white" to="/restaurants" onClick={closeOffcanvas}>
+                        <i className="fa-solid fa-store"></i> Restaurants
                       </NavLink>
                     </li>
                   )}
-                  {/* Admin Drop down menu */}
+
+                  {!loading && user && userRole === "restaurant-staff" && (
+                    <li className="nav-item">
+                      <NavLink className="nav-link text-white" to="/my-restaurant/orders" onClick={closeOffcanvas}>
+                        <i className="fa-solid fa-receipt"></i> Manage Orders
+                      </NavLink>
+                    </li>
+                  )}
+
                   {!loading && user && userRole === "admin" && (
                     <li className="nav-item dropdown">
                       <button
                         className="nav-link dropdown-toggle text-white"
-                        type="button"
-                        data-bs-toggle="dropdown"
-                        aria-expanded="false"
+                        onClick={toggleDropdown}
                       >
-                        <i class="fa-solid fa-microscope"></i> Management
+                        <i className="fa-solid fa-microscope"></i> Management
                       </button>
                       <ul className="dropdown-menu dropdown-menu-dark">
                         <li>
-                          <NavLink className="dropdown-item" to="/signup">
-                            <i class="fa-solid fa-user-plus"></i> Register new
-                            user
+                          <NavLink className="dropdown-item" to="/signup" onClick={closeOffcanvas}>
+                            <i className="fa-solid fa-user-plus"></i> Register new user
                           </NavLink>
                         </li>
                         <li>
-                          <NavLink
-                            className="dropdown-item"
-                            to="/admin/user-management"
-                          >
-                            <i class="fa-solid fa-users"></i> View & Manage
-                            Users
+                          <NavLink className="dropdown-item" to="/admin/user-management" onClick={closeOffcanvas}>
+                            <i className="fa-solid fa-users"></i> View & Manage Users
                           </NavLink>
                         </li>
                         <li>
-                          <NavLink
-                            className="dropdown-item"
-                            to="/admin/restaurants-requests"
-                          >
-                            <i class="fa-solid fa-store"></i> Restaurants
-                            opening requests
+                          <NavLink className="dropdown-item" to="/admin/restaurants-requests" onClick={closeOffcanvas}>
+                            <i className="fa-solid fa-store"></i> Restaurants opening requests
                           </NavLink>
                         </li>
-
-                        <li className="nav-item">
-                          <NavLink
-                            className="dropdown-item"
-                            to="/admin-messages"
-                          >
-                            <i class="fa-solid fa-comments"></i> Customer
-                            Messages
+                        <li>
+                          <NavLink className="dropdown-item" to="/admin-messages" onClick={closeOffcanvas}>
+                            <i className="fa-solid fa-comments"></i> Customer Messages
                           </NavLink>
                         </li>
-                        <li className="nav-item">
-                          <NavLink className="dropdown-item" to="/admin/report">
-                            <i class="fa-solid fa-chart-bar"></i> Reports
+                        <li>
+                          <NavLink className="dropdown-item" to="/admin/report" onClick={closeOffcanvas}>
+                            <i className="fa-solid fa-chart-bar"></i> Reports
                           </NavLink>
                         </li>
                       </ul>
                     </li>
                   )}
 
-                  {/*restaurant-owner Dashboard */}
                   {!loading && user && userRole === "restaurant-owner" && (
                     <li className="nav-item dropdown">
                       <button
                         className="nav-link dropdown-toggle text-white"
-                        type="button"
-                        data-bs-toggle="dropdown"
-                        aria-expanded="false"
+                        onClick={toggleDropdown}
                       >
-                        <i class="fa-solid fa-store"></i> My Restaurant
+                        <i className="fa-solid fa-store"></i> My Restaurant
                       </button>
                       <ul className="dropdown-menu dropdown-menu-dark">
                         <li>
-                          <NavLink
-                            className="dropdown-item"
-                            to="/my-restaurant/orders"
-                          >
-                            <i class="fa-solid fa-receipt"></i> Manage Orders
+                          <NavLink className="dropdown-item" to="/my-restaurant/orders" onClick={closeOffcanvas}>
+                            <i className="fa-solid fa-receipt"></i> Manage Orders
                           </NavLink>
                         </li>
                         <li>
-                          <NavLink
-                            className="dropdown-item"
-                            to="/my-restaurant/add"
-                          >
-                            <i class="fa-solid fa-envelope"></i> Request opening
-                            new restaurant
+                          <NavLink className="dropdown-item" to={`/user/menu-page/${restaurantId}`} onClick={closeOffcanvas}>
+                            <i className="fa-solid fa-burger"></i> Manage Menu Item
                           </NavLink>
                         </li>
                         <li>
-                          <NavLink
-                            className="dropdown-item"
-                            to="/my-restaurant/edit"
-                          >
-                            <i class="fa-solid fa-pen-to-square"></i> Edit
-                            Restaurant
+                          <NavLink className="dropdown-item" to="/my-restaurant-add-menu" onClick={closeOffcanvas}>
+                            <i className="fa-solid fa-plus"></i> Add Menu Item
                           </NavLink>
                         </li>
                         <li>
-                          <NavLink
-                            className="dropdown-item"
-                            to={`/user/menu-page/${restaurantId}`}
-                          >
-                            <i class="fa-solid fa-burger"></i> Manage Menu Item
+                          <NavLink className="dropdown-item" to="/my-restaurant/register-staff" onClick={closeOffcanvas}>
+                            <i className="fa-solid fa-user-plus"></i> Register Staff
                           </NavLink>
                         </li>
                         <li>
-                          <NavLink
-                            className="dropdown-item"
-                            to="/my-restaurant-add-menu"
-                          >
-                            <i class="fa-solid fa-plus"></i> Add Menu Item
+                          <NavLink className="dropdown-item" to="/admin/user-management" onClick={closeOffcanvas}>
+                            <i className="fa-solid fa-users"></i> Manage Staff Users
                           </NavLink>
                         </li>
                         <li>
-                          <NavLink
-                            className="dropdown-item"
-                            to="/my-restaurant/register-staff"
-                          >
-                            <i class="fa-solid fa-user-plus"></i> Register Staff
+                          <NavLink className="dropdown-item" to="/my-restaurant/edit" onClick={closeOffcanvas}>
+                            <i className="fa-solid fa-pen-to-square"></i> Edit Restaurant
                           </NavLink>
                         </li>
                         <li>
-                          <NavLink
-                            className="dropdown-item"
-                            to="/admin/user-management"
-                          >
-                            <i class="fa-solid fa-users"></i> Manage Staff Users
+                          <NavLink className="dropdown-item" to="/my-restaurant/add" onClick={closeOffcanvas}>
+                            <i className="fa-solid fa-envelope"></i> Request opening new restaurant
                           </NavLink>
                         </li>
                         <li>
-                          <NavLink
-                            className="dropdown-item"
-                            to="/my-restaurant/status-report"
-                          >
-                            <i class="fa-solid fa-chart-bar"></i> Restaurant
-                            Status & Report
+                          <NavLink className="dropdown-item" to="/my-restaurant/status-report" onClick={closeOffcanvas}>
+                            <i className="fa-solid fa-chart-bar"></i> Restaurant Status & Report
                           </NavLink>
                         </li>
                       </ul>
                     </li>
                   )}
-                     {userRole === "customer" && (
+
+                  {userRole === "customer" && (
                     <li className="nav-item">
-                      <NavLink
-                        className="nav-link text-white"
-                        to="/cart"
-                        onClick={closeNavbar}
-                      >
-                        <i class="fa-solid fa-cart-shopping"></i>
-                        <span className=""> Cart</span>
+                      <NavLink className="nav-link text-white" to="/cart" onClick={closeOffcanvas}>
+                        <i className="fa-solid fa-cart-shopping"></i> Cart
                       </NavLink>
                     </li>
                   )}
+
                   <li className="nav-item">
-                    <NavLink className="nav-link text-white" to="/about">
-                      <i class="fa-solid fa-info"></i> About
+                    <NavLink className="nav-link text-white" to="/about" onClick={closeOffcanvas}>
+                      <i className="fa-solid fa-info"></i> About
                     </NavLink>
                   </li>
+
                   <li className="nav-item">
-                    <NavLink className="nav-link text-white" to="/contact">
-                      <i class="fa-solid fa-phone"></i> Contact
+                    <NavLink className="nav-link text-white" to="/contact" onClick={closeOffcanvas}>
+                      <i className="fa-solid fa-phone"></i> Contact
                     </NavLink>
                   </li>
-                  {/* Cart for customer dashboard */}
-               
                 </ul>
 
-                {/* Profile Dropdown - aligned and styled to match nav */}
-                <div className="" style={{ marginTop: "30px" }}>
+                <div className="mt-auto">
                   {user ? (
-                    <li className="nav-item dropdown ">
+                    <li className="nav-item dropdown">
                       <button
                         className="nav-link dropdown-toggle text-white"
-                        type="button"
-                        data-bs-toggle="dropdown"
-                        aria-expanded="false"
+                        onClick={toggleDropdown}
                       >
                         <i className="fa-solid fa-user me-2"></i>
                         {userName}
                       </button>
-                      <ul className="dropdown-menu dropdown-menu-dark ">
+                      <ul className="dropdown-menu dropdown-menu-dark">
                         {!loading && user && userRole === "customer" && (
-                          <>
-                            <li className="">
-                              <NavLink
-                                className="dropdown-item"
-                                to={
-                                  lastOrderId
-                                    ? `/order/${lastOrderId}`
-                                    : "/orders"
-                                }
-                                onClick={closeNavbar}
-                              >
-                                <i class="fa-solid fa-receipt"></i> My Orders
-                              </NavLink>
-                            </li>
-                          </>
+                          <li>
+                            <NavLink
+                              className="dropdown-item"
+                              to={lastOrderId ? `/order/${lastOrderId}` : "/orders"}
+                              onClick={closeOffcanvas}
+                            >
+                              <i className="fa-solid fa-receipt"></i> My Orders
+                            </NavLink>
+                          </li>
                         )}
                         <li>
-                          <NavLink className="dropdown-item " to="/profile">
+                          <NavLink className="dropdown-item" to="/profile" onClick={closeOffcanvas}>
                             <i className="fa fa-user me-2"></i> Profile
                           </NavLink>
                         </li>
@@ -430,23 +362,15 @@ function Header() {
                           <hr className="dropdown-divider" />
                         </li>
                         <li>
-                          <button
-                            className="dropdown-item"
-                            onClick={handleUserLogout}
-                          >
-                            <i class="fa-solid fa-right-from-bracket"></i>{" "}
-                            Logout
+                          <button className="dropdown-item" onClick={handleUserLogout}>
+                            <i className="fa-solid fa-right-from-bracket"></i> Logout
                           </button>
                         </li>
                       </ul>
                     </li>
                   ) : (
                     <li className="nav-item">
-                      <NavLink
-                        className="nav-link text-white"
-                        to="/login"
-                        onClick={closeNavbar}
-                      >
+                      <NavLink className="nav-link text-white" to="/login" onClick={closeOffcanvas}>
                         <i className="fa fa-user me-2"></i> Login
                       </NavLink>
                     </li>

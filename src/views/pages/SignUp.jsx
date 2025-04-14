@@ -123,6 +123,7 @@ export default function SignUp({ isStaffRegistration = false }) {
             userData.restaurantId = restaurantId;
             userData.createdBy = auth.currentUser.uid;
           } else {
+            showError("You must have an approved restaurant to create staff account. Please make sure your restaurant request is submitted and approved.");
             throw new Error("No restaurant found for this owner.");
           }
         }

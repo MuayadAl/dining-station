@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { Link } from "react-router-dom";
 import { auth, db, storage } from "../../models/firebase";
 import {
   getDoc,
@@ -31,6 +32,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 
 import useAlert from "../../hooks/userAlert";
+import Loader from "../components/Loader";
 
 const popularCategories = [
   "Rice",
@@ -83,7 +85,7 @@ const categoryKeywords = {
   "Snacks & Finger Foods": ["snack", "finger", "bite"],
   Fruits: ["fruit", "berry", "banana", "apple"],
   Pizza: ["pizza", "slice"],
-  BBQ: ["bbq", "barbecue", "grill", "grilled chicken"],
+  BBQ: ["bbq", "barbecue", "grill", "grilled chicken", "kebab"],
   "Healthy Options": ["healthy", "low-fat", "low-carb"],
   Specials: ["special", "chef", "limited"],
   Sandwich: ["sandwich", "shawarma", "wrap"],
@@ -130,7 +132,7 @@ const AddMenuItemPage = () => {
       try {
         const user = auth.currentUser;
         if (!user) return;
-
+  
         const q = query(
           collection(db, "restaurants"),
           where("userId", "==", user.uid)
@@ -140,16 +142,20 @@ const AddMenuItemPage = () => {
           const fetchedRestaurantId = querySnapshot.docs[0].data().restaurantId;
           setRestaurantId(fetchedRestaurantId);
           sessionStorage.setItem("restaurantId", fetchedRestaurantId);
+        } else {
+          setRestaurantId(""); // ensure we don't keep the old ID
+          sessionStorage.removeItem("restaurantId"); // also clear this
         }
       } catch (error) {
         console.error("Error fetching restaurant ID:", error);
       }
     };
-
+  
     if (!restaurantId) {
       fetchRestaurantId();
     }
-  }, [restaurantId]);
+  }, [auth.currentUser]);
+  
 
   const uploadImage = async (file) => {
     if (!file) return "";
@@ -300,17 +306,17 @@ const AddMenuItemPage = () => {
     setSizes(updatedSizes);
   };
 
+    if(loading){
+      return Loader("Loading...")
+    }
+
   return (
     <div className="container d-flex justify-content-center align-items-center">
       <div className="card shadow p-4 w-100 my-3">
         <h2 className="text-center mb-4">Add Menu Item</h2>
-        {restaurantId ? (
-          <p className="text-muted text-center">
-            Restaurant ID: {restaurantId}
-          </p>
-        ) : (
-          <p className="text-danger text-center">Loading restaurant info...</p>
-        )}
+        {restaurantId? (
+          <>
+          <p>{restaurantId}</p>
         {message && <div className="alert alert-info">{message}</div>}
 
         <form className="row g-3">
@@ -550,6 +556,26 @@ const AddMenuItemPage = () => {
             </button>
           </div>
         </form>
+          </>
+        ) : (
+          <div className="text-center">
+          <div className="alert alert-warning">
+            <h5 className="mb-2">
+              <FontAwesomeIcon icon={faExclamationCircle} className="me-2" />
+              No Restaurant Found
+            </h5>
+            <p>
+              You must have an approved restaurant to add menu items. <br />
+              Please make sure your restaurant request is submitted and approved.
+            </p>
+            <Link to="/my-restaurant/add">
+  <button className="btn">Request page</button>
+</Link>
+            {/* my-restaurant/add */}
+          </div>
+        </div>
+        )}
+
       </div>
     </div>
   );

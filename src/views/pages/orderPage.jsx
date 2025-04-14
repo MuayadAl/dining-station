@@ -162,7 +162,7 @@ const OrderPage = () => {
     }
   };
 
-  if (loading) return Loader("Loading order details");
+  if (loading) return Loader("Loading order details...");
   if (!order)
     return (
       <div className="container mb-4">

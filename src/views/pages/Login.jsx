@@ -2,8 +2,8 @@ import React, { useState } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "font-awesome/css/font-awesome.min.css";
 import { NavLink, useNavigate } from "react-router-dom"; // Import useNavigate for redirection
-import { auth } from "../../models/firebase"; // Firebase authentication
-import { signInWithEmailAndPassword } from "firebase/auth";
+import { handleLogin } from "../../controllers/authController";
+
 
 export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
@@ -30,31 +30,27 @@ export default function Login() {
   // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError(""); // Clear any previous error message
-
-    // Basic validation
+    setError("");
+  
     if (!email || !password) {
       setError("Both email and password are required.");
       return;
     }
-
-    // Validate email format (simple regex)
-    const emailRegex = /^[a-zA-Z0-9._-]+@apu.edu.my$|@mail.apu.edu.my$/;
+  
+    const emailRegex = /^[a-zA-Z0-9._-]+@(apu\.edu\.my|mail\.apu\.edu\.my)$/;
     if (!emailRegex.test(email)) {
       setError("Please enter a valid email address.");
       return;
     }
-
+  
     try {
-      // Attempt to sign in with Firebase
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
-
-      // After successful login, navigate to the landing page
-      navigate("/landing");
+      const user = await handleLogin(email, password);
+      navigate("/landing", {replace: true});
     } catch (error) {
       setError("Invalid email or password. Please try again.");
     }
   };
+  
 
   return (
     <div className="container d-flex justify-content-center align-items-center vh-100 ">

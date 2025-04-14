@@ -7,6 +7,11 @@ import {
 } from "react-router-dom";
 import "font-awesome/css/font-awesome.min.css";
 import { CartProvider } from "./contexts/CartContext";
+
+// Protected route
+import ProtectedRoute from "./routes/ProtectedRoute";
+import { useAuth } from "./contexts/AuthContext";
+
 // Pages Imports
 import LandingPage from "./views/pages/LandingPage";
 import Header from "./views/components/Header";
@@ -16,7 +21,6 @@ import SignUp from "./views/pages/SignUp";
 import AboutPage from "./views/pages/AboutPage";
 import RestaurantsPage from "./views/pages/RestaurantsPage";
 import Contact from "./views/pages/Contact";
-import RegisteredSuccess from "./views/pages/RegisteredSuccess";
 import Profile from "./views/pages/Profile";
 import AddRestaurant from "./views/pages/AddRestaurant";
 import EditRestaurant from "./views/pages/EditRestaurant";
@@ -30,69 +34,190 @@ import CheckoutPage from "./views/pages/CheckoutPage";
 import RestaurantOrderManager from "./views/pages/RestaurantOrderManager";
 import AdminReportPage from "./views/pages/AdminReportPage";
 import AdminManageUsers from "./views/pages/AdminManageUsers";
+import Forbidden403 from "./views/pages/Forbidden403";
 
 // Stripe pages
 import Cancel from "./views/pages/Cancel";
 import OrderPage from "./views/pages/orderPage";
 
 function App() {
+  const { currentUser } = useAuth();
+
   return (
     <CartProvider>
+      <Router>
+        <Header />
+        <Routes>
+          {/* Public Routes */}
+          <Route path="/" element={<Navigate to="/landing" />} />
+          <Route path="/landing" element={<LandingPage />} />
+          <Route path="/about" element={<AboutPage />} />
+          <Route path="/contact" element={<Contact />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/signup" element={<SignUp />} />
+          <Route path="/cancel" element={<Cancel />} />
+          <Route path="/403" element={<Forbidden403 />} />
 
-    <Router>
-      <Header/>
-      <Routes>
-        {/* Logo navigation starts */}
-        <Route path="/" element={<Navigate to="/landing" />} />
-        {/* Logo navigation ends */}
+          {/* Shared Routes */}
+          <Route
+            path="/profile"
+            element={
+              <ProtectedRoute
+                element={<Profile />}
+                allowedRoles={[
+                  "customer",
+                  "restaurant-owner",
+                  "restaurant-staff",
+                  "admin",
+                ]}
+              />
+            }
+          />
+          <Route
+            path="/restaurants"
+            element={
+              <ProtectedRoute
+                element={<RestaurantsPage />}
+                allowedRoles={["customer", "admin"]}
+              />
+            }
+          />
 
-        {/* Common navigation starts*/}
-        <Route path="/landing" element={<LandingPage />} />
-        <Route path="/restaurants" element={<RestaurantsPage />} />
-        <Route path="/about" element={<AboutPage />} />
-        <Route path="/contact" element={<Contact />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/signup" element={<SignUp />} />
-        <Route path="/registered-success" element={<RegisteredSuccess />} />
-        <Route path="/user/menu-page/:restaurantId" element={<MenuPage />} />
-        <Route path="/profile" element={<Profile />} />
-        <Route path="/cancel" element={<Cancel />} />
+          <Route
+            path="/user/menu-page/:restaurantId"
+            element={
+              <ProtectedRoute
+                element={<MenuPage />}
+                allowedRoles={["customer", "restaurant-owner", "admin"]}
+              />
+            }
+          />
+          <Route
+            path="/admin/user-management"
+            element={
+              <ProtectedRoute
+                element={<AdminManageUsers />}
+                allowedRoles={["admin", "restaurant-owner"]}
+              />
+            }
+          />
 
-        {/* Common navigation ends*/}
+          {/* Customer Routes */}
+          <Route
+            path="/order/:orderId"
+            element={
+              <ProtectedRoute
+                element={<OrderPage />}
+                allowedRoles={["customer"]}
+              />
+            }
+          />
+          <Route
+            path="/cart"
+            element={
+              <ProtectedRoute
+                element={<CartPage />}
+                allowedRoles={["customer"]}
+              />
+            }
+          />
+          <Route
+            path="/checkout/:restaurantId"
+            element={
+              <ProtectedRoute
+                element={<CheckoutPage />}
+                allowedRoles={["customer"]}
+              />
+            }
+          />
 
-        {/* User Dashboard */}
-        <Route path="/cart" element={<CartPage />} />
-        <Route path="/checkout/:restaurantId" element={<CheckoutPage />} />
-        <Route path="/order/:orderId" element={<OrderPage />} />
+          {/* Restaurant Routes */}
+          <Route
+            path="/my-restaurant/add"
+            element={
+              <ProtectedRoute
+                element={<AddRestaurant />}
+                allowedRoles={["restaurant-owner"]}
+              />
+            }
+          />
+          <Route
+            path="/my-restaurant/edit"
+            element={
+              <ProtectedRoute
+                element={<EditRestaurant />}
+                allowedRoles={["restaurant-owner"]}
+              />
+            }
+          />
+          <Route
+            path="/my-restaurant/status-report"
+            element={
+              <ProtectedRoute
+                element={<RestaurantStatusReports />}
+                allowedRoles={["restaurant-owner"]}
+              />
+            }
+          />
+          <Route
+            path="/my-restaurant-add-menu"
+            element={
+              <ProtectedRoute
+                element={<AddMenuItem />}
+                allowedRoles={["restaurant-owner"]}
+              />
+            }
+          />
+          <Route
+            path="/my-restaurant/orders"
+            element={
+              <ProtectedRoute
+                element={<RestaurantOrderManager />}
+                allowedRoles={["restaurant-owner", "restaurant-staff"]}
+              />
+            }
+          />
+          <Route
+            path="/my-restaurant/register-staff"
+            element={
+              <ProtectedRoute
+                element={<SignUp isStaffRegistration />}
+                allowedRoles={["restaurant-owner"]}
+              />
+            }
+          />
 
-        {/* Restaurant Dashboard */}
-        <Route path="/my-restaurant/add" element={<AddRestaurant />} />
-        <Route path="/my-restaurant/edit" element={<EditRestaurant />} />
-        <Route
-          path="/my-restaurant/status-report"
-          element={<RestaurantStatusReports />}
-        />
-        <Route path="/my-restaurant-add-menu" element={<AddMenuItem />} />
-        <Route
-          path="/my-restaurant/orders"
-          element={<RestaurantOrderManager />}
-        />
-        <Route
-          path="/my-restaurant/register-staff"
-          element={<SignUp isStaffRegistration={true} />}
-        />
-
-        {/* Admin Dashboard */}
-        <Route
-          path="/admin/restaurants-requests"
-          element={<AdminRestaurantApprovalPage />}
-        />
-        <Route path="/admin-messages" element={<AdminMessages />} />
-        <Route path="/admin/report" element={<AdminReportPage />} />
-        <Route path="/admin/user-management" element={<AdminManageUsers />} />
-      </Routes>
-      <Footer />
-    </Router>
+          {/* Admin Routes */}
+          <Route
+            path="/admin/restaurants-requests"
+            element={
+              <ProtectedRoute
+                element={<AdminRestaurantApprovalPage />}
+                allowedRoles={["admin"]}
+              />
+            }
+          />
+          <Route
+            path="/admin-messages"
+            element={
+              <ProtectedRoute
+                element={<AdminMessages />}
+                allowedRoles={["admin"]}
+              />
+            }
+          />
+          <Route
+            path="/admin/report"
+            element={
+              <ProtectedRoute
+                element={<AdminReportPage />}
+                allowedRoles={["admin"]}
+              />
+            }
+          />
+        </Routes>
+        <Footer />
+      </Router>
     </CartProvider>
   );
 }

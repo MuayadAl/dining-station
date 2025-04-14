@@ -85,6 +85,8 @@ const AdminRestaurantApprovalPage = () => {
         icon: "success",
         title: `Restaurant ${newStatus}`,
         text: `The restaurant has been marked as ${newStatus}.`,
+        confirmButtonColor: "#f01c1c", 
+
       });
     } catch (err) {
       setError("Error updating status: " + err.message);
@@ -92,6 +94,8 @@ const AdminRestaurantApprovalPage = () => {
         icon: "error",
         title: "Error",
         text: "Failed to update restaurant status.",
+        confirmButtonColor: "#f01c1c", 
+
       });
     }
   };

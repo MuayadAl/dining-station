@@ -102,53 +102,87 @@ function Contact() {
             <div className="col-md-12">
               <div className="mail_section_1">
                 {/* Name Field */}
-                <input
-                  type="text"
-                  className={`mail_text ${errors.userName ? "border-danger" : ""}`}
-                  placeholder="Your Name"
-                  value={userName}
-                  onChange={(e) => setUserName(e.target.value)}
-                />
-                {errors.userName && <small className="text-danger">{errors.userName}</small>}
+                <div>
+                  <input
+                    type="text"
+                    className={`mail_text ${
+                      errors.userName ? "border-danger" : ""
+                    }`}
+                    placeholder="Your Name"
+                    value={userName}
+                    onChange={(e) => setUserName(e.target.value)}
+                  />
+                  {errors.userName && (
+                    <small className="text-danger d-block">
+                      {errors.userName}
+                    </small>
+                  )}
+                </div>
 
                 {/* Email Field */}
-                <input
-                  type="text"
-                  className={`mail_text ${errors.userEmail ? "border-danger" : ""}`}
-                  placeholder="Your Email"
-                  value={userEmail}
-                  onChange={(e) => setUserEmail(e.target.value)}
-                />
-                {errors.userEmail && <small className="text-danger">{errors.userEmail}</small>}
+                <div >
+                  <input
+                    type="text"
+                    className={`mail_text ${
+                      errors.userEmail ? "border-danger" : ""
+                    }`}
+                    placeholder="Your Email"
+                    value={userEmail}
+                    onChange={(e) => setUserEmail(e.target.value)}
+                  />
+                  {errors.userEmail && (
+                    <small className="text-danger d-block">
+                      {errors.userEmail}
+                    </small>
+                  )}
+                </div>
 
                 {/* Phone Field */}
-                <input
-                  type="text"
-                  className="mail_text"
-                  placeholder="Your Phone"
-                  value={userPhone}
-                  onChange={(e) => setUserPhone(e.target.value)}
-                />
+                <div >
+                  <input
+                    type="text"
+                    className="mail_text"
+                    placeholder="Your Phone"
+                    value={userPhone}
+                    onChange={(e) => setUserPhone(e.target.value)}
+                  />
+                </div>
 
-                {/* ✅ Subject Field (New) */}
-                <input
-                  type="text"
-                  className={`mail_text ${errors.subject ? "border-danger" : ""}`}
-                  placeholder="Subject"
-                  value={subject}
-                  onChange={(e) => setSubject(e.target.value)}
-                />
-                {errors.subject && <small className="text-danger">{errors.subject}</small>}
+                {/* Subject Field */}
+                <div >
+                  <input
+                    type="text"
+                    className={`mail_text ${
+                      errors.subject ? "border-danger" : ""
+                    }`}
+                    placeholder="Subject"
+                    value={subject}
+                    onChange={(e) => setSubject(e.target.value)}
+                  />
+                  {errors.subject && (
+                    <small className="text-danger d-block">
+                      {errors.subject}
+                    </small>
+                  )}
+                </div>
 
                 {/* Message Field */}
-                <textarea
-                  className={`massage-bt ${errors.userMessage ? "border-danger" : ""}`}
-                  placeholder="Message"
-                  rows="5"
-                  value={userMessage}
-                  onChange={(e) => setUserMessage(e.target.value)}
-                ></textarea>
-                {errors.userMessage && <small className="text-danger">{errors.userMessage}</small>}
+                <div>
+                  <textarea
+                    className={`massage-bt ${
+                      errors.userMessage ? "border-danger" : ""
+                    }`}
+                    placeholder="Message"
+                    rows="5"
+                    value={userMessage}
+                    onChange={(e) => setUserMessage(e.target.value)}
+                  ></textarea>
+                  {errors.userMessage && (
+                    <small className="text-danger d-block">
+                      {errors.userMessage}
+                    </small>
+                  )}
+                </div>
 
                 {/* Send Button */}
                 <div className="send_bt">

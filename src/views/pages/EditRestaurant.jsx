@@ -8,21 +8,16 @@ import { onAuthStateChanged } from "firebase/auth";
 // Hooks Import
 import useAlert from "../../hooks/userAlert";
 
-
 // Font awesome Import Starts
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSpinner } from "@fortawesome/free-solid-svg-icons";
 import { faPen } from "@fortawesome/free-solid-svg-icons";
 import { faClock } from "@fortawesome/free-solid-svg-icons";
 
-// Bootstrap Import
-import "bootstrap/dist/css/bootstrap.min.css";
-import "bootstrap/dist/js/bootstrap.bundle.min";
-
-
+import imagePlaceHolder from "../../assets/image-placeholder.jpg";
+import Loader from "../components/Loader";
 
 export default function EditRestaurant() {
-
   const { confirmAction, showSuccess, showError } = useAlert(); // Use the alert hook
 
   const [restaurantId, setRestaurantId] = useState(null);
@@ -47,30 +42,34 @@ export default function EditRestaurant() {
   const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
   const [isHidden, setIsHidden] = useState(false);
+  const [imgLoading, setImgLoading] = useState(true);
 
   useEffect(() => {
     let isMounted = true;
-
+  
     const fetchRestaurant = async (user) => {
+      if (isMounted) setLoading(true); // ✅ Start loading
+  
       try {
         if (!user) {
           if (isMounted) {
             setError("User not authenticated");
             setIsHidden(true);
+            setLoading(false); // ✅ End loading on error
           }
           return;
         }
-
+  
         const restaurantQuery = query(
           collection(db, "restaurants"),
           where("userId", "==", user.uid)
         );
         const querySnapshot = await getDocs(restaurantQuery);
-
+  
         if (!querySnapshot.empty) {
           const docSnap = querySnapshot.docs[0];
           const data = docSnap.data();
-
+  
           if (isMounted) {
             setRestaurantId(docSnap.id);
             setFormData({
@@ -89,6 +88,7 @@ export default function EditRestaurant() {
                 Sunday: { enabled: false, open: "", close: "" },
               },
             });
+            setIsHidden(false);
           }
         } else {
           if (isMounted) {
@@ -97,20 +97,24 @@ export default function EditRestaurant() {
           }
         }
       } catch (err) {
-        if (isMounted) setError("Error fetching restaurant: " + err.message);
+        if (isMounted) {
+          setError("Error fetching restaurant: " + err.message);
+        }
+      } finally {
+        if (isMounted) setLoading(false); // ✅ Always stop loading
       }
     };
-
-    // Listen for authentication state changes
+  
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       fetchRestaurant(user);
     });
-
+  
     return () => {
-      isMounted = false; // Prevent state updates when unmounted
-      unsubscribe(); // Unsubscribe from auth listener to prevent memory leaks
+      isMounted = false;
+      unsubscribe();
     };
   }, []);
+  
 
   const handleChange = (e) => {
     setFormData({
@@ -158,33 +162,35 @@ export default function EditRestaurant() {
     setError("");
     setSuccess("");
 
-
     if (!restaurantId) {
-        showError("No restaurant ID found. Cannot update.");
-        return;
+      showError("No restaurant ID found. Cannot update.");
+      return;
     }
 
     // Show confirmation before updating the restaurant
     const isConfirmed = await confirmAction(
-        "Are you sure?",
-        "Do you want to update this restaurant?",
-        "Yes, update it!"
+      "Are you sure?",
+      "Do you want to update this restaurant?",
+      "Yes, update it!"
     );
 
     if (!isConfirmed) return; // Stop if user cancels
 
     setLoading(true);
     try {
-        await editRestaurant(restaurantId, { ...formData, imgFile });
-        showSuccess("Restaurant updated successfully!");
-        setSuccess("Restaurant updated successfully");
+      await editRestaurant(restaurantId, { ...formData, imgFile });
+      showSuccess("Restaurant updated successfully!");
+      setSuccess("Restaurant updated successfully");
     } catch (err) {
-        showError("Error updating restaurant: " + err.message);
-        setError("Error updating restaurant: " + err.message);
+      showError("Error updating restaurant: " + err.message);
+      setError("Error updating restaurant: " + err.message);
     } finally {
-        setLoading(false);
+      setLoading(false);
     }
-};
+  };
+  if(loading){
+    return Loader("Loading...")
+  }
 
   return (
     <div className="container d-flex justify-content-center align-items-center py-2">
@@ -200,11 +206,24 @@ export default function EditRestaurant() {
           <form onSubmit={handleSubmit}>
             {/* Restaurant Image */}
             <div className="mb-3 text-center position-relative">
+              {imgLoading && (
+                <div
+                  className="spinner-border text-primary position-absolute top-50 start-50 translate-middle"
+                  role="status"
+                  style={{ width: "2rem", height: "2rem" }}
+                ></div>
+              )}
               <img
-                src={formData.imgUrl || "https://via.placeholder.com/150"}
-                className="restaurant_edit_img"
+                src={formData.imgUrl || imagePlaceHolder}
                 alt="Restaurant Logo"
+                className="restaurant_edit_img"
                 onClick={handleImageClick}
+                onLoad={() => setImgLoading(false)}
+                onError={(e) => {
+                  e.target.src = imagePlaceHolder;
+                  setImgLoading(false);
+                }}
+                style={imgLoading ? { visibility: "hidden" } : {}}
               />
               <FontAwesomeIcon
                 icon={faPen}
@@ -220,7 +239,7 @@ export default function EditRestaurant() {
               />
             </div>
 
-            <hr class="border border-primary border-3 opacity-75"/>
+            <hr class="border border-primary border-3 opacity-75" />
 
             {/* Restaurant Name */}
             <div className="mb-3">
@@ -305,7 +324,11 @@ export default function EditRestaurant() {
                       id={day}
                       checked={formData.openingHours?.[day]?.enabled || false}
                       onChange={(e) =>
-                        handleOpeningHoursChange(day, "enabled", e.target.checked)
+                        handleOpeningHoursChange(
+                          day,
+                          "enabled",
+                          e.target.checked
+                        )
                       }
                     />
                     <label className="form-check-label">{day}</label>
@@ -317,7 +340,11 @@ export default function EditRestaurant() {
                           className="form-control w-25 mr-2"
                           value={formData.openingHours?.[day]?.open || ""}
                           onChange={(e) =>
-                            handleOpeningHoursChange(day, "open", e.target.value)
+                            handleOpeningHoursChange(
+                              day,
+                              "open",
+                              e.target.value
+                            )
                           }
                         />
                         <input
@@ -325,7 +352,11 @@ export default function EditRestaurant() {
                           className="form-control w-25"
                           value={formData.openingHours?.[day]?.close || ""}
                           onChange={(e) =>
-                            handleOpeningHoursChange(day, "close", e.target.value)
+                            handleOpeningHoursChange(
+                              day,
+                              "close",
+                              e.target.value
+                            )
                           }
                         />
                       </div>

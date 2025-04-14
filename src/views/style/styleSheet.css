@@ -1529,4 +1529,32 @@ textarea#comment.update_mail::placeholder {
     width: 5%;
   }
   
+  /* Forbidden page */
+
+  /* Forbidden403.css */
+
+  
+  .forbidden-box {
+    background-color: white;
+    max-width: 600px;
+    width: 100%;
+  }
+  
+  .forbidden-code {
+    font-size: 6rem;
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+  }
+  
+  .forbidden-heading {
+    font-size: 2rem;
+    font-weight: 500;
+    color: #343a40;
+  }
+  
+  .forbidden-message {
+    color: #6c757d;
+    font-size: 1.1rem;
+  }
+  
   

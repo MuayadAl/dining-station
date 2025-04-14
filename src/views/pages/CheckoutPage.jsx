@@ -4,7 +4,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { Button, Table, Form } from "react-bootstrap";
 import useAlert from "../../hooks/userAlert";
 import { auth, db } from "../../models/firebase";
-import { doc, getDoc, setDoc, collection } from "firebase/firestore";
+import { doc, getDoc, setDoc,updateDoc, collection } from "firebase/firestore";
 import { getUserDetails } from "../../controllers/userController";
 import { clearCart } from "../../controllers/cartController";
 
@@ -13,6 +13,45 @@ const CheckoutForm = ({ cartItems, total, user, restaurant }) => {
   const [paymentMethod, setPaymentMethod] = useState("Stripe");
   const [loading, setLoading] = useState(false);
 
+  const deductItemQuantities = async (restaurantId, cartItems) => {
+    const menuRef = doc(db, "menu", restaurantId);
+    const menuSnap = await getDoc(menuRef);
+  
+    if (!menuSnap.exists()) {
+      throw new Error("Menu document not found.");
+    }
+  
+    const menuData = menuSnap.data();
+    let updatedItems = menuData.items || [];
+  
+    // Loop through cart items to deduct quantity
+    cartItems.forEach((cartItem) => {
+      const index = updatedItems.findIndex(
+        (item) =>
+          item.itemId === cartItem.itemId &&
+          item.sizes?.some((s) => s.size === cartItem.selectedSize)
+      );
+  
+      if (index !== -1) {
+        // Deduct from the right size
+        const sizeIndex = updatedItems[index].sizes.findIndex(
+          (s) => s.size === cartItem.selectedSize
+        );
+  
+        if (
+          sizeIndex !== -1 &&
+          typeof updatedItems[index].availableQuantity === "number"
+        ) {
+          updatedItems[index].availableQuantity -= cartItem.quantity;
+          if (updatedItems[index].availableQuantity < 0) {
+            updatedItems[index].availableQuantity = 0;
+          }
+        }
+      }
+    });
+  
+    await updateDoc(menuRef, { items: updatedItems });
+  };
 
   const handlePayment = async () => {
     if (cartItems.length === 0) {
@@ -46,6 +85,7 @@ const CheckoutForm = ({ cartItems, total, user, restaurant }) => {
         };
 
         await setDoc(orderRef, orderData, { merge: true });
+        await deductItemQuantities(restaurant.id, cartItems);
         await clearCart();
 
         showSuccess(`Your order has been placed with ${paymentMethod}.`);
@@ -85,7 +125,7 @@ const CheckoutForm = ({ cartItems, total, user, restaurant }) => {
         showError(data.error || "Payment failed. Please try again.");
         return;
       }
-
+      await deductItemQuantities(restaurant.id, cartItems);
       window.location.href = data.url; // Redirect to Stripe
     } catch (err) {
       console.error("Network error:", err);
