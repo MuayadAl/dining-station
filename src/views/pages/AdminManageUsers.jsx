@@ -242,6 +242,8 @@ const AdminManageUsers = () => {
               <i className="fa-solid fa-spinner"></i> Loading users...
             </p>
           ) : (
+            <div className="table-responsive">
+
             <table className="w-full table-auto border">
               <thead>
                 <tr className="bg-gray-100">
@@ -288,6 +290,7 @@ const AdminManageUsers = () => {
                 )}
               </tbody>
             </table>
+            </div>
           )}
 
           {/* Load more */}

@@ -4,7 +4,14 @@ import React, { useState, useEffect, useRef } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { handleLogout } from "../../controllers/authController";
 import { auth, db } from "../../models/firebase";
-import { doc, getDoc, collection, getDocs, query, where } from "firebase/firestore";
+import {
+  doc,
+  getDoc,
+  collection,
+  getDocs,
+  query,
+  where,
+} from "firebase/firestore";
 import logo from "../../assets/dining-station-logo.png";
 
 function Header() {
@@ -16,28 +23,20 @@ function Header() {
   const [lastOrderId, setLastOrderId] = useState(null);
   const navigate = useNavigate();
   const offcanvasRef = useRef(null);
+  const bootstrap = window.bootstrap;
 
   // Close offcanvas when a link is clicked
   const closeOffcanvas = () => {
     try {
-      // Close all dropdowns first
-      document.querySelectorAll('.dropdown-menu').forEach(menu => {
-        menu.classList.remove('show');
-      });
-  
-      // Then close the offcanvas
-      if (typeof window !== 'undefined' && window.bootstrap) {
-        const offcanvasEl = offcanvasRef.current;
-        if (offcanvasEl) {
-          const offcanvas = window.bootstrap.Offcanvas.getInstance(offcanvasEl) || 
-                           new window.bootstrap.Offcanvas(offcanvasEl);
-          offcanvas.hide();
-        }
+      if (window._offcanvasCloseBtn) {
+        window._offcanvasCloseBtn.click(); // 🧠 This triggers proper Bootstrap hide
       }
     } catch (error) {
-      console.error("Error closing offcanvas:", error);
+      console.error("Error closing offcanvas via simulated click:", error);
     }
   };
+  
+  
 
   const toggleDropdown = (e) => {
     e.preventDefault();
@@ -45,11 +44,11 @@ function Header() {
     const dropdownMenu = e.currentTarget.nextElementSibling;
     if (dropdownMenu) {
       // Close all other dropdowns first
-      document.querySelectorAll('.dropdown-menu').forEach(menu => {
-        if (menu !== dropdownMenu) menu.classList.remove('show');
+      document.querySelectorAll(".dropdown-menu").forEach((menu) => {
+        if (menu !== dropdownMenu) menu.classList.remove("show");
       });
       // Toggle current dropdown
-      dropdownMenu.classList.toggle('show');
+      dropdownMenu.classList.toggle("show");
     }
   };
 
@@ -57,21 +56,23 @@ function Header() {
   useEffect(() => {
     const handleClickOutside = (event) => {
       // If clicking outside of navbar toggler or offcanvas
-      if (!event.target.closest('.navbar-toggler') && 
-          !event.target.closest('.offcanvas')) {
+      if (
+        !event.target.closest(".navbar-toggler") &&
+        !event.target.closest(".offcanvas")
+      ) {
         closeOffcanvas();
       }
-      
+
       // Close dropdowns when clicking outside
-      if (!event.target.closest('.dropdown-toggle')) {
-        document.querySelectorAll('.dropdown-menu').forEach(menu => {
-          menu.classList.remove('show');
+      if (!event.target.closest(".dropdown-toggle")) {
+        document.querySelectorAll(".dropdown-menu").forEach((menu) => {
+          menu.classList.remove("show");
         });
       }
     };
-    
-    document.addEventListener('click', handleClickOutside);
-    return () => document.removeEventListener('click', handleClickOutside);
+
+    document.addEventListener("click", handleClickOutside);
+    return () => document.removeEventListener("click", handleClickOutside);
   }, []);
 
   // Fetch the latest order ID
@@ -151,7 +152,10 @@ function Header() {
   };
 
   return (
-    <div className="header_section header_bg navbar-light" style={{ position: "sticky", top: "0", zIndex: "1000" }}>
+    <div
+      className="header_section header_bg navbar-light"
+      style={{ position: "sticky", top: "0", zIndex: "1000" }}
+    >
       <div className="container">
         <nav className="navbar navbar-expand-lg navbar-dark">
           <div className="container-fluid">
@@ -178,7 +182,10 @@ function Header() {
               ref={offcanvasRef}
             >
               <div className="offcanvas-header border-bottom">
-                <h5 className="offcanvas-title text-white" id="offcanvasNavbarLabel">
+                <h5
+                  className="offcanvas-title text-white"
+                  id="offcanvasNavbarLabel"
+                >
                   <i className="fa-solid fa-utensils"></i> Menu
                 </h5>
                 <button
@@ -186,34 +193,47 @@ function Header() {
                   className="btn-close btn-close-white"
                   data-bs-dismiss="offcanvas"
                   aria-label="Close"
+                  ref={(el) => (window._offcanvasCloseBtn = el)} 
                 ></button>
               </div>
               <div className="offcanvas-body">
                 <ul className="navbar-nav flex-grow-1">
                   <li className="nav-item">
-                  <NavLink 
-  className="nav-link text-white" 
-  to="/landing" 
-  onClick={() => {
-    closeOffcanvas();
-    // Add any other click handlers here if needed
-  }}
->
-  <i className="fa-solid fa-house-user"></i> Home
-</NavLink>
+                    <NavLink
+                      className="nav-link text-white"
+                      to="/landing"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        closeOffcanvas(); 
+                        navigate("/landing"); 
+                      }}
+                    >
+                      <i className="fa-solid fa-house-user"></i> Home
+                    </NavLink>
                   </li>
+                  
 
-                  {!loading && user && (userRole === "customer" || userRole === "admin") && (
-                    <li className="nav-item">
-                      <NavLink className="nav-link text-white" to="/restaurants" onClick={closeOffcanvas}>
-                        <i className="fa-solid fa-store"></i> Restaurants
-                      </NavLink>
-                    </li>
-                  )}
+                  {!loading &&
+                    user &&
+                    (userRole === "customer" || userRole === "admin") && (
+                      <li className="nav-item">
+                        <NavLink
+                          className="nav-link text-white"
+                          to="/restaurants"
+                          onClick={closeOffcanvas}
+                        >
+                          <i className="fa-solid fa-store"></i> Restaurants
+                        </NavLink>
+                      </li>
+                    )}
 
                   {!loading && user && userRole === "restaurant-staff" && (
                     <li className="nav-item">
-                      <NavLink className="nav-link text-white" to="/my-restaurant/orders" onClick={closeOffcanvas}>
+                      <NavLink
+                        className="nav-link text-white"
+                        to="/my-restaurant/orders"
+                        onClick={closeOffcanvas}
+                      >
                         <i className="fa-solid fa-receipt"></i> Manage Orders
                       </NavLink>
                     </li>
@@ -229,27 +249,51 @@ function Header() {
                       </button>
                       <ul className="dropdown-menu dropdown-menu-dark">
                         <li>
-                          <NavLink className="dropdown-item" to="/signup" onClick={closeOffcanvas}>
-                            <i className="fa-solid fa-user-plus"></i> Register new user
+                          <NavLink
+                            className="dropdown-item"
+                            to="/signup"
+                            onClick={closeOffcanvas}
+                          >
+                            <i className="fa-solid fa-user-plus"></i> Register
+                            new user
                           </NavLink>
                         </li>
                         <li>
-                          <NavLink className="dropdown-item" to="/admin/user-management" onClick={closeOffcanvas}>
-                            <i className="fa-solid fa-users"></i> View & Manage Users
+                          <NavLink
+                            className="dropdown-item"
+                            to="/admin/user-management"
+                            onClick={closeOffcanvas}
+                          >
+                            <i className="fa-solid fa-users"></i> View & Manage
+                            Users
                           </NavLink>
                         </li>
                         <li>
-                          <NavLink className="dropdown-item" to="/admin/restaurants-requests" onClick={closeOffcanvas}>
-                            <i className="fa-solid fa-store"></i> Restaurants opening requests
+                          <NavLink
+                            className="dropdown-item"
+                            to="/admin/restaurants-requests"
+                            onClick={closeOffcanvas}
+                          >
+                            <i className="fa-solid fa-store"></i> Restaurants
+                            opening requests
                           </NavLink>
                         </li>
                         <li>
-                          <NavLink className="dropdown-item" to="/admin-messages" onClick={closeOffcanvas}>
-                            <i className="fa-solid fa-comments"></i> Customer Messages
+                          <NavLink
+                            className="dropdown-item"
+                            to="/admin-messages"
+                            onClick={closeOffcanvas}
+                          >
+                            <i className="fa-solid fa-comments"></i> Customer
+                            Messages
                           </NavLink>
                         </li>
                         <li>
-                          <NavLink className="dropdown-item" to="/admin/report" onClick={closeOffcanvas}>
+                          <NavLink
+                            className="dropdown-item"
+                            to="/admin/report"
+                            onClick={closeOffcanvas}
+                          >
                             <i className="fa-solid fa-chart-bar"></i> Reports
                           </NavLink>
                         </li>
@@ -267,43 +311,82 @@ function Header() {
                       </button>
                       <ul className="dropdown-menu dropdown-menu-dark">
                         <li>
-                          <NavLink className="dropdown-item" to="/my-restaurant/orders" onClick={closeOffcanvas}>
-                            <i className="fa-solid fa-receipt"></i> Manage Orders
+                          <NavLink
+                            className="dropdown-item"
+                            to="/my-restaurant/orders"
+                            onClick={closeOffcanvas}
+                          >
+                            <i className="fa-solid fa-receipt"></i> Manage
+                            Orders
                           </NavLink>
                         </li>
                         <li>
-                          <NavLink className="dropdown-item" to={`/user/menu-page/${restaurantId}`} onClick={closeOffcanvas}>
-                            <i className="fa-solid fa-burger"></i> Manage Menu Item
+                          <NavLink
+                            className="dropdown-item"
+                            to={`/user/menu-page/${restaurantId}`}
+                            onClick={closeOffcanvas}
+                          >
+                            <i className="fa-solid fa-burger"></i> Manage Menu
+                            Item
                           </NavLink>
                         </li>
                         <li>
-                          <NavLink className="dropdown-item" to="/my-restaurant-add-menu" onClick={closeOffcanvas}>
+                          <NavLink
+                            className="dropdown-item"
+                            to="/my-restaurant-add-menu"
+                            onClick={closeOffcanvas}
+                          >
                             <i className="fa-solid fa-plus"></i> Add Menu Item
                           </NavLink>
                         </li>
                         <li>
-                          <NavLink className="dropdown-item" to="/my-restaurant/register-staff" onClick={closeOffcanvas}>
-                            <i className="fa-solid fa-user-plus"></i> Register Staff
+                          <NavLink
+                            className="dropdown-item"
+                            to="/my-restaurant/register-staff"
+                            onClick={closeOffcanvas}
+                          >
+                            <i className="fa-solid fa-user-plus"></i> Register
+                            Staff
                           </NavLink>
                         </li>
                         <li>
-                          <NavLink className="dropdown-item" to="/admin/user-management" onClick={closeOffcanvas}>
-                            <i className="fa-solid fa-users"></i> Manage Staff Users
+                          <NavLink
+                            className="dropdown-item"
+                            to="/admin/user-management"
+                            onClick={closeOffcanvas}
+                          >
+                            <i className="fa-solid fa-users"></i> Manage Staff
+                            Users
                           </NavLink>
                         </li>
                         <li>
-                          <NavLink className="dropdown-item" to="/my-restaurant/edit" onClick={closeOffcanvas}>
-                            <i className="fa-solid fa-pen-to-square"></i> Edit Restaurant
+                          <NavLink
+                            className="dropdown-item"
+                            to="/my-restaurant/edit"
+                            onClick={closeOffcanvas}
+                          >
+                            <i className="fa-solid fa-pen-to-square"></i> Edit
+                            Restaurant
                           </NavLink>
                         </li>
                         <li>
-                          <NavLink className="dropdown-item" to="/my-restaurant/add" onClick={closeOffcanvas}>
-                            <i className="fa-solid fa-envelope"></i> Request opening new restaurant
+                          <NavLink
+                            className="dropdown-item"
+                            to="/my-restaurant/add"
+                            onClick={closeOffcanvas}
+                          >
+                            <i className="fa-solid fa-envelope"></i> Request
+                            opening new restaurant
                           </NavLink>
                         </li>
                         <li>
-                          <NavLink className="dropdown-item" to="/my-restaurant/status-report" onClick={closeOffcanvas}>
-                            <i className="fa-solid fa-chart-bar"></i> Restaurant Status & Report
+                          <NavLink
+                            className="dropdown-item"
+                            to="/my-restaurant/status-report"
+                            onClick={closeOffcanvas}
+                          >
+                            <i className="fa-solid fa-chart-bar"></i> Restaurant
+                            Status & Report
                           </NavLink>
                         </li>
                       </ul>
@@ -312,20 +395,36 @@ function Header() {
 
                   {userRole === "customer" && (
                     <li className="nav-item">
-                      <NavLink className="nav-link text-white" to="/cart" onClick={closeOffcanvas}>
+                      <NavLink
+                        className="nav-link text-white"
+                        to="/cart"
+                        onClick={closeOffcanvas}
+                      >
                         <i className="fa-solid fa-cart-shopping"></i> Cart
                       </NavLink>
                     </li>
                   )}
 
                   <li className="nav-item">
-                    <NavLink className="nav-link text-white" to="/about" onClick={closeOffcanvas}>
+                    <NavLink
+                      className="nav-link text-white"
+                      to="/about"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        closeOffcanvas();
+                        navigate("/about");
+                      }}
+                    >
                       <i className="fa-solid fa-info"></i> About
                     </NavLink>
                   </li>
 
                   <li className="nav-item">
-                    <NavLink className="nav-link text-white" to="/contact" onClick={closeOffcanvas}>
+                    <NavLink
+                      className="nav-link text-white"
+                      to="/contact"
+                      onClick={closeOffcanvas}
+                    >
                       <i className="fa-solid fa-phone"></i> Contact
                     </NavLink>
                   </li>
@@ -346,7 +445,11 @@ function Header() {
                           <li>
                             <NavLink
                               className="dropdown-item"
-                              to={lastOrderId ? `/order/${lastOrderId}` : "/orders"}
+                              to={
+                                lastOrderId
+                                  ? `/order/${lastOrderId}`
+                                  : "/orders"
+                              }
                               onClick={closeOffcanvas}
                             >
                               <i className="fa-solid fa-receipt"></i> My Orders
@@ -354,7 +457,11 @@ function Header() {
                           </li>
                         )}
                         <li>
-                          <NavLink className="dropdown-item" to="/profile" onClick={closeOffcanvas}>
+                          <NavLink
+                            className="dropdown-item"
+                            to="/profile"
+                            onClick={closeOffcanvas}
+                          >
                             <i className="fa fa-user me-2"></i> Profile
                           </NavLink>
                         </li>
@@ -362,15 +469,23 @@ function Header() {
                           <hr className="dropdown-divider" />
                         </li>
                         <li>
-                          <button className="dropdown-item" onClick={handleUserLogout}>
-                            <i className="fa-solid fa-right-from-bracket"></i> Logout
+                          <button
+                            className="dropdown-item"
+                            onClick={handleUserLogout}
+                          >
+                            <i className="fa-solid fa-right-from-bracket"></i>{" "}
+                            Logout
                           </button>
                         </li>
                       </ul>
                     </li>
                   ) : (
                     <li className="nav-item">
-                      <NavLink className="nav-link text-white" to="/login" onClick={closeOffcanvas}>
+                      <NavLink
+                        className="nav-link text-white"
+                        to="/login"
+                        onClick={closeOffcanvas}
+                      >
                         <i className="fa fa-user me-2"></i> Login
                       </NavLink>
                     </li>

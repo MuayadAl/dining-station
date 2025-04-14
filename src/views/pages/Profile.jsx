@@ -197,7 +197,7 @@ export default function Profile() {
           </div>
 
           {/* Action Buttons */}
-          <div className="d-flex justify-content-between">
+          <div className="d-flex justify-content-between gap-2">
             {editing ? (
               <button type="button" className="btn btn-primary" onClick={handleSaveChanges}>
                 <FontAwesomeIcon icon={faFloppyDisk} /> Save Changes
