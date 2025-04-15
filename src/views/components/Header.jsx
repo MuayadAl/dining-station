@@ -35,8 +35,6 @@ function Header() {
       console.error("Error closing offcanvas via simulated click:", error);
     }
   };
-  
-  
 
   const toggleDropdown = (e) => {
     e.preventDefault();
@@ -63,11 +61,14 @@ function Header() {
         closeOffcanvas();
       }
 
-      // Close dropdowns when clicking outside
-      if (!event.target.closest(".dropdown-toggle")) {
-        document.querySelectorAll(".dropdown-menu").forEach((menu) => {
-          menu.classList.remove("show");
-        });
+      // Only close dropdowns inside the offcanvas (Header dropdowns)
+      const isHeaderDropdown = event.target.closest(
+        ".offcanvas .dropdown-toggle"
+      );
+      if (!isHeaderDropdown) {
+        document
+          .querySelectorAll(".offcanvas .dropdown-menu")
+          .forEach((menu) => menu.classList.remove("show"));
       }
     };
 
@@ -193,7 +194,7 @@ function Header() {
                   className="btn-close btn-close-white"
                   data-bs-dismiss="offcanvas"
                   aria-label="Close"
-                  ref={(el) => (window._offcanvasCloseBtn = el)} 
+                  ref={(el) => (window._offcanvasCloseBtn = el)}
                 ></button>
               </div>
               <div className="offcanvas-body">
@@ -204,14 +205,13 @@ function Header() {
                       to="/landing"
                       onClick={(e) => {
                         e.preventDefault();
-                        closeOffcanvas(); 
-                        navigate("/landing"); 
+                        closeOffcanvas();
+                        navigate("/landing");
                       }}
                     >
                       <i className="fa-solid fa-house-user"></i> Home
                     </NavLink>
                   </li>
-                  
 
                   {!loading &&
                     user &&
@@ -393,18 +393,6 @@ function Header() {
                     </li>
                   )}
 
-                  {userRole === "customer" && (
-                    <li className="nav-item">
-                      <NavLink
-                        className="nav-link text-white"
-                        to="/cart"
-                        onClick={closeOffcanvas}
-                      >
-                        <i className="fa-solid fa-cart-shopping"></i> Cart
-                      </NavLink>
-                    </li>
-                  )}
-
                   <li className="nav-item">
                     <NavLink
                       className="nav-link text-white"
@@ -428,9 +416,20 @@ function Header() {
                       <i className="fa-solid fa-phone"></i> Contact
                     </NavLink>
                   </li>
+                  {userRole === "customer" && (
+                    <li className="nav-item">
+                      <NavLink
+                        className="nav-link text-white"
+                        to="/cart"
+                        onClick={closeOffcanvas}
+                      >
+                        <i className="fa-solid fa-cart-shopping"></i> Cart
+                      </NavLink>
+                    </li>
+                  )}
                 </ul>
 
-                <div className="mt-auto">
+                <div className="" style={{ paddingTop: "30px" }}>
                   {user ? (
                     <li className="nav-item dropdown">
                       <button

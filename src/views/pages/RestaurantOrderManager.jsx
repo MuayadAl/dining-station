@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from "react";
+import "bootstrap/dist/js/bootstrap.bundle.min.js";
+import React, { useEffect, useState, useRef } from "react";
 import {
   collection,
   query,
@@ -35,6 +36,8 @@ function RestaurantOrderManager() {
   const [toastMessage, setToastMessage] = useState("");
   const [openingHours, setOpeningHours] = useState({});
   const [prevAutoStatus, setPrevAutoStatus] = useState(null);
+  const [isStatusDropdownOpen, setIsStatusDropdownOpen] = useState(false);
+  const dropdownWrapperRef = useRef(null);
 
   useEffect(() => {
     const auth = getAuth();
@@ -108,6 +111,22 @@ function RestaurantOrderManager() {
     });
 
     return () => unsubscribeAuth();
+  }, []);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (
+        dropdownWrapperRef.current &&
+        !dropdownWrapperRef.current.contains(e.target)
+      ) {
+        setIsStatusDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
   }, []);
 
   useEffect(() => {
@@ -336,7 +355,7 @@ function RestaurantOrderManager() {
           </h2>
 
           {/* Restaurant Status */}
-          <div className="dropdown">
+          <div className="dropdown position-relative" ref={dropdownWrapperRef}>
             <button
               className={`btn dropdown-toggle ${
                 restaurantStatus === "open"
@@ -346,19 +365,29 @@ function RestaurantOrderManager() {
                   : "btn-danger"
               }`}
               type="button"
-              id="statusDropdown"
-              data-bs-toggle="dropdown"
-              aria-expanded="false"
+              onClick={() => setIsStatusDropdownOpen((prev) => !prev)}
             >
               Status: {restaurantStatus}
             </button>
 
-            <ul className="dropdown-menu" aria-labelledby="statusDropdown">
+            <ul
+              className={`dropdown-menu custom-dropdown-menu ${
+                isStatusDropdownOpen ? "show" : ""
+              }`}
+              style={{
+                display: isStatusDropdownOpen ? "block" : "none",
+                position: "absolute",
+                zIndex: 1000,
+              }}
+            >
               {["open", "busy", "closed", "auto"].map((status) => (
                 <li key={status}>
                   <button
                     className="dropdown-item"
-                    onClick={() => handleStatusChange(status)}
+                    onClick={() => {
+                      handleStatusChange(status);
+                      setIsStatusDropdownOpen(false);
+                    }}
                   >
                     {status}
                   </button>
@@ -461,7 +490,7 @@ function RestaurantOrderManager() {
                     <div className="row g-3">
                       {orders
                         .filter((order) => order.status === "Ready to Pick Up")
-                        .sort((a, b) => new Date(a.time) - new Date(b.time)) 
+                        .sort((a, b) => new Date(a.time) - new Date(b.time))
                         .map(renderOrderCard)}
                     </div>
                   )}

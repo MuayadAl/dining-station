@@ -1,3 +1,6 @@
+.dropdown-menu.show {
+  display: block !important;
+}
 
 /* Google Fonts */
 
@@ -364,12 +367,12 @@ button {
 @media (max-width: 768px) {
     .banner_section {
       padding: 60px 15px 80px 15px;
-      height: auto; /* let content define height on small screens */
+      height: auto; 
       text-align: left;
     }
   
     .banner_taital {
-      font-size: 2rem; /* reduce heading size */
+      font-size: 2rem; 
     }
   
     .banner_text {
@@ -444,6 +447,7 @@ button {
     background-color: #fefefd;
     border: 1px solid #f01c1c;
 }
+
 
 .callnow_bt {
     width: 175px;
@@ -1243,6 +1247,8 @@ textarea#comment.update_mail::placeholder {
     background-color: #f01c1c !important; 
     
   }
+
+  
 
 /* Dropdown menu ends */
 
