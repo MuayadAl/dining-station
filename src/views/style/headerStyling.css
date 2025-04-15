@@ -1,0 +1,310 @@
+
+/* Header Styles */
+.app-header {
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    background: linear-gradient(135deg, #1a1a1a, #1a1a1a);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+  }
+  
+  .app-header:hover {
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+  }
+  
+  .navbar {
+    padding: 0.8rem 0;
+  }
+  
+  .logo {
+    height: 40px;
+    transition: transform 0.3s ease;
+  }
+  
+  .logo:hover {
+    transform: scale(1.05);
+  }
+  
+  /* Nav Links */
+  .nav-link:not(.tab-button) {
+    font-weight: 500;
+    margin: 0 0.25rem;
+    border-radius: 4px;
+    transition: all 0.3s ease;
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+  
+  .nav-link:not(.tab-button):hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    transform: translateY(-2px);
+  }
+  
+  .nav-link:not(.tab-button)::before {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    width: 0;
+    height: 2px;
+    background-color: #e63946;
+    transition: all 0.3s ease;
+    transform: translateX(-50%);
+  }
+  
+  .nav-link:not(.tab-button):hover::before {
+    width: 70%;
+  }
+  
+  .nav-link.active {
+    background-color: rgba(230, 57, 70, 0.2);
+  }
+  
+  .nav-link.active:before {
+    width: 70%;
+    background-color: #e63946;
+  }
+  
+  /* Dropdowns */
+  .dropdown-menu {
+    background-color: #2c3e50;
+    border: none;
+    border-radius: 8px;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+    padding: 0.5rem 0;
+  }
+  
+  .dropdown-item {
+    position: relative;
+    display: flex;
+    align-items: center;
+    /* justify-content: start; */
+    padding: 0.5rem 1.5rem;
+    transition: all 0.3s ease;
+    color: #f8f9fa;
+  }
+  
+  .dropdown-item::before {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    width: 0;
+    height: 2px;
+    background-color: #e63946;
+    transition: all 0.3s ease;
+    transform: translateX(-50%);
+  }
+  
+  .dropdown-item:hover::before {
+    width: 70%;
+    
+  }
+  
+  .dropdown-item:hover {
+    background-color: transparent; 
+    color: #ffffff;
+    transform: translateX(5px); 
+  }
+  
+  /* Offcanvas */
+  .offcanvas {
+    background-color: #2c3e50 !important;
+    color: #f8f9fa;
+  }
+  
+  .offcanvas-header {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  }
+  
+  .offcanvas-title {
+    font-weight: 600;
+  }
+  
+  /* Toggler */
+  .navbar-toggler {
+    border: none;
+    padding: 0.5rem;
+  }
+  
+  .toggler-icon {
+    display: block;
+    width: 24px;
+    height: 2px;
+    background-color: #f8f9fa;
+    position: relative;
+    transition: all 0.3s ease;
+  }
+  
+  .toggler-icon:before,
+  .toggler-icon:after {
+    content: '';
+    position: absolute;
+    width: 24px;
+    height: 2px;
+    background-color: #f8f9fa;
+    transition: all 0.3s ease;
+  }
+  
+  .toggler-icon:before {
+    transform: translateY(-6px);
+  }
+  
+  .toggler-icon:after {
+    transform: translateY(6px);
+  }
+  
+  .navbar-toggler[aria-expanded="true"] .toggler-icon {
+    background-color: transparent;
+  }
+  
+  .navbar-toggler[aria-expanded="true"] .toggler-icon:before {
+    transform: rotate(45deg);
+  }
+  
+  .navbar-toggler[aria-expanded="true"] .toggler-icon:after {
+    transform: rotate(-45deg);
+  }
+  
+  /* User Section */
+  .user-section {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+  }
+  
+  .user-profile {
+    display: flex;
+    align-items: center;
+    background-color: rgba(230, 57, 70, 0.2);
+    border-radius: 50px;
+    padding: 0.5rem 1rem !important;
+  }
+  
+  .user-profile:hover {
+    background-color: rgba(230, 57, 70, 0.4) !important;
+  }
+  
+  .login-btn {
+    background-color: #e63946;
+    border-radius: 50px;
+    padding: 0.5rem 1.5rem !important;
+    margin-top: 0.5rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .login-btn:hover {
+    background-color: #d62c3a !important;
+    transform: translateY(-2px) !important;
+  }
+  /* Updated CSS for dropdown alignment in mobile view */
+  @media (max-width: 991.98px) {
+    /* Center align dropdown toggle buttons */
+    .nav-item.dropdown > button.nav-link {
+      width: 100%;
+      text-align: center;
+      justify-content: center;
+    }
+    .offcanvas.offcanvas-end {
+        width: 80% !important; /* Override default 100% */
+        max-width: 80% !important;
+      }
+
+       /* Center all nav links */
+  .offcanvas-body .nav-link {
+    justify-content: center;
+    text-align: center;
+    width: 100%;
+  }
+
+  .navbar-nav {
+    align-items: center;
+  }
+
+  .nav-item {
+    width: 100%;
+  }
+
+  /* Optional: make icons and text vertically aligned */
+  .nav-link i {
+    margin-right: 0.5rem;
+  }
+
+    
+  
+    /* Center align dropdown menu items */
+    .dropdown-menu {
+      width: 100%;
+      text-align: center;
+      background-color: rgba(44, 62, 80, 0.9);
+      border: none;
+      box-shadow: none;
+    }
+  
+    /* Center align dropdown items */
+    .dropdown-item {
+      text-align: center;
+      justify-content: center;
+      padding: 0.75rem 1rem;
+    }
+  
+    /* Remove the transform on hover for mobile */
+    .dropdown-item:hover {
+      transform: none !important;
+    }
+  
+    /* Add some separation between dropdown items */
+    .dropdown-menu li:not(:last-child) {
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+  
+    /* Adjust the caret icon position */
+    .dropdown-toggle::after {
+      position: absolute;
+      right: 1rem;
+      top: 50%;
+      transform: translateY(-50%);
+    }
+  }
+  
+  /* Responsive Adjustments */
+  @media (min-width: 992px) {
+    .user-section {
+      margin-top: 0;
+      padding-top: 0;
+      border-top: none;
+      margin-left: auto;
+    }
+    
+    .login-btn {
+      margin-top: 0;
+    }
+    
+    .navbar-nav {
+      align-items: center;
+    }
+  }
+  
+  .header_section {
+    width: 100%;
+    height: auto ;
+    float: left;
+    background-image: url(../../assets/dining_station_bg.jpg);
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
+    }
+  
+  .header_bg {
+    width: 100%;
+    float: left;
+    background: #1d1d1d !important;
+    height: auto;
+    background-size: 100%;
+  }
+  
+  
+  /* header section end */

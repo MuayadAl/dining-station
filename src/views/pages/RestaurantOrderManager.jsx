@@ -399,18 +399,18 @@ function RestaurantOrderManager() {
 
         {/* Tabs */}
         <ul className="nav nav-pills mb-4 overflow-auto flex-nowrap justify-content-center align-items-center">
-          <li className="nav-item">
+          <li className="nav-item ">
             <button
-              className={`nav-link ${activeTab === "new" ? "active" : ""}`}
+              className={`nav-link tab-button ${activeTab === "new" ? "active" : ""}`}
               onClick={() => setActiveTab("new")}
             >
-              🆕 New Orders{" "}
+              🆕New Orders{" "}
               <span className="badge bg-light text-dark ms-1">{newCount}</span>
             </button>
           </li>
-          <li className="nav-item">
+          <li className="nav-item ">
             <button
-              className={`nav-link ${activeTab === "active" ? "active" : ""}`}
+              className={`nav-link tab-button ${activeTab === "active" ? "active" : ""}`}
               onClick={() => setActiveTab("active")}
             >
               <FontAwesomeIcon icon={faFireBurner} /> Active Orders{" "}
@@ -421,7 +421,7 @@ function RestaurantOrderManager() {
           </li>
           <li className="nav-item">
             <button
-              className={`nav-link ${
+              className={`nav-link tab-button ${
                 activeTab === "completed" ? "active" : ""
               }`}
               onClick={() => setActiveTab("completed")}
