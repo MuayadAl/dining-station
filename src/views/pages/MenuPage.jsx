@@ -1,4 +1,7 @@
 import React, { useEffect, useState, useRef } from "react";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+
+import { storage } from "../../models/firebase";
 import { useParams } from "react-router-dom";
 import { db } from "../../models/firebase";
 import { useNavigate } from "react-router-dom";
@@ -27,6 +30,8 @@ import { deleteMenuItem } from "../../controllers/menuController";
 import { useCart } from "../../contexts/CartContext";
 
 import imagePlaceHolder from "../../assets/image-placeholder.jpg";
+import foodPlaceHolder from "../../assets/food-placeHolder.png";
+
 import Loader from "../components/Loader";
 
 const MenuPage = () => {
@@ -51,20 +56,24 @@ const MenuPage = () => {
   const categoryRefs = useRef({});
   const [selectedItem, setSelectedItem] = useState(null);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [saving, setSaving] = useState(false);
+
   const [isOwner, setIsOwner] = useState(null);
 
   const [showViewModal, setShowViewModal] = useState(false);
   const [viewingItem, setViewingItem] = useState(null);
   const [selectedSize, setSelectedSize] = useState(null);
 
-  useEffect(() => {
-    if (restaurantId) {
-      localStorage.setItem("restaurantId", restaurantId); // ✅ Store in localStorage
-    }
-  }, [restaurantId]);
+  const [selectedImageFile, setSelectedImageFile] = useState(null);
 
   useEffect(() => {
-    if (!restaurantId || isOwner === null) return; // Ensure isOwner is determined
+    if (restaurantId && !isOwner ) {
+      localStorage.setItem("restaurantId", restaurantId);
+    }
+  }, [restaurantId, isOwner]);
+
+  useEffect(() => {
+    if (!restaurantId || isOwner === null) return;
 
     let isMounted = true;
 
@@ -332,35 +341,53 @@ const MenuPage = () => {
   };
 
   const handleSaveChanges = async () => {
+    setSaving(true); // ✅ Start spinner
     try {
       const menuRef = doc(db, "menu", restaurantId);
-  
-      // 🔁 Convert availableQuantity to number
+      let updatedImgUrl = selectedItem.imgUrl;
+
+      if (selectedImageFile) {
+        const user = auth.currentUser;
+        const imgRef = ref(
+          storage,
+          `menus/${user.uid}/${Date.now()}_${selectedImageFile.name}`
+        );
+        await uploadBytes(imgRef, selectedImageFile);
+        updatedImgUrl = await getDownloadURL(imgRef);
+      }
+
       if (selectedItem?.availableQuantity !== undefined) {
         selectedItem.availableQuantity = Number(selectedItem.availableQuantity);
       }
-  
-      // 🔁 Convert each price to number in sizes array
+
       if (Array.isArray(selectedItem?.sizes)) {
         selectedItem.sizes = selectedItem.sizes.map((sizeObj) => ({
           ...sizeObj,
           price: Number(sizeObj.price),
         }));
       }
-  
+
+      const updatedItem = {
+        ...selectedItem,
+        imgUrl: updatedImgUrl,
+      };
+
       const updatedItems = menuItems.map((item) =>
-        item.itemId === selectedItem.itemId ? selectedItem : item
+        item.itemId === selectedItem.itemId ? updatedItem : item
       );
-  
+
       await updateDoc(menuRef, { items: updatedItems });
+
       setMenuItems(updatedItems);
+      setSelectedImageFile(null);
       setShowEditModal(false);
     } catch (error) {
       console.error("Error updating item:", error);
+      showError("Something went wrong while saving.");
+    } finally {
+      setSaving(false);
     }
   };
-  
-  
 
   // Delete function
   const handleDeleteItem = async (itemId) => {
@@ -411,7 +438,7 @@ const MenuPage = () => {
   return (
     <div className="container p-1 ">
       {/* Floating cart */}
-      {!isOwner && (
+      {isOwner === false && restaurantId && (
         <div
           className="bg-dark p-2 cart_hover"
           style={{
@@ -633,7 +660,7 @@ const MenuPage = () => {
                                 ref={(el) =>
                                   (itemImageRefs.current[item.itemId] = el)
                                 }
-                                src={item.imgUrl}
+                                src={item.imgUrl || foodPlaceHolder}
                                 className="img-fluid rounded-start"
                                 alt={item.name}
                                 style={{
@@ -707,13 +734,55 @@ const MenuPage = () => {
           <p className="text-center text-danger">No menu items available.</p>
         )}
       </div>
+
       {/* Edit Modal */}
-      <Modal show={showEditModal} onHide={() => setShowEditModal(false)}>
+      <Modal
+        show={showEditModal}
+        onHide={() => {
+          setShowEditModal(false);
+          setSelectedImageFile(null);
+        }}
+      >
         <Modal.Header closeButton>
           <Modal.Title>Fast Edit Menu Item</Modal.Title>
         </Modal.Header>
         <Modal.Body>
           <Form>
+            <Form.Group className="mb-3 text-center">
+              <div>
+                <img
+                  src={
+                    selectedImageFile
+                      ? URL.createObjectURL(selectedImageFile)
+                      : selectedItem?.imgUrl || foodPlaceHolder
+                  }
+                  alt="Edit item"
+                  className="img-fluid rounded mb-2"
+                  style={{
+                    width: "100%",
+                    maxHeight: "200px",
+                    objectFit: "scale-down",
+                    cursor: "pointer",
+                    border: "2px dashed #aaa",
+                  }}
+                  onClick={() =>
+                    document.getElementById("editItemImageInput")?.click()
+                  }
+                />
+                <Form.Control
+                  type="file"
+                  id="editItemImageInput"
+                  style={{ display: "none" }}
+                  accept="image/*"
+                  onChange={(e) => {
+                    if (e.target.files?.[0]) {
+                      setSelectedImageFile(e.target.files[0]);
+                    }
+                  }}
+                />
+              </div>
+            </Form.Group>
+
             <Form.Group>
               <Form.Label>Name</Form.Label>
               <Form.Control
@@ -815,6 +884,7 @@ const MenuPage = () => {
         <Modal.Footer className="d-flex justify-content-between">
           <Button
             variant="danger"
+            disabled={saving}
             onClick={(e) => {
               e.stopPropagation();
               handleDeleteItem(selectedItem.itemId);
@@ -824,17 +894,39 @@ const MenuPage = () => {
             Delete
           </Button>
 
-          <Button variant="secondary" onClick={() => setShowEditModal(false)}>
+          <Button
+            variant="secondary"
+            disabled={saving}
+            onClick={() => setShowEditModal(false)}
+          >
             Cancel
           </Button>
-          <Button variant="primary" onClick={handleSaveChanges}>
-            Save Changes
+
+          <Button
+            variant="primary"
+            onClick={handleSaveChanges}
+            disabled={saving}
+          >
+            {saving ? (
+              <>
+                {" "}
+                <i class="fa-solid fa-spinner fa-spin"></i> Saving...{" "}
+              </>
+            ) : (
+              "Save Changes"
+            )}
           </Button>
         </Modal.Footer>
       </Modal>
 
       {/* View Modal for Regular Users */}
-      <Modal show={showViewModal} onHide={() => setShowViewModal(false)}>
+      <Modal
+        show={showViewModal}
+        onHide={() => {
+          setShowViewModal(false);
+          setSelectedImageFile(null);
+        }}
+      >
         <Modal.Header closeButton>
           <Modal.Title>{viewingItem?.name}</Modal.Title>
         </Modal.Header>

@@ -43,13 +43,14 @@ export default function EditRestaurant() {
   const [loading, setLoading] = useState(false);
   const [isHidden, setIsHidden] = useState(false);
   const [imgLoading, setImgLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
-  
+
     const fetchRestaurant = async (user) => {
       if (isMounted) setLoading(true); // ✅ Start loading
-  
+
       try {
         if (!user) {
           if (isMounted) {
@@ -59,17 +60,17 @@ export default function EditRestaurant() {
           }
           return;
         }
-  
+
         const restaurantQuery = query(
           collection(db, "restaurants"),
           where("userId", "==", user.uid)
         );
         const querySnapshot = await getDocs(restaurantQuery);
-  
+
         if (!querySnapshot.empty) {
           const docSnap = querySnapshot.docs[0];
           const data = docSnap.data();
-  
+
           if (isMounted) {
             setRestaurantId(docSnap.id);
             setFormData({
@@ -104,17 +105,16 @@ export default function EditRestaurant() {
         if (isMounted) setLoading(false); // ✅ Always stop loading
       }
     };
-  
+
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       fetchRestaurant(user);
     });
-  
+
     return () => {
       isMounted = false;
       unsubscribe();
     };
   }, []);
-  
 
   const handleChange = (e) => {
     setFormData({
@@ -157,7 +157,9 @@ export default function EditRestaurant() {
     document.getElementById("fileInput").click();
   };
 
+
   const handleSubmit = async (e) => {
+    // setSaving(true);
     e.preventDefault();
     setError("");
     setSuccess("");
@@ -174,9 +176,14 @@ export default function EditRestaurant() {
       "Yes, update it!"
     );
 
-    if (!isConfirmed) return; // Stop if user cancels
+    if (!isConfirmed){ 
+      setSaving(false);
+      return}; // Stop if user cancels
 
-    setLoading(true);
+    if(isConfirmed){
+      setSaving(true);
+    }
+
     try {
       await editRestaurant(restaurantId, { ...formData, imgFile });
       showSuccess("Restaurant updated successfully!");
@@ -185,16 +192,13 @@ export default function EditRestaurant() {
       showError("Error updating restaurant: " + err.message);
       setError("Error updating restaurant: " + err.message);
     } finally {
-      setLoading(false);
+      setSaving(false);
     }
   };
-  if(loading){
-    return Loader("Loading...")
-  }
 
   return (
     <div className="container d-flex justify-content-center align-items-center py-2">
-      <div className="shadow p-3 mb-5 bg-body rounded body_card_layout">
+      <div className="shadow p-3 my-3 bg-body rounded body_card_layout">
         <h3 className="text-center mb-4">
           <i className="fa fa-edit"></i> Edit Your Restaurant
         </h3>
@@ -302,7 +306,7 @@ export default function EditRestaurant() {
             </div>
 
             {/* Opening Hours */}
-            <div className="mb-3">
+            <div className="mb-3 ">
               <label className="form-label">
                 <FontAwesomeIcon icon={faClock} /> Opening Hours
               </label>
@@ -320,7 +324,7 @@ export default function EditRestaurant() {
                   <div key={day}>
                     <input
                       type="checkbox"
-                      className="form-check-input"
+                      className="form-check-input "
                       id={day}
                       checked={formData.openingHours?.[day]?.enabled || false}
                       onChange={(e) =>
@@ -334,7 +338,7 @@ export default function EditRestaurant() {
                     <label className="form-check-label">{day}</label>
 
                     {formData.openingHours?.[day]?.enabled && (
-                      <div className="d-flex justify-content-start mt-2">
+                      <div className="d-flex justify-content-start gap-2 mt-2">
                         <input
                           type="time"
                           className="form-control w-25 mr-2"
@@ -368,8 +372,8 @@ export default function EditRestaurant() {
 
             {/* Submit Button */}
             <div className="d-flex justify-content-center align-items-center send_bt">
-              <button type="submit" disabled={loading}>
-                {loading ? (
+              <button type="submit" disabled={saving}>
+                {saving ? (
                   <>
                     <FontAwesomeIcon icon={faSpinner} spin /> Updating...
                   </>

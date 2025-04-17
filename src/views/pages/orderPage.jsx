@@ -80,7 +80,7 @@ const OrderPage = () => {
       isMounted = false;
       unsubscribeAuth();
     };
-  }, [orderId, navigate, sessionId, cartCleared]);
+  }, [orderId, navigate, sessionId, cartCleared,  showError, showSuccess]);
 
   // const handleClearCart = async () => {
   //   await clearCart();

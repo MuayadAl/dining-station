@@ -1,9 +1,13 @@
 // src/views/pages/AddRestaurant.jsx
 import React, { useState, useEffect, useRef } from "react";
-import { Navigate } from "react-router-dom";
+import { Navigate, Link } from "react-router-dom";
 
 // import { Link } from "react-router-dom";
 import { addRestaurant } from "../../controllers/restaurantController";
+
+// Firebase
+import { auth, db } from "../../models/firebase";
+import { doc, getDocs, collection, query, where } from "firebase/firestore";
 
 // Hooks Import
 import useAlert from "../../hooks/userAlert";
@@ -29,9 +33,36 @@ export default function AddRestaurant() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
+  const [hasRestaurant, setHasRestaurant] = useState(false);
+  const [checking, setChecking] = useState(true);
 
   // Reference for scrolling
   const messageRef = useRef(null);
+
+  useEffect(() => {
+    const checkExistingRestaurant = async () => {
+      try {
+        const user = auth.currentUser;
+        if (!user) return;
+
+        const q = query(
+          collection(db, "restaurants"),
+          where("userId", "==", user.uid)
+        );
+        const snapshot = await getDocs(q);
+
+        if (!snapshot.empty) {
+          setHasRestaurant(true);
+        }
+      } catch (error) {
+        console.error("Error checking existing restaurant:", error);
+      } finally {
+        setChecking(false);
+      }
+    };
+
+    checkExistingRestaurant();
+  }, []);
 
   // Scroll to message when error or success changes
   useEffect(() => {
@@ -133,195 +164,225 @@ export default function AddRestaurant() {
         location: "",
         status: null,
         openingHours: {},
-        description:""
+        description: "",
       });
       setImgFile(null);
     } catch (err) {
       showError("Error adding restaurant: " + err.message);
     } finally {
       setLoading(false);
-      <Navigate to="/landing" replace></Navigate>
+      <Navigate to="/landing" replace></Navigate>;
     }
   };
 
   return (
-    <div className="container d-flex justify-content-center align-items-center py-2">
-      <div className="shadow p-3 mb-5 bg-body rounded body_card_layout">
-        <h3 className="text-center mb-4">
-          <i className="fa fa-plus"></i> Request Opening Restaurant Form
-        </h3>
-
-        {/* Message container with ref */}
-        <div ref={messageRef}>
-          {error && <div className="alert alert-danger">{error}</div>}
-          {success && <div className="alert alert-success">{success}</div>}
+    <div className="container d-flex justify-content-center align-items-center">
+      <div className="shadow p-3 my-3 bg-body rounded body_card_layout ">
+        {checking ? (
+          <h5 className="text-center">Checking your restaurant status...</h5>
+        ) : hasRestaurant ? (
+          <div className="alert alert-info text-center">
+          You already have a registered restaurant. You can view it from the{" "}
+          <strong>
+            <Link to="/my-restaurant/status-report" className="text-decoration-underline">
+              Restaurant Status & Report
+            </Link>
+          </strong>{" "}
+          page.
         </div>
+        
+        ) : (
+          <>
+            <h3 className="text-center mb-4">
+              <i className="fa fa-plus"></i> Request Opening Restaurant Form
+            </h3>
 
-        <form onSubmit={handleSubmit}>
-          {/* Restaurant Name */}
-          <div className="mb-3">
-            <label htmlFor="name" className="form-label">
-              <i className="fa fa-user"></i> Name
-            </label>
-            <input
-              type="text"
-              className="form-control"
-              id="name"
-              name="name"
-              value={formData.name}
-              onChange={handleChange}
-              placeholder="Enter restaurant name"
-              required
-            />
-          </div>
-
-          {/* Restaurant Email */}
-          <div className="mb-3">
-            <label htmlFor="email" className="form-label">
-              <i className="fa fa-envelope"></i> Email
-            </label>
-            <input
-              type="email"
-              className="form-control"
-              id="email"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-              placeholder="Enter restaurant email"
-              required
-            />
-          </div>
-
-          {/* Restaurant Phone */}
-          <div className="mb-3">
-            <label htmlFor="phone" className="form-label">
-              <i className="fa fa-phone"></i> Phone
-            </label>
-            <input
-              type="text"
-              className="form-control"
-              id="phone"
-              name="phone"
-              value={formData.phone}
-              onChange={handleChange}
-              placeholder="Enter restaurant phone"
-              required
-            />
-          </div>
-
-          {/* Restaurant Description */}
-          <div className="mb-3">
-            <label htmlFor="description" className="form-label">
-            <i class="fa-solid fa-tag"></i> Description
-            </label>
-            <input
-              type="text"
-              className="form-control"
-              id="description"
-              name="description"
-              value={formData.description}
-              onChange={handleChange}
-              placeholder="Enter restaurant description"
-              required
-            />
-          </div>
-
-          {/* Restaurant Location */}
-          <div className="mb-3">
-            <label htmlFor="location" className="form-label">
-              <i className="fa fa-map"></i> Location
-            </label>
-            <input
-              type="text"
-              className="form-control"
-              id="location"
-              name="location"
-              value={formData.location}
-              onChange={handleChange}
-              placeholder="Enter restaurant location"
-              required
-            />
-          </div>
-
-          {/* Opening Hours (Checkboxes + Time Pickers) */}
-          <div className="mb-3">
-            <label className="form-label">
-              <FontAwesomeIcon icon={faClock} /> Opening Hours
-            </label>
-            <div className="form-check">
-              {[
-                "Monday",
-                "Tuesday",
-                "Wednesday",
-                "Thursday",
-                "Friday",
-                "Saturday",
-                "Sunday",
-              ].map((day) => (
-                <div key={day}>
-                  <input
-                    type="checkbox"
-                    className="form-check-input"
-                    id={day}
-                    onChange={(e) =>
-                      handleOpeningHoursChange(day, "enabled", e.target.checked)
-                    }
-                  />
-                  <label className="form-check-label">{day}</label>
-
-                  {formData.openingHours[day]?.enabled && (
-                    <div className="d-flex justify-content-start mt-2">
-                      <input
-                        type="time"
-                        className="form-control w-25 mr-2"
-                        value={formData.openingHours[day]?.open || ""}
-                        onChange={(e) =>
-                          handleOpeningHoursChange(day, "open", e.target.value)
-                        }
-                      />
-                      <input
-                        type="time"
-                        className="form-control w-25"
-                        value={formData.openingHours[day]?.close || ""}
-                        onChange={(e) =>
-                          handleOpeningHoursChange(day, "close", e.target.value)
-                        }
-                      />
-                    </div>
-                  )}
-                </div>
-              ))}
+            {/* Message container with ref */}
+            <div ref={messageRef}>
+              {error && <div className="alert alert-danger">{error}</div>}
+              {success && <div className="alert alert-success">{success}</div>}
             </div>
-          </div>
 
-          {/* Image Upload */}
-          <div className="mb-3">
-            <label htmlFor="imgFile" className="form-label">
-              <i class="fa fa-image"></i> Restaurant Logo
-            </label>
-            <input
-              type="file"
-              className="form-control"
-              id="imgFile"
-              onChange={(e) => setImgFile(e.target.files[0])}
-            />
-          </div>
+            <form onSubmit={handleSubmit}>
+              {/* Restaurant Name */}
+              <div className="mb-3">
+                <label htmlFor="name" className="form-label">
+                  <i className="fa fa-user"></i> Name
+                </label>
+                <input
+                  type="text"
+                  className="form-control"
+                  id="name"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleChange}
+                  placeholder="Enter restaurant name"
+                  required
+                />
+              </div>
 
-          {/* Submit Button */}
-          <div className="d-flex justify-content-center align-items-center send_bt">
-            <button type="submit" disabled={loading}>
-              {loading ? (
-                <>
-                  <FontAwesomeIcon icon={faSpinner} spin /> Sending Request...
-                </>
-              ) : (
-                <>
-                  <i class="fa fa-paper-plane"></i> Send Request
-                </>
-              )}
-            </button>
-          </div>
-        </form>
+              {/* Restaurant Email */}
+              <div className="mb-3">
+                <label htmlFor="email" className="form-label">
+                  <i className="fa fa-envelope"></i> Email
+                </label>
+                <input
+                  type="email"
+                  className="form-control"
+                  id="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  placeholder="Enter restaurant email"
+                  required
+                />
+              </div>
+
+              {/* Restaurant Phone */}
+              <div className="mb-3">
+                <label htmlFor="phone" className="form-label">
+                  <i className="fa fa-phone"></i> Phone
+                </label>
+                <input
+                  type="text"
+                  className="form-control"
+                  id="phone"
+                  name="phone"
+                  value={formData.phone}
+                  onChange={handleChange}
+                  placeholder="Enter restaurant phone"
+                  required
+                />
+              </div>
+
+              {/* Restaurant Description */}
+              <div className="mb-3">
+                <label htmlFor="description" className="form-label">
+                  <i class="fa-solid fa-tag"></i> Description
+                </label>
+                <input
+                  type="text"
+                  className="form-control"
+                  id="description"
+                  name="description"
+                  value={formData.description}
+                  onChange={handleChange}
+                  placeholder="Enter restaurant description"
+                  required
+                />
+              </div>
+
+              {/* Restaurant Location */}
+              <div className="mb-3">
+                <label htmlFor="location" className="form-label">
+                  <i className="fa fa-map"></i> Location
+                </label>
+                <input
+                  type="text"
+                  className="form-control"
+                  id="location"
+                  name="location"
+                  value={formData.location}
+                  onChange={handleChange}
+                  placeholder="Enter restaurant location"
+                  required
+                />
+              </div>
+
+              {/* Opening Hours (Checkboxes + Time Pickers) */}
+              <div className="mb-3">
+                <label className="form-label">
+                  <FontAwesomeIcon icon={faClock} /> Opening Hours
+                </label>
+                <div className="form-check">
+                  {[
+                    "Monday",
+                    "Tuesday",
+                    "Wednesday",
+                    "Thursday",
+                    "Friday",
+                    "Saturday",
+                    "Sunday",
+                  ].map((day) => (
+                    <div key={day}>
+                      <input
+                        type="checkbox"
+                        className="form-check-input"
+                        id={day}
+                        onChange={(e) =>
+                          handleOpeningHoursChange(
+                            day,
+                            "enabled",
+                            e.target.checked
+                          )
+                        }
+                      />
+                      <label className="form-check-label">{day}</label>
+
+                      {formData.openingHours[day]?.enabled && (
+                        <div className="d-flex justify-content-start gap-2 mt-2">
+                          <input
+                            type="time"
+                            className="form-control w-25 mr-2"
+                            value={formData.openingHours[day]?.open || ""}
+                            onChange={(e) =>
+                              handleOpeningHoursChange(
+                                day,
+                                "open",
+                                e.target.value
+                              )
+                            }
+                          />
+                          <input
+                            type="time"
+                            className="form-control w-25"
+                            value={formData.openingHours[day]?.close || ""}
+                            onChange={(e) =>
+                              handleOpeningHoursChange(
+                                day,
+                                "close",
+                                e.target.value
+                              )
+                            }
+                          />
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Image Upload */}
+              <div className="mb-3">
+                <label htmlFor="imgFile" className="form-label">
+                  <i class="fa fa-image"></i> Restaurant Logo
+                </label>
+                <input
+                  type="file"
+                  className="form-control"
+                  id="imgFile"
+                  onChange={(e) => setImgFile(e.target.files[0])}
+                />
+              </div>
+
+              {/* Submit Button */}
+              <div className="d-flex justify-content-center align-items-center send_bt">
+                <button type="submit" disabled={loading}>
+                  {loading ? (
+                    <>
+                      <FontAwesomeIcon icon={faSpinner} spin /> Sending
+                      Request...
+                    </>
+                  ) : (
+                    <>
+                      <i class="fa fa-paper-plane"></i> Send Request
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
+          </>
+        )}
       </div>
     </div>
   );

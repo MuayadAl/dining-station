@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { getCart } from "../../controllers/cartController";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, } from "react-router-dom";
 import { Button, Table, Form } from "react-bootstrap";
 import useAlert from "../../hooks/userAlert";
 import { auth, db } from "../../models/firebase";
@@ -12,6 +12,8 @@ const CheckoutForm = ({ cartItems, total, user, restaurant }) => {
   const { showError, showSuccess } = useAlert();
   const [paymentMethod, setPaymentMethod] = useState("Stripe");
   const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
+
 
   const deductItemQuantities = async (restaurantId, cartItems) => {
     const menuRef = doc(db, "menu", restaurantId);
@@ -88,10 +90,8 @@ const CheckoutForm = ({ cartItems, total, user, restaurant }) => {
         await deductItemQuantities(restaurant.id, cartItems);
         await clearCart();
 
+        navigate(`/order/${orderId}`)
         showSuccess(`Your order has been placed with ${paymentMethod}.`);
-        setTimeout(() => {
-          window.location.href = `/order/${orderId}`;
-        }, 1500);
       } catch (error) {
         console.error(`🔥 Firebase Order Error (${paymentMethod}):`, error);
         showError("Failed to place order. Please try again.");
@@ -104,20 +104,26 @@ const CheckoutForm = ({ cartItems, total, user, restaurant }) => {
     // Stripe Payment
     setLoading(true);
     try {
-      const API_BASE_URL =
-        process.env.REACT_APP_API_BASE_URL || "http://localhost:5000";
-      const response = await fetch(`${API_BASE_URL}/create-checkout-session`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          cartItems,
-          total,
-          userId: user.id,
-          userName: user.name,
-          restaurantId: restaurant.id,
-          restaurantName: restaurant.name,
-        }),
-      });
+
+      const response = await fetch(
+        `${process.env.REACT_APP_API_BASE_URL}/create-checkout-session`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({
+            cartItems,
+            total,
+            userId: user.id,
+            userName: user.name,
+            restaurantId: restaurant.id,
+            restaurantName: restaurant.name,
+          }),
+        }
+      );
+      
+        
+        
 
       const data = await response.json();
 

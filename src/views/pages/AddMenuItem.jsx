@@ -32,7 +32,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 
 import useAlert from "../../hooks/userAlert";
-import Loader from "../components/Loader";
+import uploadDummyMenuItems from "../../importDummyMenu";
 
 const popularCategories = [
   "Rice",
@@ -132,7 +132,7 @@ const AddMenuItemPage = () => {
       try {
         const user = auth.currentUser;
         if (!user) return;
-  
+
         const q = query(
           collection(db, "restaurants"),
           where("userId", "==", user.uid)
@@ -150,12 +150,11 @@ const AddMenuItemPage = () => {
         console.error("Error fetching restaurant ID:", error);
       }
     };
-  
+
     if (!restaurantId) {
       fetchRestaurantId();
     }
   }, [auth.currentUser]);
-  
 
   const uploadImage = async (file) => {
     if (!file) return "";
@@ -208,6 +207,12 @@ const AddMenuItemPage = () => {
     if (!estimatedPreparationTime || estimatedPreparationTime <= 0)
       formErrors.estimatedPreparationTime = "Enter a valid preparation time.";
     if (!imageFile) formErrors.imageFile = "Please upload an image.";
+    const sizeNames = sizes.map((s) => s.size.toLowerCase());
+    const hasDuplicateSizes = new Set(sizeNames).size !== sizeNames.length;
+
+    if (hasDuplicateSizes) {
+      formErrors.sizes = "Duplicate sizes are not allowed.";
+    }
 
     setErrors(formErrors);
     return Object.keys(formErrors).length === 0;
@@ -285,7 +290,7 @@ const AddMenuItemPage = () => {
     setImagePreview("");
     setCategory("");
     setEstimatedPreparationTime("");
-    setAvailability(false);
+    setAvailability(true);
 
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
@@ -302,280 +307,307 @@ const AddMenuItemPage = () => {
 
   const handleSizeChange = (index, key, value) => {
     const updatedSizes = [...sizes];
+
+    if (key === "size") {
+      const isDuplicate = sizes.some(
+        (s, i) => i !== index && s.size.toLowerCase() === value.toLowerCase()
+      );
+
+      if (isDuplicate) {
+        showError(`The size "${value}" has already been selected.`);
+        return;
+      }
+    }
+
     updatedSizes[index][key] = value;
     setSizes(updatedSizes);
   };
-
-    if(loading){
-      return Loader("Loading...")
-    }
 
   return (
     <div className="container d-flex justify-content-center align-items-center">
       <div className="card shadow p-4 w-100 my-3">
         <h2 className="text-center mb-4">Add Menu Item</h2>
-        {restaurantId? (
+        {restaurantId ? (
           <>
-          <p>{restaurantId}</p>
-        {message && <div className="alert alert-info">{message}</div>}
+            {message && <div className="alert alert-info">{message}</div>}
 
-        <form className="row g-3">
-          {/* Item Name */}
-          <div className="col-12">
-            <label className="form-label">Item Name</label>
-            <div className="input-group">
-              <span className="input-group-text">
-                <FontAwesomeIcon icon={faUtensils} />
-              </span>
-              <input
-                type="text"
-                className="form-control"
-                value={itemName}
-                onChange={(e) => setItemName(e.target.value)}
-                placeholder="Enter item name"
-              />
-            </div>
-            {errors.itemName && (
-              <small className="text-danger">
-                <FontAwesomeIcon icon={faExclamationCircle} /> {errors.itemName}
-              </small>
-            )}
-          </div>
+            <form className="row g-3">
+              {/* Item Name */}
+              <div className="col-12">
+                <label className="form-label">Item Name</label>
+                <div className="input-group">
+                  <span className="input-group-text">
+                    <FontAwesomeIcon icon={faUtensils} />
+                  </span>
+                  <input
+                    type="text"
+                    className="form-control"
+                    value={itemName}
+                    onChange={(e) => setItemName(e.target.value)}
+                    placeholder="Enter item name"
+                  />
+                </div>
+                {errors.itemName && (
+                  <small className="text-danger">
+                    <FontAwesomeIcon icon={faExclamationCircle} />{" "}
+                    {errors.itemName}
+                  </small>
+                )}
+              </div>
 
-          {/* Size & Price */}
-          <div className="col-lg-12 col-md-4">
-            <label className="form-label"> Sizes & Prices</label>
-            {sizes.map((size, index) => (
-              <div key={index} className="input-group mb-2">
-                <span className="input-group-text">
-                  <FontAwesomeIcon icon={faScaleUnbalanced} />
-                </span>
+              {/* Size & Price */}
+              <div className="col-lg-12 col-md-4">
+                <label className="form-label"> Sizes & Prices</label>
+                {sizes.map((size, index) => (
+                  <div key={index} className="input-group mb-2">
+                    <span className="input-group-text">
+                      <FontAwesomeIcon icon={faScaleUnbalanced} />
+                    </span>
+                    <select
+                      className="form-select"
+                      value={size.size}
+                      onChange={(e) =>
+                        handleSizeChange(index, "size", e.target.value)
+                      }
+                    >
+                      <option value="">Select a size</option>
+                      {itemSize.map((s, idx) => {
+                        const alreadySelected = sizes.some(
+                          (sz, i) => sz.size === s && i !== index
+                        );
+                        return (
+                          <option
+                            key={idx}
+                            value={s}
+                            disabled={alreadySelected}
+                          >
+                            {s}
+                          </option>
+                        );
+                      })}
+                    </select>
+
+                    <span
+                      className="input-group-text"
+                      style={{ marginLeft: "10px" }}
+                    >
+                      <FontAwesomeIcon icon={faDollarSign} />
+                    </span>
+                    <input
+                      type="number"
+                      className="form-control"
+                      placeholder="Price (RM)"
+                      value={size.price}
+                      onChange={(e) =>
+                        handleSizeChange(index, "price", e.target.value)
+                      }
+                    />
+                    {sizes.length > 1 && (
+                      <button
+                        type="button"
+                        className="btn btn-danger"
+                        onClick={() => removeSizeField(index)}
+                      >
+                        <FontAwesomeIcon icon={faTrash} />
+                      </button>
+                    )}
+                  </div>
+                ))}
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={addSizeField}
+                >
+                  <FontAwesomeIcon icon={faPlus} /> Add Size
+                </button>
+              </div>
+              {errors.sizes && (
+                <small className="text-danger">
+                  <FontAwesomeIcon icon={faExclamationCircle} /> {errors.sizes}
+                </small>
+              )}
+
+              {/* Available Quantity */}
+              <div className="col-12">
+                <label className="form-label">Available Quantity</label>
+                <div className="input-group">
+                  <span className="input-group-text">
+                    <FontAwesomeIcon icon={faBoxes} />
+                  </span>
+                  <input
+                    type="number"
+                    className="form-control"
+                    value={availableQuantity}
+                    onChange={(e) => setAvailableQuantity(e.target.value)}
+                    placeholder="Quantity"
+                  />
+                </div>
+                {errors.availableQuantity && (
+                  <small className="text-danger">
+                    <FontAwesomeIcon icon={faExclamationCircle} />{" "}
+                    {errors.availableQuantity}
+                  </small>
+                )}
+              </div>
+
+              {/* Description */}
+              <div className="col-12">
+                <label className="form-label">
+                  <FontAwesomeIcon icon={faTag} /> Description
+                </label>
+                <textarea
+                  className="form-control"
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  rows="2"
+                  placeholder="Describe the item"
+                ></textarea>
+                {errors.description && (
+                  <small className="text-danger">
+                    <FontAwesomeIcon icon={faExclamationCircle} />{" "}
+                    {errors.description}
+                  </small>
+                )}
+              </div>
+
+              {/* Category */}
+              <div className="col-12">
+                <label className="form-label">
+                  <FontAwesomeIcon icon={faListAlt} /> Category
+                </label>
                 <select
                   className="form-select"
-                  value={size.size}
-                  onChange={(e) =>
-                    handleSizeChange(index, "size", e.target.value)
-                  }
+                  value={category}
+                  onChange={(e) => setCategory(e.target.value)}
                 >
-                  <option value="">Select a size</option>
-                  {itemSize.map((s, idx) => (
-                    <option key={idx} value={s}>
-                      {s}
+                  <option value="">Select a category</option>
+                  {popularCategories.map((cat, index) => (
+                    <option key={index} value={cat}>
+                      {cat}
                     </option>
                   ))}
                 </select>
-                <span
-                  className="input-group-text"
-                  style={{ marginLeft: "10px" }}
-                >
-                  <FontAwesomeIcon icon={faDollarSign} />
-                </span>
-                <input
-                  type="number"
-                  className="form-control"
-                  placeholder="Price (RM)"
-                  value={size.price}
-                  onChange={(e) =>
-                    handleSizeChange(index, "price", e.target.value)
-                  }
-                />
-                {sizes.length > 1 && (
-                  <button
-                    type="button"
-                    className="btn btn-danger"
-                    onClick={() => removeSizeField(index)}
-                  >
-                    <FontAwesomeIcon icon={faTrash} />
-                  </button>
+                {errors.category && (
+                  <small className="text-danger">
+                    <FontAwesomeIcon icon={faExclamationCircle} />{" "}
+                    {errors.category}
+                  </small>
                 )}
               </div>
-            ))}
-            <button
-              type="button"
-              className="btn btn-secondary"
-              onClick={addSizeField}
-            >
-              <FontAwesomeIcon icon={faPlus} /> Add Size
-            </button>
-          </div>
-          {errors.sizes && (
-            <small className="text-danger">
-              <FontAwesomeIcon icon={faExclamationCircle} /> {errors.sizes}
-            </small>
-          )}
 
-          {/* Available Quantity */}
-          <div className="col-12">
-            <label className="form-label">Available Quantity</label>
-            <div className="input-group">
-              <span className="input-group-text">
-                <FontAwesomeIcon icon={faBoxes} />
-              </span>
-              <input
-                type="number"
-                className="form-control"
-                value={availableQuantity}
-                onChange={(e) => setAvailableQuantity(e.target.value)}
-                placeholder="Quantity"
-              />
-            </div>
-            {errors.availableQuantity && (
-              <small className="text-danger">
-                <FontAwesomeIcon icon={faExclamationCircle} />{" "}
-                {errors.availableQuantity}
-              </small>
-            )}
-          </div>
+              {/* Estimated Prep Time */}
+              <div className="col-md-6">
+                <label className="form-label">Estimated Prep Time</label>
+                <div className="input-group">
+                  <span className="input-group-text">
+                    <FontAwesomeIcon icon={faClock} />
+                  </span>
+                  <input
+                    type="number"
+                    className="form-control"
+                    value={estimatedPreparationTime}
+                    required
+                    onChange={(e) =>
+                      setEstimatedPreparationTime(e.target.value)
+                    }
+                    placeholder="Time (mins)"
+                  />
+                </div>
+                {errors.estimatedPreparationTime && (
+                  <small className="text-danger">
+                    <FontAwesomeIcon icon={faExclamationCircle} />{" "}
+                    {errors.estimatedPreparationTime}
+                  </small>
+                )}
+              </div>
 
-          {/* Description */}
-          <div className="col-12">
-            <label className="form-label">
-              <FontAwesomeIcon icon={faTag} /> Description
-            </label>
-            <textarea
-              className="form-control"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              rows="2"
-              placeholder="Describe the item"
-            ></textarea>
-            {errors.description && (
-              <small className="text-danger">
-                <FontAwesomeIcon icon={faExclamationCircle} />{" "}
-                {errors.description}
-              </small>
-            )}
-          </div>
+              {/* Image Uploader */}
+              <div className="col-12">
+                <label className="form-label">
+                  <FontAwesomeIcon icon={faFileImage} /> Upload Image
+                </label>
+                <input
+                  type="file"
+                  className="form-control"
+                  onChange={handleImageChange}
+                  ref={fileInputRef}
+                />
+                {imagePreview && (
+                  <img
+                    src={imagePreview}
+                    className="img-thumbnail mt-2"
+                    alt="Preview"
+                    width="100px"
+                  />
+                )}
+                {errors.imageFile && (
+                  <small className="text-danger">
+                    <FontAwesomeIcon icon={faExclamationCircle} />{" "}
+                    {errors.imageFile}
+                  </small>
+                )}
+              </div>
 
-          {/* Category */}
-          <div className="col-12">
-            <label className="form-label">
-              <FontAwesomeIcon icon={faListAlt} /> Category
-            </label>
-            <select
-              className="form-select"
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
-            >
-              <option value="">Select a category</option>
-              {popularCategories.map((cat, index) => (
-                <option key={index} value={cat}>
-                  {cat}
-                </option>
-              ))}
-            </select>
-            {errors.category && (
-              <small className="text-danger">
-                <FontAwesomeIcon icon={faExclamationCircle} /> {errors.category}
-              </small>
-            )}
-          </div>
+              <div className="form-check form-switch">
+                <input
+                  className="form-check-input fs-6 "
+                  type="checkbox"
+                  role="switch"
+                  id="flexSwitchCheckChecked"
+                  checked={availability}
+                  onChange={(e) => setAvailability(e.target.checked)}
+                  data-bs-toggle="tooltip"
+                  data-bs-placement="top"
+                  title="Switch on if this item is currently available for orders."
+                />
+                <label
+                  className="form-check-label fs-6"
+                  htmlFor="flexSwitchCheckChecked"
+                  title="Switch on if this item is currently available for orders."
+                >
+                  Availability
+                </label>
+              </div>
 
-          {/* Estimated Prep Time */}
-          <div className="col-md-6">
-            <label className="form-label">Estimated Prep Time</label>
-            <div className="input-group">
-              <span className="input-group-text">
-                <FontAwesomeIcon icon={faClock} />
-              </span>
-              <input
-                type="number"
-                className="form-control"
-                value={estimatedPreparationTime}
-                required
-                onChange={(e) => setEstimatedPreparationTime(e.target.value)}
-                placeholder="Time (mins)"
-              />
-            </div>
-            {errors.estimatedPreparationTime && (
-              <small className="text-danger">
-                <FontAwesomeIcon icon={faExclamationCircle} />{" "}
-                {errors.estimatedPreparationTime}
-              </small>
-            )}
-          </div>
+              {/* Submit Button */}
+              <div className="col-md-6 send_bt">
+                <button
+                  type="button"
+                  onClick={addMenuItem}
+                  disabled={loading}
+                  className="btn"
+                >
+                  {loading ? "Adding..." : "Add Item"}
+                </button>
+              </div>
+              {/* <button
+  onClick={() => uploadDummyMenuItems("ooBQRntrcMhHjxQaFlmz")}
+  className="btn btn-warning"
+>
+  🔄 Upload Dummy Menu
+</button> */}
 
-          {/* Image Uploader */}
-          <div className="col-12">
-            <label className="form-label">
-              <FontAwesomeIcon icon={faFileImage} /> Upload Image
-            </label>
-            <input
-              type="file"
-              className="form-control"
-              onChange={handleImageChange}
-              ref={fileInputRef}
-            />
-            {imagePreview && (
-              <img
-                src={imagePreview}
-                className="img-thumbnail mt-2"
-                alt="Preview"
-                width="100px"
-              />
-            )}
-            {errors.imageFile && (
-              <small className="text-danger">
-                <FontAwesomeIcon icon={faExclamationCircle} />{" "}
-                {errors.imageFile}
-              </small>
-            )}
-          </div>
-
-          <div className="form-check form-switch">
-            <input
-              className="form-check-input fs-6 "
-              type="checkbox"
-              role="switch"
-              id="flexSwitchCheckChecked"
-              checked={availability}
-              onChange={(e) => setAvailability(e.target.checked)}
-              data-bs-toggle="tooltip"
-              data-bs-placement="top"
-              title="Switch on if this item is currently available for orders."
-            />
-            <label
-              className="form-check-label fs-6"
-              htmlFor="flexSwitchCheckChecked"
-              title="Switch on if this item is currently available for orders."
-
-            >
-              Availability
-            </label>
-          </div>
-
-          {/* Submit Button */}
-          <div className="col-md-6 send_bt">
-            <button
-              type="button"
-              onClick={addMenuItem}
-              disabled={loading}
-              className="btn"
-            >
-              {loading ? "Adding..." : "Add Item"}
-            </button>
-          </div>
-        </form>
+            </form>
           </>
         ) : (
           <div className="text-center">
-          <div className="alert alert-warning">
-            <h5 className="mb-2">
-              <FontAwesomeIcon icon={faExclamationCircle} className="me-2" />
-              No Restaurant Found
-            </h5>
-            <p>
-              You must have an approved restaurant to add menu items. <br />
-              Please make sure your restaurant request is submitted and approved.
-            </p>
-            <Link to="/my-restaurant/add">
-  <button className="btn">Request page</button>
-</Link>
-            {/* my-restaurant/add */}
+            <div className="alert alert-warning">
+              <h5 className="mb-2">
+                <FontAwesomeIcon icon={faExclamationCircle} className="me-2" />
+                No Restaurant Found
+              </h5>
+              <p>
+                You must have an approved restaurant to add menu items. <br />
+                Please make sure your restaurant request is submitted and
+                approved.
+              </p>
+              <Link to="/my-restaurant/add">
+                <button className="btn">Request page</button>
+              </Link>
+              {/* my-restaurant/add */}
+            </div>
           </div>
-        </div>
         )}
-
       </div>
     </div>
   );

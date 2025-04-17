@@ -148,7 +148,8 @@ function Header() {
       setUser(null);
       setUserName("");
       setUserRole(null);
-      navigate("/login");
+      // navigate("/login");
+      window.location.href = "/login"; // this is used instead of navigate to ensure the local storage is cleared for the restaurantId.
     } catch (error) {
       console.error("Error logging out:", error);
     }

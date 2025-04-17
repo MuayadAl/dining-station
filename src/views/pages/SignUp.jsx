@@ -102,7 +102,6 @@ export default function SignUp({ isStaffRegistration = false }) {
       if (currentUserRole === "admin" || isStaffRegistration) {
         const token = await auth.currentUser.getIdToken();
 
-        // ✅ Build userData before API call
         const userData = {
           name: formData.name,
           gender: formData.gender,
@@ -110,7 +109,6 @@ export default function SignUp({ isStaffRegistration = false }) {
           email: formData.email,
         };
 
-        // ✅ For restaurant staff, fetch restaurantId
         if (isStaffRegistration) {
           const q = query(
             collection(db, "restaurants"),
@@ -123,24 +121,28 @@ export default function SignUp({ isStaffRegistration = false }) {
             userData.restaurantId = restaurantId;
             userData.createdBy = auth.currentUser.uid;
           } else {
-            showError("You must have an approved restaurant to create staff account. Please make sure your restaurant request is submitted and approved.");
+            showError(
+              "You must have an approved restaurant to create staff account. Please make sure your restaurant request is submitted and approved."
+            );
             throw new Error("No restaurant found for this owner.");
           }
         }
 
-        // ✅ Now send the API request with correct userData
-        const response = await fetch("http://localhost:5000/api/create-user", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            email: formData.email,
-            password: formData.password,
-            userData: userData, // ← includes restaurantId and createdBy if applicable
-          }),
-        });
+        const response = await fetch(
+          `${process.env.REACT_APP_API_BASE_URL}/create-user`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+              email: formData.email,
+              password: formData.password,
+              userData: userData,
+            }),
+          }
+        );
 
         if (!response.ok) {
           const { error } = await response.json();
@@ -157,7 +159,6 @@ export default function SignUp({ isStaffRegistration = false }) {
           confirmPassword: "",
         });
       } else {
-        // Normal customer sign up
         await handleSignUp(formData.email, formData.password, {
           name: formData.name,
           gender: formData.gender,
@@ -372,15 +373,16 @@ export default function SignUp({ isStaffRegistration = false }) {
                     : "text-danger"
                 }`}
               >
-                {formData.password === formData.confirmPassword
-                  ?<>
-                  <i class="fa-solid fa-circle-check"></i> Passwords match
-                  </> 
-                  : <>
-                  <i class="fa-solid fa-circle-xmark"></i> Passwords do not match
+                {formData.password === formData.confirmPassword ? (
+                  <>
+                    <i class="fa-solid fa-circle-check"></i> Passwords match
                   </>
-                  
-                  }
+                ) : (
+                  <>
+                    <i class="fa-solid fa-circle-xmark"></i> Passwords do not
+                    match
+                  </>
+                )}
               </small>
             )}
           </div>

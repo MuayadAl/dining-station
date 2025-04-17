@@ -49,7 +49,7 @@
     left: 50%;
     width: 0;
     height: 2px;
-    background-color: #e63946;
+    background-color: #f01c1c;
     transition: all 0.3s ease;
     transform: translateX(-50%);
   }
@@ -64,7 +64,7 @@
   
   .nav-link.active:before {
     width: 70%;
-    background-color: #e63946;
+    background-color: #f01c1c;
   }
   
   /* Dropdowns */
@@ -93,7 +93,7 @@
     left: 50%;
     width: 0;
     height: 2px;
-    background-color: #e63946;
+    background-color: #f01c1c;
     transition: all 0.3s ease;
     transform: translateX(-50%);
   }
