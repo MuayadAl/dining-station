@@ -22,6 +22,7 @@ import {
   buildStyles,
 } from "react-circular-progressbar";
 import "react-circular-progressbar/dist/styles.css";
+import isEqual from "lodash.isequal";
 
 const OrderPage = () => {
   const { orderId } = useParams();
@@ -31,7 +32,7 @@ const OrderPage = () => {
   const [loadingOrders, setLoadingOrders] = useState(false);
   const [ordersLoaded, setOrdersLoaded] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState(null);
-  const [cartCleared, setCartCleared] = useState(false); 
+  const [cartCleared, setCartCleared] = useState(false);
 
   const location = useLocation();
   const queryParams = new URLSearchParams(location.search);
@@ -42,49 +43,44 @@ const OrderPage = () => {
 
   useEffect(() => {
     let isMounted = true;
+    const currentUser = auth.currentUser;
 
-    const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
-      if (user && isMounted) {
-        const orderRef = doc(db, "orders", orderId);
+    if (!currentUser) {
+      showError("You need to be logged in.");
+      navigate("/login");
+      return;
+    }
 
-        const unsubscribeOrder = onSnapshot(orderRef, async (docSnapshot) => {
-          if (!isMounted) return;
+    const orderRef = doc(db, "orders", orderId);
+    const unsubscribeOrder = onSnapshot(orderRef, async (docSnapshot) => {
+      if (!isMounted) return;
 
-          if (docSnapshot.exists()) {
-            const fetchedOrder = { id: docSnapshot.id, ...docSnapshot.data() };
-            setOrder(fetchedOrder);
-            setLoading(false);
+      if (docSnapshot.exists()) {
+        const fetchedOrder = { id: docSnapshot.id, ...docSnapshot.data() };
 
-            // Clear cart once on payment success.
-            if (sessionId && fetchedOrder.status === "Placed" && !cartCleared) {
-              await clearCart();
-              setCartCleared(true);
-              showSuccess("Payment successful!");
-            }
-          } else {
-            showError("Order not found.");
-            navigate("/orders");
-            setLoading(false);
+        // ✅ Only update if the order has actually changed
+        if (!isEqual(fetchedOrder, order)) {
+          setOrder(fetchedOrder);
+
+          if (sessionId && fetchedOrder.status === "Placed" && !cartCleared) {
+            await clearCart();
+            setCartCleared(true);
+            showSuccess("Payment successful!");
           }
-        });
-
-        return () => unsubscribeOrder();
-      } else if (isMounted) {
-        showError("No authenticated user.");
-        navigate("/login");
+        }
+        setLoading(false);
+      } else {
+        showError("Order not found.");
+        navigate("/orders");
         setLoading(false);
       }
     });
 
     return () => {
       isMounted = false;
-      unsubscribeAuth();
+      unsubscribeOrder();
     };
-  }, [orderId, navigate, sessionId, cartCleared,  showError, showSuccess]);
-
-  // const handleClearCart = async () => {
-  //   await clearCart();
-  // };
+  }, [orderId, sessionId, cartCleared]);
 
   const fetchPreviousOrders = async () => {
     setLoadingOrders(true);
@@ -133,7 +129,9 @@ const OrderPage = () => {
 
       await updateDoc(orderRef, { status: "Cancelled" });
 
-      showSuccess("Order canceled successfully!. Amount will be refunded to your payment method (if any).");
+      showSuccess(
+        "Order canceled successfully!. Amount will be refunded to your payment method (if any)."
+      );
     } catch (error) {
       showError("Failed to cancel order.");
     }
@@ -257,7 +255,6 @@ const OrderPage = () => {
 
       {/* Progress Circle */}
       <div className="bg-body shadow p-4 rounded-3 d-flex flex-column justify-content-center align-items-center">
-
         <div style={{ width: 150, height: 150 }}>
           <CircularProgressbarWithChildren
             value={progressPercentage}

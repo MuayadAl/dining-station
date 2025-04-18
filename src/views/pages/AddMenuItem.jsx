@@ -32,7 +32,6 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 
 import useAlert from "../../hooks/userAlert";
-import uploadDummyMenuItems from "../../importDummyMenu";
 
 const popularCategories = [
   "Rice",
@@ -580,12 +579,6 @@ const AddMenuItemPage = () => {
                   {loading ? "Adding..." : "Add Item"}
                 </button>
               </div>
-              {/* <button
-  onClick={() => uploadDummyMenuItems("ooBQRntrcMhHjxQaFlmz")}
-  className="btn btn-warning"
->
-  🔄 Upload Dummy Menu
-</button> */}
 
             </form>
           </>
