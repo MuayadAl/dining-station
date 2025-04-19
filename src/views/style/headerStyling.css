@@ -289,27 +289,13 @@
     }
   }
   
-  /* .header_section {
+  .header_section {
     width: 100%;
     height: auto ;
     float: left;
     background-image: url(../../assets/dining_station_bg.jpg);
     background-size: 100% 100%;
     background-repeat: no-repeat;
-    } */
-
-    .header_section {
-      position: relative;
-      height: 90vh;
-      overflow: hidden;
-    }
-    
-    .bg-image {
-      width: 100%;
-      height: 100%;
-      object-fit: fill;
-      position: absolute;
-      z-index: -1;
     }
     
   

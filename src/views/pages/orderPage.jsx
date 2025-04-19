@@ -11,11 +11,12 @@ import {
   where,
   getDocs,
   updateDoc,
+  setDoc,
 } from "firebase/firestore";
 import { db, auth } from "../../models/firebase";
 import useAlert from "../../hooks/userAlert";
 import Loader from "../components/Loader";
-import { clearCart } from "../../controllers/cartController";
+import { clearCart, getCart } from "../../controllers/cartController";
 
 import {
   CircularProgressbarWithChildren,
@@ -43,6 +44,104 @@ const OrderPage = () => {
   const navigate = useNavigate();
   const { confirmAction, showSuccess, showError } = useAlert();
 
+  useEffect(() => {
+    const createOrderAfterStripe = async () => {
+      if (
+        !sessionId ||
+        order ||
+        localStorage.getItem(`order-placed-${sessionId}`)
+      )
+        return;
+
+      try {
+        console.log("🎯 Detected sessionId:", sessionId);
+
+        const response = await fetch(
+          `${process.env.REACT_APP_API_BASE_URL}/retrieve-checkout-session?session_id=${sessionId}`
+        );
+
+        // Use .text() to safely parse raw response and avoid JSON error
+        const rawText = await response.text();
+
+        let session;
+        try {
+          session = JSON.parse(rawText);
+        } catch (parseErr) {
+          console.error("❌ Failed to parse session JSON:", rawText);
+          throw new Error("Invalid response format from Stripe session fetch.");
+        }
+
+        console.log("📦 Stripe session retrieved:", session);
+
+        if (!session || !session.customer_details) {
+          throw new Error("Invalid session or missing customer details.");
+        }
+
+        const currentUser = auth.currentUser;
+        if (!currentUser) {
+          showError("You must be logged in.");
+          return navigate("/login");
+        }
+
+        console.log("✅ Authenticated user:", currentUser.uid);
+
+        const cartData = await getCart();
+        if (!Array.isArray(cartData) || cartData.length === 0) {
+          throw new Error("Cart is empty or not retrievable.");
+        }
+
+        console.log("🛒 Retrieved cart:", cartData);
+
+        const totalAmount = (session.amount_total / 100).toFixed(2);
+        const orderRef = doc(collection(db, "orders"));
+        const orderId = orderRef.id;
+
+        // 🟡 Use metadata if you included it in your Stripe session
+        const restaurantId =
+          session.metadata?.restaurantId || "unknown-restaurant-id";
+        const restaurantName =
+          session.metadata?.restaurantName || "Unknown Restaurant";
+
+        const orderData = {
+          stripeSessionId: sessionId,
+          orderId,
+          userId: currentUser.uid,
+          userName: session.customer_details.name || "Unknown",
+          restaurantId,
+          restaurantName,
+          total: parseFloat(totalAmount),
+          time: new Date().toISOString(),
+          items: cartData,
+          status: "Placed",
+          paymentMethod: "Stripe",
+        };
+
+        console.log("📝 Final orderData to Firestore:", orderData);
+
+        await setDoc(orderRef, orderData);
+        localStorage.setItem(`order-placed-${sessionId}`, "true");
+        await clearCart();
+        setOrder(orderData);
+        navigate(`/order/${orderId}?justPaid=true`);
+
+        showSuccess("Payment successful and order placed!");
+      } catch (err) {
+        console.error("🔥 Failed to place order after Stripe:", err);
+        showError("Error creating order after payment. Please try again.");
+      }
+    };
+
+    createOrderAfterStripe();
+  }, [sessionId]);
+
+  useEffect(() => {
+    return () => {
+      if (orderId) {
+        localStorage.removeItem(`payment-toast-shown-${orderId}`);
+      }
+    };
+  }, [orderId]);
+
   // Notification request
   useEffect(() => {
     if ("Notification" in window && Notification.permission !== "granted") {
@@ -53,30 +152,51 @@ const OrderPage = () => {
   }, []);
 
   useEffect(() => {
-    let isMounted = true;
-    const currentUser = auth.currentUser;
+    const fetchOrder = async () => {
+      try {
+        const currentUser = await new Promise((resolve, reject) => {
+          const unsubscribe = onAuthStateChanged(auth, (user) => {
+            if (user) {
+              resolve(user);
+              unsubscribe();
+            } else {
+              reject("User not logged in");
+            }
+          });
+        });
 
-    if (!currentUser) {
-      showError("You need to be logged in.");
-      navigate("/login");
-      return;
-    }
+        if (!currentUser) {
+          showError("You need to be logged in.");
+          navigate("/login");
+          return;
+        }
 
-    const orderRef = doc(db, "orders", orderId);
-    const unsubscribeOrder = onSnapshot(orderRef, async (docSnapshot) => {
-      if (!isMounted) return;
+        const orderRef = doc(db, "orders", orderId);
+        const unsubscribeOrder = onSnapshot(orderRef, async (docSnapshot) => {
+          if (!docSnapshot.exists()) {
+            // showError("Order not found.");
+            navigate(`/order/${orderId}`);
+            setLoading(false);
+            return;
+          }
 
-      if (docSnapshot.exists()) {
-        const fetchedOrder = { id: docSnapshot.id, ...docSnapshot.data() };
-
-        // ✅ Only update if the order has actually changed
-        if (!isEqual(fetchedOrder, order)) {
+          const fetchedOrder = { id: docSnapshot.id, ...docSnapshot.data() };
           setOrder(fetchedOrder);
 
-          if (sessionId && fetchedOrder.status === "Placed" && !cartCleared) {
+          const justPaid =
+            new URLSearchParams(location.search).get("justPaid") === "true";
+
+          if (fetchedOrder.status === "Placed" && justPaid && !cartCleared) {
             await clearCart();
             setCartCleared(true);
-            showSuccess("Payment successful!");
+
+            const toastKey = `payment-toast-shown-${fetchedOrder.id}`;
+            const alreadyShown = localStorage.getItem(toastKey);
+
+            if (!alreadyShown) {
+              showSuccess("Payment successful!");
+              localStorage.setItem(toastKey, "true");
+            }
           }
 
           if (
@@ -84,42 +204,38 @@ const OrderPage = () => {
             prevStatusRef.current !== null &&
             Notification.permission === "granted"
           ) {
-            // 🔔 Web Notification
             new Notification("Order Update", {
               body: `Your order is now: ${fetchedOrder.status}`,
               icon: "/icons/icon-192x192.png",
             });
-          
-            // 🎵 Play sound
+
             try {
-              notificationSound.play().catch((err) =>
-                console.error("Audio play error:", err)
-              );
+              notificationSound
+                .play()
+                .catch((err) => console.error("Audio play error:", err));
             } catch (err) {
               console.error("Sound error:", err);
             }
-          
-            // 📳 Vibrate (mobile)
+
             if (navigator.vibrate) {
               navigator.vibrate([200, 100, 200]);
             }
           }
-          
-          prevStatusRef.current = fetchedOrder.status;
-        }
-        setLoading(false);
-      } else {
-        showError("Order not found.");
-        navigate("/orders");
-        setLoading(false);
-      }
-    });
 
-    return () => {
-      isMounted = false;
-      unsubscribeOrder();
+          prevStatusRef.current = fetchedOrder.status;
+          setLoading(false);
+        });
+
+        return () => unsubscribeOrder();
+      } catch (err) {
+        console.error("🔐 Auth error or Firestore issue:", err);
+        showError("Authentication or order retrieval error.");
+        navigate("/login");
+      }
     };
-  }, [orderId, sessionId, cartCleared]);
+
+    if (orderId) fetchOrder();
+  }, [orderId, cartCleared]);
 
   const fetchPreviousOrders = async () => {
     setLoadingOrders(true);
@@ -318,11 +434,16 @@ const OrderPage = () => {
 
       <h3 className="mt-4">Items</h3>
       <ul className="list-group">
-        {order.items.map((item, index) => (
-          <li key={index} className="list-group-item">
-            {item.quantity}x {item.name} - RM{parseFloat(item.price).toFixed(2)}
-          </li>
-        ))}
+        {Array.isArray(order.items) && order.items.length > 0 ? (
+          order.items.map((item, index) => (
+            <li key={index} className="list-group-item">
+              {item.quantity}x {item.name} - RM
+              {parseFloat(item.price).toFixed(2)}
+            </li>
+          ))
+        ) : (
+          <li className="list-group-item text-muted">No items in this order</li>
+        )}
       </ul>
 
       <h3 className="mt-3">

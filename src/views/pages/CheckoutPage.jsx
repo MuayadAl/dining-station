@@ -111,28 +111,19 @@ const CheckoutForm = ({ cartItems, total, user, restaurant }) => {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           credentials: "include",
-          body: JSON.stringify({
-            cartItems,
-            total,
-            userId: user.id,
-            userName: user.name,
-            restaurantId: restaurant.id,
-            restaurantName: restaurant.name,
-          }),
+          body: JSON.stringify({ cartItems, restaurantId: restaurant.id, restaurantName: restaurant.name }),
+
         }
       );
       
-        
-        
-
       const data = await response.json();
-
       if (!response.ok || !data.url) {
         showError(data.error || "Payment failed. Please try again.");
         return;
       }
-      await deductItemQuantities(restaurant.id, cartItems);
-      window.location.href = data.url; // Redirect to Stripe
+      
+      window.location.href = data.url; // ✅ No deduction or Firestore write here
+      
     } catch (err) {
       console.error("Network error:", err);
       showError("Network error: Unable to reach Stripe.");

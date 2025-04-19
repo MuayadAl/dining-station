@@ -55,13 +55,13 @@ function LandingPage() {
   return (
     <div className="">
       <div className="img-fluid header_section  mb-3">
-        <img
+        {/* <img
           src={require("../../assets/dining_station_bg.jpg")}
           alt="Dining Station Background"
           className="bg-image"
           width="100%"
           height="auto"
-        />
+        /> */}
         <div className=" banner_section layout_padding ">
           <div className="container">
             <div

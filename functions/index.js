@@ -58,43 +58,16 @@ app.post("/api/create-checkout-session", async (req, res) => {
   res.setHeader("Access-Control-Allow-Credentials", "true");
 
   try {
-    const { cartItems, userId, userName, restaurantId, restaurantName } = req.body;
+    const { cartItems } = req.body;
 
-    if (
-      !cartItems?.length ||
-      !userId ||
-      !userName ||
-      !restaurantId ||
-      !restaurantName
-    ) {
-      return res.status(400).json({ error: "Missing required fields" });
+    if (!cartItems?.length) {
+      return res.status(400).json({ error: "Missing cart items" });
     }
-
-    const total = cartItems.reduce(
-      (sum, item) => sum + item.price * item.quantity,
-      0
-    );
-
-    const newOrderRef = db.collection("orders").doc();
-    const orderId = newOrderRef.id;
-
-    await newOrderRef.set({
-      orderId,
-      userId,
-      userName,
-      restaurantId,
-      restaurantName,
-      total: parseFloat(total.toFixed(2)),
-      time: new Date().toISOString(),
-      items: cartItems,
-      status: "Placed",
-      paymentMethod: "Stripe",
-    });
 
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
       mode: "payment",
-      success_url: `${frontendBaseUrl}/order/${orderId}?session_id={CHECKOUT_SESSION_ID}`,
+      success_url: `${frontendBaseUrl}/order/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${frontendBaseUrl}/cancel`,
       line_items: cartItems.map((item) => ({
         price_data: {
@@ -104,7 +77,15 @@ app.post("/api/create-checkout-session", async (req, res) => {
         },
         quantity: item.quantity,
       })),
+      metadata: {
+        restaurantId: req.body.restaurantId || "unknown-restaurant-id",
+        restaurantName: req.body.restaurantName || "Unknown Restaurant",
+      },
+
+      
+      
     });
+    
 
     res.status(200).json({ url: session.url });
   } catch (error) {
@@ -112,6 +93,18 @@ app.post("/api/create-checkout-session", async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+
+app.get("/api/retrieve-checkout-session", async (req, res) => {
+  const sessionId = req.query.session_id;
+  try {
+    const session = await stripe.checkout.sessions.retrieve(sessionId);
+    res.status(200).json(session);
+  } catch (error) {
+    console.error("🔥 Stripe Session Retrieval Error:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 
 // ✅ Register other routes
 app.use("/api", adminRoutes);
