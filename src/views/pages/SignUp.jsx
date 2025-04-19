@@ -14,7 +14,6 @@ import {
   getDocs,
 } from "firebase/firestore";
 import useAlert from "../../hooks/userAlert";
-import zxcvbn from "zxcvbn";
 
 export default function SignUp({ isStaffRegistration = false }) {
   const [formData, setFormData] = useState({
@@ -50,10 +49,12 @@ export default function SignUp({ isStaffRegistration = false }) {
     return () => unsubscribe();
   }, []);
 
-  const handleChange = (e) => {
+  const handleChange = async (e) => {
     const { name, value } = e.target;
 
     if (name === "password") {
+      const { default: zxcvbn } = await import("zxcvbn");
+      
       const result = zxcvbn(value);
       setPasswordScore(result.score);
     }

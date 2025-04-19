@@ -38,7 +38,7 @@ function About() {
                         </div>
                         <div className="col-md-6"> 
                             <div className="">
-                                <img src={aboutPic} className="about_img" alt="About Dining Station" />
+                                <img src={aboutPic} loading="lazy" className="about_img" alt="About Dining Station" />
                             </div>
                         </div>
                     </div>

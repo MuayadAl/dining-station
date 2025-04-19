@@ -882,7 +882,7 @@ textarea#comment.massage-bt::placeholder {
 .footer_section {
     width: 100%;
     float: left;
-    height: auto;
+    height: 200px;
     background-color: #1d1d1d;
     background-size: 100%;
     padding: 50px 0px;

@@ -1,6 +1,6 @@
 import { useLocation } from "react-router-dom";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { onAuthStateChanged } from "firebase/auth";
 import {
@@ -33,13 +33,24 @@ const OrderPage = () => {
   const [ordersLoaded, setOrdersLoaded] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [cartCleared, setCartCleared] = useState(false);
+  const prevStatusRef = useRef(null);
 
   const location = useLocation();
   const queryParams = new URLSearchParams(location.search);
   const sessionId = queryParams.get("session_id");
+  const notificationSound = new Audio("/notifications/ping.mp3");
 
   const navigate = useNavigate();
   const { confirmAction, showSuccess, showError } = useAlert();
+
+  // Notification request
+  useEffect(() => {
+    if ("Notification" in window && Notification.permission !== "granted") {
+      Notification.requestPermission().then((permission) => {
+        console.log("Notification permission:", permission);
+      });
+    }
+  }, []);
 
   useEffect(() => {
     let isMounted = true;
@@ -67,6 +78,34 @@ const OrderPage = () => {
             setCartCleared(true);
             showSuccess("Payment successful!");
           }
+
+          if (
+            fetchedOrder.status !== prevStatusRef.current &&
+            prevStatusRef.current !== null &&
+            Notification.permission === "granted"
+          ) {
+            // 🔔 Web Notification
+            new Notification("Order Update", {
+              body: `Your order is now: ${fetchedOrder.status}`,
+              icon: "/icons/icon-192x192.png",
+            });
+          
+            // 🎵 Play sound
+            try {
+              notificationSound.play().catch((err) =>
+                console.error("Audio play error:", err)
+              );
+            } catch (err) {
+              console.error("Sound error:", err);
+            }
+          
+            // 📳 Vibrate (mobile)
+            if (navigator.vibrate) {
+              navigator.vibrate([200, 100, 200]);
+            }
+          }
+          
+          prevStatusRef.current = fetchedOrder.status;
         }
         setLoading(false);
       } else {

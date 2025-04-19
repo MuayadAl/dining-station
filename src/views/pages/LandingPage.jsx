@@ -4,7 +4,7 @@ import "bootstrap/dist/css/bootstrap.min.css";
 import React, { useState, useEffect } from "react";
 import { auth, db } from "../../models/firebase";
 import { collection, getDocs } from "firebase/firestore";
-import { Link } from 'react-router-dom';
+import { Link } from "react-router-dom";
 
 function LandingPage() {
   const [user, setUser] = useState(null);
@@ -55,6 +55,13 @@ function LandingPage() {
   return (
     <div className="">
       <div className="img-fluid header_section  mb-3">
+        <img
+          src={require("../../assets/dining_station_bg.jpg")}
+          alt="Dining Station Background"
+          className="bg-image"
+          width="100%"
+          height="auto"
+        />
         <div className=" banner_section layout_padding ">
           <div className="container">
             <div
@@ -96,13 +103,12 @@ function LandingPage() {
         </div>
       </div>
       <section className="container py-4 vh-75">
-        
-          <h2
-            className="text-center"
-            style={{ fontSize: "2.2rem", fontWeight: "600" }}
-          >
-            Top Ordered Items
-          </h2>
+        <h2
+          className="text-center"
+          style={{ fontSize: "2.2rem", fontWeight: "600" }}
+        >
+          Top Ordered Items
+        </h2>
 
         {topItems.length === 0 ? (
           <div className="text-center">
