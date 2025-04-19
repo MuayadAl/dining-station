@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Dining Station</string>
+    <string name="title_activity_main">Dining Station</string>
+    <string name="package_name">com.dining.station</string>
+    <string name="custom_url_scheme">com.dining.station</string>
+</resources>
