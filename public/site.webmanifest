@@ -1,0 +1,58 @@
+{
+  "id": "/",
+  "short_name": "Dining Station",
+  "name": "Dining Station Web App",
+  "description": "A Progressive Web App for ordering food at APU campus restaurants.",
+  "start_url": "/",
+  "display": "standalone",
+  "theme_color": "#ffffff",
+  "background_color": "#ffffff",
+  "icons": [
+    {
+      "src": "icons/favicon-96x96.png",
+      "sizes": "96x96",
+      "type": "image/png"
+    },
+    {
+      "src": "icons/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    },
+    {
+      "src": "icons/web-app-manifest-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/web-app-manifest-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/favicon.ico",
+      "sizes": "any",
+      "type": "image/x-icon"
+    },
+    {
+      "src": "icons/favicon.svg",
+      "type": "image/svg+xml",
+      "sizes": "any",
+      "purpose": "any"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "screenshots/home.png",
+      "sizes": "540x720",
+      "type": "image/png",
+      "form_factor": "wide"
+    },
+    {
+      "src": "screenshots/menu.png",
+      "sizes": "540x720",
+      "type": "image/png"
+    }
+  ]
+}
