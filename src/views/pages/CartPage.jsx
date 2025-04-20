@@ -12,11 +12,14 @@ import { doc, getDoc } from "firebase/firestore";
 import { db } from "../../models/firebase";
 
 const CartPage = () => {
+  
   const [cartItems, setCartItems] = useState([]);
   const { showSuccess, showError } = useAlert();
   const navigate = useNavigate();
 
   useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+
     const fetchCart = async () => {
       const cartData = await getCart();
       setCartItems(cartData);

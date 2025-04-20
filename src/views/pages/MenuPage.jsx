@@ -57,6 +57,10 @@ const MenuPage = () => {
   const [selectedItem, setSelectedItem] = useState(null);
   const [showEditModal, setShowEditModal] = useState(false);
   const [saving, setSaving] = useState(false);
+  // Adding button 
+  const [addingItemId, setAddingItemId] = useState(null);
+  const [isAdding, setIsAdding] = useState(false);
+
 
   const [isOwner, setIsOwner] = useState(null);
 
@@ -67,7 +71,7 @@ const MenuPage = () => {
   const [selectedImageFile, setSelectedImageFile] = useState(null);
 
   useEffect(() => {
-    if (restaurantId && !isOwner ) {
+    if (restaurantId && !isOwner) {
       localStorage.setItem("restaurantId", restaurantId);
     }
   }, [restaurantId, isOwner]);
@@ -173,6 +177,7 @@ const MenuPage = () => {
 
   const handleAddToCart = async (item, e = null, manualImgElement = null) => {
     const defaultSize = item.sizes?.[0];
+    setAddingItemId(item.itemId); // Start loading
 
     try {
       const restaurantRef = doc(db, "restaurants", restaurantId);
@@ -229,7 +234,6 @@ const MenuPage = () => {
 
       await addToCart(itemWithSize);
 
-      // 🩹 Fix: Wait a tick for the image ref to be available
       setTimeout(() => {
         const img = manualImgElement || itemImageRefs.current[item.itemId];
         if (img) animateToCart(img);
@@ -243,6 +247,8 @@ const MenuPage = () => {
     } catch (error) {
       console.error("Caught error in handleAddToCart:", error);
       showError("Failed to add item to cart.");
+    } finally {
+      setAddingItemId(null); // Stop loading
     }
   };
 
@@ -715,8 +721,11 @@ const MenuPage = () => {
                                           itemImageRefs.current[item.itemId]
                                         );
                                       }}
+                                      disabled={addingItemId === item.itemId}
                                     >
-                                      Add to Cart
+                                      {addingItemId === item.itemId
+                                        ? <><i class="fa-solid fa-spinner fa-spin"></i> Adding...</>
+                                        : "Add to Cart"}
                                     </button>
                                   )}
                                 </div>
@@ -993,23 +1002,31 @@ const MenuPage = () => {
             Cancel
           </Button>
           <Button
-            variant="danger"
-            onClick={async () => {
-              if (!selectedSize) return showError("Please select a size.");
-              const itemWithSize = {
-                ...viewingItem,
-                sizes: [selectedSize],
-                selectedSize: selectedSize.size,
-                selectedPrice: selectedSize.price,
-              };
-              await handleAddToCart(itemWithSize);
-              setTimeout(() => {
-                setShowViewModal(false);
-              }, 600);
-            }}
-          >
-            Add to Cart
-          </Button>
+  variant="danger"
+  disabled={isAdding}
+  onClick={async () => {
+    if (!selectedSize) return showError("Please select a size.");
+
+    setIsAdding(true); // start loading
+
+    const itemWithSize = {
+      ...viewingItem,
+      sizes: [selectedSize],
+      selectedSize: selectedSize.size,
+      selectedPrice: selectedSize.price,
+    };
+
+    await handleAddToCart(itemWithSize);
+
+    setTimeout(() => {
+      setShowViewModal(false);
+      setIsAdding(false); // end loading
+    }, 600);
+  }}
+>
+  {isAdding ? <><i class="fa-solid fa-spinner fa-spin"></i> Adding...</>  : "Add to Cart"}
+</Button>
+
         </Modal.Footer>
       </Modal>
     </div>

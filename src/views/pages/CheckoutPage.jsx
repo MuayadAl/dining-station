@@ -122,7 +122,7 @@ const CheckoutForm = ({ cartItems, total, user, restaurant }) => {
         return;
       }
       
-      window.location.href = data.url; // ✅ No deduction or Firestore write here
+      window.location.href = data.url; 
       
     } catch (err) {
       console.error("Network error:", err);
@@ -185,6 +185,7 @@ const CheckoutPage = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
     const fetchData = async () => {
       try {
         setLoading(true);

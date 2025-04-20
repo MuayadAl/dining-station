@@ -84,7 +84,7 @@ function LandingPage() {
                           ready for pickup!
                         </p>
                         <div className="btn_main">
-                          <div className="main_btn active">
+                          <div className="main_btn active mb-2">
                             {/* Hide the Register link if the user is logged in */}
                             {!user && <Link to="/signup">Register</Link>}
                           </div>

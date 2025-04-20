@@ -35,6 +35,7 @@ import RestaurantOrderManager from "./views/pages/RestaurantOrderManager";
 import AdminReportPage from "./views/pages/AdminReportPage";
 import AdminManageUsers from "./views/pages/AdminManageUsers";
 import Forbidden403 from "./views/pages/Forbidden403";
+import ProcessingPage from "./views/pages/ProcessingPage";
 
 // Stripe pages
 import Cancel from "./views/pages/Cancel";
@@ -53,10 +54,21 @@ function App() {
           <Route path="/landing" element={<LandingPage />} />
           <Route path="/about" element={<AboutPage />} />
           <Route path="/contact" element={<Contact />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/signup" element={<SignUp />} />
+          <Route
+            path="/login"
+            element={
+              currentUser ? <Navigate to="/landing" replace /> : <Login />
+            }
+          />
+          <Route
+            path="/signup"
+            element={
+              currentUser ? <Navigate to="/landing" replace /> : <SignUp />
+            }
+          />
           <Route path="/cancel" element={<Cancel />} />
           <Route path="/403" element={<Forbidden403 />} />
+          <Route path="/order/processing" element={<ProcessingPage />} />
 
           {/* Shared Routes */}
           <Route
