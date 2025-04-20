@@ -10,9 +10,11 @@ import { addToCart as addToCartController } from "../controllers/cartController"
 
 
 const CartContext = createContext();
+
 export const useCart = () => useContext(CartContext);
 
 export const CartProvider = ({ children }) => {
+  const [cartRestaurantId, setCartRestaurantId] = useState(null);
   const [cartItems, setCartItems] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -21,13 +23,19 @@ export const CartProvider = ({ children }) => {
       try {
         const backendCart = await getCart();
         setCartItems(backendCart);
+        if (backendCart.length > 0) {
+          setCartRestaurantId(backendCart[0].restaurantId);
+        } else {
+          setCartRestaurantId(null);
+        }
       } catch (error) {
         console.error("Failed to fetch cart:", error);
         setCartItems([]);
+        setCartRestaurantId(null);
       } finally {
         setLoading(false);
       }
-    };
+    };    
 
     fetchCart();
   }, []);
@@ -47,6 +55,7 @@ export const CartProvider = ({ children }) => {
   const clear = async () => {
     await clearCart();
     setCartItems([]);
+    setCartRestaurantId(null);  
   };
   
 
@@ -60,6 +69,7 @@ export const CartProvider = ({ children }) => {
       await addToCartController(item); // item must contain selectedSize & selectedPrice
       const updated = await getCart();
       setCartItems(updated);
+      setCartRestaurantId(item.restaurantId);
     } catch (error) {
       console.error("Failed to add item to cart (context):", error);
     }
@@ -70,6 +80,7 @@ export const CartProvider = ({ children }) => {
     <CartContext.Provider
       value={{
         cartItems,
+        cartRestaurantId,
         setCartItems,
         updateQuantity,
         removeItem,

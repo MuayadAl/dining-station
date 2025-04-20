@@ -57,10 +57,9 @@ const MenuPage = () => {
   const [selectedItem, setSelectedItem] = useState(null);
   const [showEditModal, setShowEditModal] = useState(false);
   const [saving, setSaving] = useState(false);
-  // Adding button 
+  // Adding button
   const [addingItemId, setAddingItemId] = useState(null);
   const [isAdding, setIsAdding] = useState(false);
-
 
   const [isOwner, setIsOwner] = useState(null);
 
@@ -69,6 +68,10 @@ const MenuPage = () => {
   const [selectedSize, setSelectedSize] = useState(null);
 
   const [selectedImageFile, setSelectedImageFile] = useState(null);
+
+  const [showCartConflictModal, setShowCartConflictModal] = useState(false);
+  const [pendingItem, setPendingItem] = useState(null);
+  const { cartRestaurantId, clear } = useCart();
 
   useEffect(() => {
     if (restaurantId && !isOwner) {
@@ -177,68 +180,77 @@ const MenuPage = () => {
 
   const handleAddToCart = async (item, e = null, manualImgElement = null) => {
     const defaultSize = item.sizes?.[0];
-    setAddingItemId(item.itemId); // Start loading
-
+    setAddingItemId(item.itemId);
+  
     try {
       const restaurantRef = doc(db, "restaurants", restaurantId);
       const restaurantSnap = await getDoc(restaurantRef);
-
+  
       if (!restaurantSnap.exists()) {
         showError("Restaurant not found.");
         navigate("/restaurants");
         return;
       }
-
+  
       const restaurantData = restaurantSnap.data();
       const currentStatus = getRestaurantStatus(
         restaurantData.openingHours,
         restaurantData.status
       );
-
+  
       if (currentStatus.toLowerCase() !== "open") {
         showError("This restaurant is currently closed. Redirecting...");
         navigate("/restaurants");
         return;
       }
-
+  
       const existingCartItem = cartItems.find(
         (ci) =>
           ci.itemId === item.itemId && ci.selectedSize === defaultSize?.size
       );
-      const currentQuantityInCart = existingCartItem?.quantity || 0;
+  
       const availableQty =
         typeof item.availableQuantity === "number" ? item.availableQuantity : 0;
-
+      const currentQuantityInCart = existingCartItem?.quantity || 0;
+  
       if (availableQty <= 0) {
         showError(`${item.name} is currently out of stock.`);
         return;
       }
-
+  
       if (currentQuantityInCart + 1 > availableQty) {
         showError(
           `Only ${availableQty} of ${item.name} available. You've reached the limit.`
         );
         return;
       }
-
+  
       if (!defaultSize || !defaultSize.size || defaultSize.price == null) {
         showError("This item does not have a valid default size or price.");
         return;
       }
-
+  
       const itemWithSize = {
         ...item,
+        restaurantId, // important for tracking cart source
         selectedSize: defaultSize.size,
         selectedPrice: defaultSize.price,
       };
-
+  
+      // 🧠 Check for conflict
+      if (cartItems.length > 0 && cartRestaurantId && cartRestaurantId !== restaurantId) {
+        setPendingItem(itemWithSize); // Save it temporarily
+        setShowCartConflictModal(true); // Show conflict modal
+        return;
+      }
+  
       await addToCart(itemWithSize);
-
+  
       setTimeout(() => {
         const img = manualImgElement || itemImageRefs.current[item.itemId];
         if (img) animateToCart(img);
       }, 0);
-
+  
       if (manualImgElement) {
         setTimeout(() => {
           setShowViewModal(false);
@@ -248,9 +260,9 @@ const MenuPage = () => {
       console.error("Caught error in handleAddToCart:", error);
       showError("Failed to add item to cart.");
     } finally {
-      setAddingItemId(null); // Stop loading
+      setAddingItemId(null);
     }
-  };
+  };  
 
   useEffect(() => {
     let isMounted = true;
@@ -723,9 +735,14 @@ const MenuPage = () => {
                                       }}
                                       disabled={addingItemId === item.itemId}
                                     >
-                                      {addingItemId === item.itemId
-                                        ? <><i class="fa-solid fa-spinner fa-spin"></i> Adding...</>
-                                        : "Add to Cart"}
+                                      {addingItemId === item.itemId ? (
+                                        <>
+                                          <i class="fa-solid fa-spinner fa-spin"></i>{" "}
+                                          Adding...
+                                        </>
+                                      ) : (
+                                        "Add to Cart"
+                                      )}
                                     </button>
                                   )}
                                 </div>
@@ -1002,33 +1019,73 @@ const MenuPage = () => {
             Cancel
           </Button>
           <Button
-  variant="danger"
-  disabled={isAdding}
-  onClick={async () => {
-    if (!selectedSize) return showError("Please select a size.");
+            variant="danger"
+            disabled={isAdding}
+            onClick={async () => {
+              if (!selectedSize) return showError("Please select a size.");
 
-    setIsAdding(true); // start loading
+              setIsAdding(true); // start loading
 
-    const itemWithSize = {
-      ...viewingItem,
-      sizes: [selectedSize],
-      selectedSize: selectedSize.size,
-      selectedPrice: selectedSize.price,
-    };
+              const itemWithSize = {
+                ...viewingItem,
+                sizes: [selectedSize],
+                selectedSize: selectedSize.size,
+                selectedPrice: selectedSize.price,
+              };
 
-    await handleAddToCart(itemWithSize);
+              await handleAddToCart(itemWithSize);
 
-    setTimeout(() => {
-      setShowViewModal(false);
-      setIsAdding(false); // end loading
-    }, 600);
-  }}
->
-  {isAdding ? <><i class="fa-solid fa-spinner fa-spin"></i> Adding...</>  : "Add to Cart"}
-</Button>
-
+              setTimeout(() => {
+                setShowViewModal(false);
+                setIsAdding(false); // end loading
+              }, 600);
+            }}
+          >
+            {isAdding ? (
+              <>
+                <i class="fa-solid fa-spinner fa-spin"></i> Adding...
+              </>
+            ) : (
+              "Add to Cart"
+            )}
+          </Button>
         </Modal.Footer>
       </Modal>
+
+      {/* Replace Cart Modal */}
+      <Modal
+  show={showCartConflictModal}
+  onHide={() => setShowCartConflictModal(false)}
+  backdrop="static"
+  centered
+>
+  <Modal.Header closeButton>
+    <Modal.Title>Replace Cart?</Modal.Title>
+  </Modal.Header>
+  <Modal.Body>
+    You already have items in your cart from a different restaurant. Do you want to clear the cart and add this new item instead?
+  </Modal.Body>
+  <Modal.Footer>
+    <Button variant="secondary" onClick={() => setShowCartConflictModal(false)}>
+      Cancel
+    </Button>
+    <Button
+      variant="danger"
+      onClick={async () => {
+        await clear(); // clear existing cart
+        await addToCart(pendingItem); // add the new item
+        setShowCartConflictModal(false);
+        setTimeout(() => {
+          const img = itemImageRefs.current[pendingItem.itemId];
+          if (img) animateToCart(img);
+        }, 0);
+      }}
+    >
+      Replace Cart
+    </Button>
+  </Modal.Footer>
+</Modal>
+
     </div>
   );
 };
