@@ -73,6 +73,9 @@ const MenuPage = () => {
   const [pendingItem, setPendingItem] = useState(null);
   const { cartRestaurantId, clear } = useCart();
 
+  const [showLogoModal, setShowLogoModal] = useState(false);
+
+
   useEffect(() => {
     if (restaurantId && !isOwner) {
       localStorage.setItem("restaurantId", restaurantId);
@@ -492,16 +495,18 @@ const MenuPage = () => {
 
       {/* Restaurant Logo */}
       <div className="container d-flex justify-content-center align-items-center">
-        <img
-          src={restaurantImgUrl || imagePlaceHolder}
-          onError={(e) => {
-            e.target.onerror = null;
-            e.target.src = { imagePlaceHolder };
-          }}
-          alt="restaurant logo"
-          className="img-fluid mt-2"
-          style={{ height: "100px", width: "100px", borderRadius: "50%" }}
-        />
+      <img
+  src={restaurantImgUrl || imagePlaceHolder}
+  onError={(e) => {
+    e.target.onerror = null;
+    e.target.src = imagePlaceHolder;
+  }}
+  alt="restaurant logo"
+  className="img-fluid mt-2"
+  style={{ height: "100px", width: "100px", borderRadius: "50%", cursor: "pointer" }}
+  onClick={() => setShowLogoModal(true)}
+/>
+
       </div>
 
       {/* Restaurant Name */}
@@ -515,7 +520,7 @@ const MenuPage = () => {
         (hours) => hours?.enabled && hours.open && hours.close
       ) && (
         <div
-          className="shadow pt-3 mb-4 bg-body rounded-3 row"
+          className="shadow pt-3 mb-4 bg-body rounded-3 row hover_effect"
           style={{ paddingLeft: "20px" }}
         >
           <div className="d-flex justify-content-between align-items-center">
@@ -787,7 +792,7 @@ const MenuPage = () => {
                   style={{
                     width: "100%",
                     maxHeight: "200px",
-                    objectFit: "scale-down",
+                    objectFit: "cover",
                     cursor: "pointer",
                     border: "2px dashed #aaa",
                   }}
@@ -1085,6 +1090,32 @@ const MenuPage = () => {
     </Button>
   </Modal.Footer>
 </Modal>
+
+
+{/* Logo Image Modal */}
+<Modal
+  show={showLogoModal}
+  onHide={() => setShowLogoModal(false)}
+  size="lg"
+  centered
+  backdrop={true}
+  keyboard={true}
+>
+  <Modal.Body className="p-0 bg-dark text-center"  onClick={() => setShowLogoModal(false)}>
+    <img
+      src={restaurantImgUrl || imagePlaceHolder}
+      alt="Restaurant Large"
+      className="img-fluid"
+      style={{
+        width: "100%",
+        height: "auto",
+        maxHeight: "90vh",
+        objectFit: "cover",
+      }}
+    />
+  </Modal.Body>
+</Modal>
+
 
     </div>
   );

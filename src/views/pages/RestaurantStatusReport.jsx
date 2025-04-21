@@ -538,7 +538,7 @@ const RestaurantStatusReports = () => {
             </table>
           </div>
 
-          <div className="row mt-4">
+          <div className="row mt-4 g-3">
             <div className="col-md-6">
               <div className="card shadow-sm border-info hover_effect">
                 <div className="card-body text-info text-center">
