@@ -23,6 +23,7 @@ import {
   faStickyNote,
 } from "@fortawesome/free-solid-svg-icons";
 import Swal from "sweetalert2";
+import imagePlaceHolder from "../../assets/image-placeholder.jpg";
 
 const AdminRestaurantApprovalPage = () => {
   const [restaurants, setRestaurants] = useState([]);
@@ -30,7 +31,12 @@ const AdminRestaurantApprovalPage = () => {
   const [error, setError] = useState("");
   const [activeTab, setActiveTab] = useState("pending");
   const [searchTerm, setSearchTerm] = useState("");
-  
+  const [statusCounts, setStatusCounts] = useState({
+    pending: 0,
+    approved: 0,
+    rejected: 0,
+    suspended: 0,
+  });
 
   useEffect(() => {
     fetchRestaurants();
@@ -41,6 +47,7 @@ const AdminRestaurantApprovalPage = () => {
     try {
       const statuses = ["pending", "approved", "rejected", "suspended"];
       const allRestaurants = [];
+      const counts = { pending: 0, approved: 0, rejected: 0, suspended: 0 };
 
       for (const status of statuses) {
         const q = query(
@@ -48,6 +55,7 @@ const AdminRestaurantApprovalPage = () => {
           where("approvalStatus", "==", status)
         );
         const querySnapshot = await getDocs(q);
+        counts[status] = querySnapshot.size;
 
         for (const docSnap of querySnapshot.docs) {
           const restaurantData = docSnap.data();
@@ -64,6 +72,7 @@ const AdminRestaurantApprovalPage = () => {
       }
 
       setRestaurants(allRestaurants);
+      setStatusCounts(counts); // ✅ Update counts
     } catch (err) {
       setError("Error fetching restaurants: " + err.message);
     } finally {
@@ -74,19 +83,33 @@ const AdminRestaurantApprovalPage = () => {
   const updateStatus = async (restaurantId, newStatus, remark = "") => {
     try {
       const restaurantRef = doc(db, "restaurants", restaurantId);
+
+      // 1. Update restaurant's status
       await updateDoc(restaurantRef, {
         approvalStatus: newStatus,
         remark: remark,
       });
 
-      await fetchRestaurants(); // ⬅️ refresh data after update
+      // 2. If approved, update the user's restaurantId
+      if (newStatus === "approved") {
+        const restaurantDoc = await getDoc(restaurantRef);
+        const restaurantData = restaurantDoc.data();
+
+        if (restaurantDoc.exists() && restaurantData?.userId) {
+          const userRef = doc(db, "users", restaurantData.userId);
+          await updateDoc(userRef, {
+            restaurantId: restaurantDoc.id,
+          });
+        }
+      }
+
+      await fetchRestaurants();
 
       Swal.fire({
         icon: "success",
         title: `Restaurant ${newStatus}`,
         text: `The restaurant has been marked as ${newStatus}.`,
-        confirmButtonColor: "#f01c1c", 
-
+        confirmButtonColor: "#f01c1c",
       });
     } catch (err) {
       setError("Error updating status: " + err.message);
@@ -94,8 +117,7 @@ const AdminRestaurantApprovalPage = () => {
         icon: "error",
         title: "Error",
         text: "Failed to update restaurant status.",
-        confirmButtonColor: "#f01c1c", 
-
+        confirmButtonColor: "#f01c1c",
       });
     }
   };
@@ -108,8 +130,8 @@ const AdminRestaurantApprovalPage = () => {
       showCancelButton: true,
       confirmButtonText: newStatus.charAt(0).toUpperCase() + newStatus.slice(1),
       cancelButtonText: "Cancel",
-      confirmButtonColor: "#f01c1c", 
-      cancelButtonColor: "#3085d6", 
+      confirmButtonColor: "#f01c1c",
+      cancelButtonColor: "#3085d6",
       icon: "warning",
     }).then((result) => {
       if (result.isConfirmed) {
@@ -118,27 +140,24 @@ const AdminRestaurantApprovalPage = () => {
       }
     });
   };
-  
 
   const filteredRestaurants = restaurants
-  .filter((rest) => rest.approvalStatus === activeTab)
-  .filter((rest) => {
-    const term = searchTerm.toLowerCase();
-    return (
-      rest.name?.toLowerCase().includes(term) ||
-      rest.userName?.toLowerCase().includes(term) ||
-      rest.userEmail?.toLowerCase().includes(term) ||
-      rest.email?.toLowerCase().includes(term) ||
-      rest.location?.toLowerCase().includes(term)
-    );
-  });
-
+    .filter((rest) => rest.approvalStatus === activeTab)
+    .filter((rest) => {
+      const term = searchTerm.toLowerCase();
+      return (
+        rest.name?.toLowerCase().includes(term) ||
+        rest.userName?.toLowerCase().includes(term) ||
+        rest.userEmail?.toLowerCase().includes(term) ||
+        rest.email?.toLowerCase().includes(term) ||
+        rest.location?.toLowerCase().includes(term)
+      );
+    });
 
   return (
     <div className="container-fluid mb-4 float-start">
       <h1 className="text-center mb-4">Restaurant Approval Requests</h1>
 
-      
       {/* Search Box */}
       <div className="container mb-4">
         <div className="row justify-content-center">
@@ -163,7 +182,7 @@ const AdminRestaurantApprovalPage = () => {
       </div>
 
       {/* Tabs */}
-      <ul className="nav nav-tabs mb-3 justify-content-center align-items-center">
+      <ul className="nav nav-tabs mb-3 justify-content-center align-items-center ">
         {["pending", "approved", "rejected", "suspended"].map((status) => (
           <li className="nav-item" key={status}>
             <button
@@ -171,6 +190,10 @@ const AdminRestaurantApprovalPage = () => {
               onClick={() => setActiveTab(status)}
             >
               {status.charAt(0).toUpperCase() + status.slice(1)}
+              {"   "}
+              <span className="badge bg-primary mx-2">
+                {statusCounts[status] || 0}
+              </span>
             </button>
           </li>
         ))}
@@ -194,16 +217,14 @@ const AdminRestaurantApprovalPage = () => {
               <div className="card shadow-sm">
                 <div className="card-body">
                   {/* Optional image */}
-                  {restaurant.imgUrl && (
-                    <div className="text-center mb-3">
-                      <img
-                        src={restaurant.imgUrl}
-                        alt={restaurant.name}
-                        className="img-fluid rounded-circle"
-                        style={{ width: "150px", height: "150px" }}
-                      />
-                    </div>
-                  )}
+                  <div className="text-center mb-3">
+                    <img
+                      src={restaurant.imgUrl || imagePlaceHolder}
+                      alt={restaurant.name}
+                      className="img-fluid rounded-circle"
+                      style={{ width: "150px", height: "150px" }}
+                    />
+                  </div>
 
                   <h5 className="text-primary text-center fw-bold">
                     {restaurant.name}
@@ -244,8 +265,7 @@ const AdminRestaurantApprovalPage = () => {
                       </p>
                       <p>
                         <FontAwesomeIcon icon={faStickyNote} className="me-2" />
-                        <strong>Remark:</strong>{" "}
-                        {restaurant.remark}
+                        <strong>Remark:</strong> {restaurant.remark}
                       </p>
                     </div>
                   </div>
@@ -268,7 +288,13 @@ const AdminRestaurantApprovalPage = () => {
                         </button>
                         <button
                           className="btn btn-danger btn-sm"
-                          onClick={() => handleStatusWithRemark(restaurant.id, "rejected", "Reject Restaurant")}
+                          onClick={() =>
+                            handleStatusWithRemark(
+                              restaurant.id,
+                              "rejected",
+                              "Reject Restaurant"
+                            )
+                          }
                         >
                           <FontAwesomeIcon
                             icon={faTimesCircle}
@@ -282,7 +308,13 @@ const AdminRestaurantApprovalPage = () => {
                     {activeTab === "approved" && (
                       <button
                         className="btn btn-warning btn-sm"
-                        onClick={() => handleStatusWithRemark(restaurant.id, "suspended", "Suspend Restaurant")}
+                        onClick={() =>
+                          handleStatusWithRemark(
+                            restaurant.id,
+                            "suspended",
+                            "Suspend Restaurant"
+                          )
+                        }
                       >
                         <FontAwesomeIcon icon={faBan} className="me-2" />
                         Suspend

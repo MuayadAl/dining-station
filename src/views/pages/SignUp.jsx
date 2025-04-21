@@ -14,6 +14,7 @@ import {
   getDocs,
 } from "firebase/firestore";
 import useAlert from "../../hooks/userAlert";
+import zxcvbn from "zxcvbn";
 
 export default function SignUp({ isStaffRegistration = false }) {
   const [formData, setFormData] = useState({
@@ -53,8 +54,6 @@ export default function SignUp({ isStaffRegistration = false }) {
     const { name, value } = e.target;
 
     if (name === "password") {
-      const { default: zxcvbn } = await import("zxcvbn");
-      
       const result = zxcvbn(value);
       setPasswordScore(result.score);
     }
@@ -108,6 +107,7 @@ export default function SignUp({ isStaffRegistration = false }) {
           gender: formData.gender,
           userRole: formData.userRole,
           email: formData.email,
+          createdAt: new Date().toISOString(),
         };
 
         if (isStaffRegistration) {
@@ -393,7 +393,7 @@ export default function SignUp({ isStaffRegistration = false }) {
             <button type="submit" disabled={loading}>
               {loading ? (
                 <>
-                  "Signing Up..."<i class="fa-solid fa-spinner fa-spin"></i>
+                  <i class="fa-solid fa-spinner fa-spin"></i> Signing Up...
                 </>
               ) : (
                 "Sign Up"

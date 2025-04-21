@@ -60,12 +60,7 @@ function App() {
               currentUser ? <Navigate to="/landing" replace /> : <Login />
             }
           />
-          <Route
-            path="/signup"
-            element={
-              currentUser ? <Navigate to="/landing" replace /> : <SignUp />
-            }
-          />
+          <Route path="/signup" element={<SignUp />} />
           <Route path="/cancel" element={<Cancel />} />
           <Route path="/403" element={<Forbidden403 />} />
           <Route path="/order/processing" element={<ProcessingPage />} />

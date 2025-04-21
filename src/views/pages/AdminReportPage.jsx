@@ -27,6 +27,7 @@ const AdminReportPage = () => {
     total: 0,
     admin: 0,
     restaurant: 0,
+    restaurantStaff: 0,
     users: 0,
     latest: [],
   });
@@ -53,7 +54,12 @@ const AdminReportPage = () => {
       processStats(allOrders, allRestaurants);
       const userSnap = await getDocs(collection(db, "users"));
       const latestUsers = [];
-      let roleCount = { admin: 0, "restaurant-owner": 0, customer: 0 };
+      let roleCount = {
+        admin: 0,
+        "restaurant-owner": 0,
+        "restaurant-staff": 0,
+        customer: 0,
+      };
 
       userSnap.forEach((doc) => {
         const data = doc.data();
@@ -67,6 +73,7 @@ const AdminReportPage = () => {
         total: latestUsers.length,
         admin: roleCount.admin,
         restaurant: roleCount["restaurant-owner"],
+        restaurantStaff: roleCount["restaurant-staff"],
         users: roleCount.customer,
         latest: latestUsers
           .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
@@ -394,8 +401,8 @@ const AdminReportPage = () => {
         {/* Summary Users */}
         <h4>User Summary</h4>
         <div className="mt-2 shadow p-3 bg-body rounded-3 hover_effect">
-          <div className="row g-3">
-            <div className="col-md-3">
+          <div className="row g-3 justify-content-between d-flex">
+            <div className="col-md-2 ">
               <div className="card text-center border-dark hover_effect">
                 <div className="card-body ">
                   <h6>Total Users</h6>
@@ -409,7 +416,7 @@ const AdminReportPage = () => {
                 </div>
               </div>
             </div>
-            <div className="col-md-3">
+            <div className="col-md-2">
               <div className="card text-center border-primary hover_effect">
                 <div className="card-body">
                   <h6>Admins</h6>
@@ -423,7 +430,7 @@ const AdminReportPage = () => {
                 </div>
               </div>
             </div>
-            <div className="col-md-3">
+            <div className="col-md-2">
               <div className="card text-center border-warning hover_effect">
                 <div className="card-body">
                   <h6>Restaurants</h6>
@@ -437,7 +444,22 @@ const AdminReportPage = () => {
                 </div>
               </div>
             </div>
-            <div className="col-md-3">
+            <div className="col-md-2">
+              <div className="card text-center border-secondary hover_effect">
+                <div className="card-body">
+                  <h6>Restaurant Staff</h6>
+                  {loading ? (
+                    <div className="placeholder-glow">
+                      <span className="placeholder col-6"></span>
+                    </div>
+                  ) : (
+                    <h3>{userStats.restaurantStaff}</h3>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="col-md-2">
               <div className="card text-center border-info hover_effect">
                 <div className="card-body">
                   <h6>Regular Users</h6>
@@ -455,14 +477,13 @@ const AdminReportPage = () => {
 
           <h5 className="mt-4">Latest Registered Users</h5>
           {loading ? (
-                    <div className="placeholder-glow">
-                      <span class="placeholder col-6"></span>
-                      <span class="placeholder col-12"></span>
-                      <span class="placeholder col-6"></span>
-                      <span class="placeholder col-4"></span>
-                    </div>
-                  ) : (
-                    
+            <div className="placeholder-glow">
+              <span class="placeholder col-6"></span>
+              <span class="placeholder col-12"></span>
+              <span class="placeholder col-6"></span>
+              <span class="placeholder col-4"></span>
+            </div>
+          ) : (
             <ul className="list-group">
               {userStats.latest.map((user, idx) => (
                 <li
@@ -474,7 +495,7 @@ const AdminReportPage = () => {
                 </li>
               ))}
             </ul>
-                  )}
+          )}
         </div>
       </div>
     </div>

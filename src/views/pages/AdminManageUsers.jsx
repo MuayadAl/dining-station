@@ -12,6 +12,7 @@ import {
 } from "firebase/firestore";
 import { auth, db } from "../../models/firebase";
 import useAlert from "../../hooks/userAlert";
+import { getIdToken } from "firebase/auth";
 
 const AdminManageUsers = () => {
   const [users, setUsers] = useState([]);
@@ -23,7 +24,7 @@ const AdminManageUsers = () => {
   const { confirmAction, showSuccess, showError } = useAlert();
 
 
-  const BATCH_SIZE = 25;
+  const BATCH_SIZE = 10;
   const searchRef = useRef("");
 
 
@@ -204,17 +205,36 @@ const AdminManageUsers = () => {
     if (!confirmed) return;
 
     try {
-      const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
-      const res = await fetch(`${API_BASE_URL}/api/admin/deleteUser`, {
+      const API_BASE_URL =
+  process.env.NODE_ENV === "development"
+    ? process.env.REACT_APP_LOCAL_API
+    : process.env.REACT_APP_API_BASE_URL;
+
+      const currentUser = auth.currentUser;
+    
+      if (!currentUser) {
+        showError("User not authenticated.");
+        return;
+      }
+    
+      const token = await currentUser.getIdToken();
+    
+      const res = await fetch(`${API_BASE_URL}/admin/deleteUser`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`, // ✅ Add the token here
+        },
         body: JSON.stringify({ uid }),
       });
-
+    
       const data = await res.json();
-
-      if (!res.ok) throw new Error(data.error || "Failed to delete user.");
-
+    
+      if (!res.ok) {
+        console.error("Server error:", data);
+        throw new Error(data.error || "Failed to delete user.");
+      }
+    
       showSuccess("User deleted successfully.");
       setLastVisible(null);
       fetchUsers(true);
@@ -244,7 +264,7 @@ const AdminManageUsers = () => {
           ) : (
             <div className="table-responsive">
 
-            <table className="w-full table-auto border">
+            <table className="w-100 table-auto border">
               <thead>
                 <tr className="bg-gray-100">
                   <th className="p-2 border">ID</th>

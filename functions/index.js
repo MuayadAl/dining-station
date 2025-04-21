@@ -11,10 +11,41 @@ const orderRoutes = require("./orderController");
 const app = express();
 
 // ✅ CORS configuration
-const allowedOrigin = "https://dinging-station.web.app";
+// const allowedOrigin = "https://dinging-station.web.app";
+
+// const corsOptions = {
+//   origin: allowedOrigin,
+//   credentials: true,
+//   methods: ["GET", "POST", "OPTIONS"],
+//   allowedHeaders: ["Content-Type", "Authorization"],
+// };
+
+// app.use(cors(corsOptions));
+// app.use(express.json());
+
+// // ✅ Manual CORS headers for full control
+// app.use((req, res, next) => {
+//   res.setHeader("Access-Control-Allow-Origin", allowedOrigin);
+//   res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+//   res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+//   res.setHeader("Access-Control-Allow-Credentials", "true");
+//   next();
+// });
+
+const allowedOrigins = [
+  "https://dinging-station.web.app",
+  "http://localhost:3000"
+];
 
 const corsOptions = {
-  origin: allowedOrigin,
+  origin: function (origin, callback) {
+    // allow requests with no origin like mobile apps or curl
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
   credentials: true,
   methods: ["GET", "POST", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
@@ -23,14 +54,18 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.use(express.json());
 
-// ✅ Manual CORS headers for full control
+// ✅ Universal CORS headers (for fallback)
 app.use((req, res, next) => {
-  res.setHeader("Access-Control-Allow-Origin", allowedOrigin);
+  const origin = req.headers.origin;
+  if (allowedOrigins.includes(origin)) {
+    res.setHeader("Access-Control-Allow-Origin", origin);
+  }
   res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
   res.setHeader("Access-Control-Allow-Credentials", "true");
   next();
 });
+
 
 // ✅ Stripe setup
 const stripeSecret = process.env.STRIPE_SECRET_KEY || functions.config().stripe?.secret;
