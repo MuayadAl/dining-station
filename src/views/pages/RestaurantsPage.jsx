@@ -16,6 +16,7 @@ import "bootstrap/dist/css/bootstrap.min.css";
 import "bootstrap/dist/js/bootstrap.bundle.min.js";
 import { NavLink } from "react-router-dom";
 import "../style/responsive.css"
+import Loader from "../components/Loader";
 const BATCH_SIZE = 6; // Number of restaurants loaded per batch
 
 function RestaurantsPage() {
@@ -174,6 +175,8 @@ function RestaurantsPage() {
       </div>
     </div>
   );
+
+  if(loading) return Loader("Loading Restaurants...");
 
   return (
     <div className="container p-4 text-center">

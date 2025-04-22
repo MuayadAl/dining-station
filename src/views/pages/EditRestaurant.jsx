@@ -15,7 +15,6 @@ import { faPen } from "@fortawesome/free-solid-svg-icons";
 import { faClock } from "@fortawesome/free-solid-svg-icons";
 
 import imagePlaceHolder from "../../assets/image-placeholder.jpg";
-import Loader from "../components/Loader";
 
 export default function EditRestaurant() {
   const { confirmAction, showSuccess, showError } = useAlert(); // Use the alert hook
@@ -56,7 +55,7 @@ export default function EditRestaurant() {
           if (isMounted) {
             setError("User not authenticated");
             setIsHidden(true);
-            setLoading(false); // ✅ End loading on error
+            setLoading(false); 
           }
           return;
         }
