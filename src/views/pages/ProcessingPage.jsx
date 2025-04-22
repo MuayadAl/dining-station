@@ -2,7 +2,7 @@ import React, { useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { auth } from "../../models/firebase";
 import { getCart, clearCart } from "../../controllers/cartController";
-import { doc, collection, setDoc } from "firebase/firestore";
+import { doc, collection, setDoc, getDoc } from "firebase/firestore";
 import { db } from "../../models/firebase";
 import useAlert from "../../hooks/userAlert";
 
@@ -16,7 +16,8 @@ const ProcessingPage = () => {
 
   useEffect(() => {
     const processOrder = async () => {
-      if (!sessionId || localStorage.getItem(`order-placed-${sessionId}`)) return;
+      if (!sessionId || localStorage.getItem(`order-placed-${sessionId}`))
+        return;
 
       try {
         const response = await fetch(
@@ -24,13 +25,26 @@ const ProcessingPage = () => {
         );
         const session = await response.json();
 
-        if (!session || !session.customer_details) throw new Error("Invalid Stripe session");
+        if (!session || !session.customer_details)
+          throw new Error("Invalid Stripe session");
 
-        const user = auth.currentUser;
-        if (!user) return navigate("/login");
+        const user = await new Promise((resolve, reject) => {
+          const unsubscribe = auth.onAuthStateChanged((user) => {
+            unsubscribe();
+            if (user) resolve(user);
+            else reject(new Error("User not logged in"));
+          });
+        });
 
         const cart = await getCart();
-        if (!Array.isArray(cart) || cart.length === 0) throw new Error("Cart is empty.");
+        if (!Array.isArray(cart) || cart.length === 0)
+          throw new Error("Cart is empty.");
+
+        const userDoc = await getDoc(doc(db, "users", user.uid));
+        const userNameFromFirestore =
+          userDoc.exists() && userDoc.data().name
+            ? userDoc.data().name
+            : session.customer_details.name || "Unknown";
 
         const total = (session.amount_total / 100).toFixed(2);
         const orderRef = doc(collection(db, "orders"));
@@ -38,7 +52,7 @@ const ProcessingPage = () => {
           stripeSessionId: sessionId,
           orderId: orderRef.id,
           userId: user.uid,
-          userName: session.customer_details.name || "Unknown",
+          userName: userNameFromFirestore,
           restaurantId: session.metadata?.restaurantId || "unknown",
           restaurantName: session.metadata?.restaurantName || "Unknown",
           total: parseFloat(total),

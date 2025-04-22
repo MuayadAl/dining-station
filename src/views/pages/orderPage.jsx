@@ -11,19 +11,17 @@ import {
   where,
   getDocs,
   updateDoc,
-  setDoc,
 } from "firebase/firestore";
 import { db, auth } from "../../models/firebase";
 import useAlert from "../../hooks/userAlert";
 import Loader from "../components/Loader";
-import { clearCart, getCart } from "../../controllers/cartController";
+import { clearCart } from "../../controllers/cartController";
 
 import {
   CircularProgressbarWithChildren,
   buildStyles,
 } from "react-circular-progressbar";
 import "react-circular-progressbar/dist/styles.css";
-import isEqual from "lodash.isequal";
 
 const OrderPage = () => {
   const { orderId } = useParams();
@@ -38,101 +36,10 @@ const OrderPage = () => {
 
   const location = useLocation();
   const queryParams = new URLSearchParams(location.search);
-  const sessionId = queryParams.get("session_id");
   const notificationSound = new Audio("/notifications/ping.mp3");
 
   const navigate = useNavigate();
   const { confirmAction, showSuccess, showError } = useAlert();
-
-  useEffect(() => {
-    const createOrderAfterStripe = async () => {
-      if (
-        !sessionId ||
-        order ||
-        localStorage.getItem(`order-placed-${sessionId}`)
-      )
-        return;
-
-      try {
-        console.log("🎯 Detected sessionId:", sessionId);
-
-        const response = await fetch(
-          `${process.env.REACT_APP_API_BASE_URL}/retrieve-checkout-session?session_id=${sessionId}`
-        );
-
-        // Use .text() to safely parse raw response and avoid JSON error
-        const rawText = await response.text();
-
-        let session;
-        try {
-          session = JSON.parse(rawText);
-        } catch (parseErr) {
-          console.error("❌ Failed to parse session JSON:", rawText);
-          throw new Error("Invalid response format from Stripe session fetch.");
-        }
-
-        console.log("📦 Stripe session retrieved:", session);
-
-        if (!session || !session.customer_details) {
-          throw new Error("Invalid session or missing customer details.");
-        }
-
-        const currentUser = auth.currentUser;
-        if (!currentUser) {
-          showError("You must be logged in.");
-          return navigate("/login");
-        }
-
-        console.log("✅ Authenticated user:", currentUser.uid);
-
-        const cartData = await getCart();
-        if (!Array.isArray(cartData) || cartData.length === 0) {
-          throw new Error("Cart is empty or not retrievable.");
-        }
-
-        console.log("🛒 Retrieved cart:", cartData);
-
-        const totalAmount = (session.amount_total / 100).toFixed(2);
-        const orderRef = doc(collection(db, "orders"));
-        const orderId = orderRef.id;
-
-        // 🟡 Use metadata if you included it in your Stripe session
-        const restaurantId =
-          session.metadata?.restaurantId || "unknown-restaurant-id";
-        const restaurantName =
-          session.metadata?.restaurantName || "Unknown Restaurant";
-
-        const orderData = {
-          stripeSessionId: sessionId,
-          orderId,
-          userId: currentUser.uid,
-          userName: session.customer_details.name || "Unknown",
-          restaurantId,
-          restaurantName,
-          total: parseFloat(totalAmount),
-          time: new Date().toISOString(),
-          items: cartData,
-          status: "Placed",
-          paymentMethod: "Stripe",
-        };
-
-        console.log("📝 Final orderData to Firestore:", orderData);
-
-        await setDoc(orderRef, orderData);
-        localStorage.setItem(`order-placed-${sessionId}`, "true");
-        await clearCart();
-        setOrder(orderData);
-        navigate(`/order/${orderId}?justPaid=true`);
-
-        showSuccess("Payment successful and order placed!");
-      } catch (err) {
-        console.error("🔥 Failed to place order after Stripe:", err);
-        showError("Error creating order after payment. Please try again.");
-      }
-    };
-
-    createOrderAfterStripe();
-  }, [sessionId]);
 
   useEffect(() => {
     return () => {
@@ -258,7 +165,7 @@ const OrderPage = () => {
     }
   };
 
-  const handleCancelOrder = async () => {
+  const handleCancelOrder = async (targetOrderId) => {
     const isConfirmed = await confirmAction(
       "Are you sure?",
       "This action cannot be undone. Do you want to cancel this order?",
@@ -280,19 +187,25 @@ const OrderPage = () => {
       }
 
       // await deleteDoc(doc(db, "orders", orderId));
-      const orderRef = doc(db, "orders", orderId);
+      const orderRef = doc(db, "orders", targetOrderId);
 
       await updateDoc(orderRef, { status: "Cancelled" });
 
       showSuccess(
         "Order canceled successfully!. Amount will be refunded to your payment method (if any)."
       );
+
+      await fetchPreviousOrders();
+    if (selectedOrder?.id === targetOrderId) {
+      setSelectedOrder((prev) => ({ ...prev, status: "Cancelled" }));
+    }
+
     } catch (error) {
       showError("Failed to cancel order.");
     }
   };
 
-  const handlePickedOrder = async () => {
+  const handlePickedOrder = async (targetOrderId) => {
     try {
       const currentUser = auth.currentUser;
       if (!currentUser) {
@@ -305,11 +218,17 @@ const OrderPage = () => {
         return;
       }
 
-      const orderRef = doc(db, "orders", orderId);
+      const orderRef = doc(db, "orders", targetOrderId);
 
       await updateDoc(orderRef, { status: "Picked Up" });
 
       showSuccess("Enjoy your meal!");
+
+      await fetchPreviousOrders();
+      if (selectedOrder?.id === targetOrderId) {
+        setSelectedOrder((prev) => ({ ...prev, status: "Picked Up" }));
+      }
+      
     } catch (error) {
       showError("Failed to picked up order.");
     }
@@ -392,10 +311,10 @@ const OrderPage = () => {
               className={`btn ${
                 order.status === "Placed" ? "btn-danger" : "btn-success"
               }`}
-              onClick={
+              onClick={()=>
                 order.status === "Placed"
-                  ? handleCancelOrder
-                  : handlePickedOrder
+                  ? handleCancelOrder(orderId)
+                  : handlePickedOrder(orderId)
               }
             >
               {order.status === "Placed" ? "Cancel Order" : "Picked Up"}
@@ -540,6 +459,9 @@ const OrderPage = () => {
                     <strong>Order ID:</strong> {selectedOrder.id}
                   </p>
                   <p>
+                    <strong>Customer:</strong> {selectedOrder.userName}
+                  </p>
+                  <p>
                     <strong>Restaurant:</strong> {selectedOrder.restaurantName}
                   </p>
                   <p>
@@ -570,6 +492,30 @@ const OrderPage = () => {
                     </ul>
                   ) : (
                     <p>No items found for this order.</p>
+                  )}
+
+                  {(selectedOrder.status === "Placed" ||
+                    selectedOrder.status === "Ready to Pick Up") && (
+                    <div className="col-12 mt-3 d-flex gap-2">
+                      {selectedOrder.status === "Placed" && (
+                        <button
+                          className="btn btn-danger"
+                          onClick={() => {
+                            handleCancelOrder(selectedOrder.id);
+                            }}
+                        >
+                          Cancel Order
+                        </button>
+                      )}
+                      {selectedOrder.status === "Ready to Pick Up" && (
+                        <button
+                          className="btn btn-success"
+                          onClick={() => handlePickedOrder(selectedOrder.id)}
+                        >
+                          Picked Up
+                        </button>
+                      )}
+                    </div>
                   )}
                 </>
               ) : (

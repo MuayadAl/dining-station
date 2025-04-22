@@ -23,6 +23,8 @@ function LandingPage() {
 
         ordersSnapshot.forEach((doc) => {
           const order = doc.data();
+          const restaurantId = order.restaurantId || "";
+
           if (Array.isArray(order.items)) {
             order.items.forEach((item) => {
               const name = item.name || item.itemName;
@@ -31,9 +33,12 @@ function LandingPage() {
 
               if (name) {
                 if (!itemMap[name]) {
-                  itemMap[name] = { name, image, total: 0 };
+                  itemMap[name] = { name, image, total: 0, restaurantId };
                 }
                 itemMap[name].total += quantity;
+
+                // ✅ Make sure restaurantId is always included
+                itemMap[name].restaurantId = restaurantId;
               }
             });
           }
@@ -55,13 +60,6 @@ function LandingPage() {
   return (
     <div className="">
       <div className="img-fluid header_section  mb-3">
-        {/* <img
-          src={require("../../assets/dining_station_bg.jpg")}
-          alt="Dining Station Background"
-          className="bg-image"
-          width="100%"
-          height="auto"
-        /> */}
         <div className=" banner_section layout_padding ">
           <div className="container">
             <div
@@ -161,6 +159,16 @@ function LandingPage() {
                     <div className="carousel-text">
                       <h4>{item.name}</h4>
                     </div>
+                    {item.restaurantId && (
+                      <div className="mt-1 text-center">
+                        <Link
+                          to={`/user/menu-page/${item.restaurantId}`}
+                          className="btn btn-danger"
+                        >
+                          Order Now
+                        </Link>
+                      </div>
+                    )}
                   </div>
                 </div>
               ))}
