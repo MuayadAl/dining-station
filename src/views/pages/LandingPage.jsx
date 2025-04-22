@@ -1,19 +1,33 @@
-import "../style/styleSheet.css";
-import "../style/responsive.css";
+
 import "bootstrap/dist/css/bootstrap.min.css";
 import React, { useState, useEffect } from "react";
 import { auth, db } from "../../models/firebase";
-import { collection, getDocs } from "firebase/firestore";
+import { collection, getDocs, doc, getDoc  } from "firebase/firestore";
 import { Link } from "react-router-dom";
 
 function LandingPage() {
   const [user, setUser] = useState(null);
   const [topItems, setTopItems] = useState([]);
+  const [userRole, setUserRole] = useState(null);
+
 
   useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged(setUser);
+    const unsubscribe = auth.onAuthStateChanged(async (currentUser) => {
+      setUser(currentUser);
+      if (currentUser) {
+        const userRef = doc(db, "users", currentUser.uid);
+        const userSnap = await getDoc(userRef);
+        if (userSnap.exists()) {
+          setUserRole(userSnap.data().userRole);
+        }
+      } else {
+        setUserRole(null);
+      }
+    });
+  
     return () => unsubscribe();
   }, []);
+  
 
   useEffect(() => {
     const fetchTopItems = async () => {
@@ -24,6 +38,7 @@ function LandingPage() {
         ordersSnapshot.forEach((doc) => {
           const order = doc.data();
           const restaurantId = order.restaurantId || "";
+          const restaurantName = order.restaurantName ||"";
 
           if (Array.isArray(order.items)) {
             order.items.forEach((item) => {
@@ -33,7 +48,7 @@ function LandingPage() {
 
               if (name) {
                 if (!itemMap[name]) {
-                  itemMap[name] = { name, image, total: 0, restaurantId };
+                  itemMap[name] = { name, image, total: 0, restaurantId, restaurantName };
                 }
                 itemMap[name].total += quantity;
 
@@ -100,7 +115,7 @@ function LandingPage() {
           </div>
         </div>
       </div>
-      <section className="container py-4 vh-75">
+      <section className="container py-4">
         <h2
           className="text-center"
           style={{ fontSize: "2.2rem", fontWeight: "600" }}
@@ -122,16 +137,15 @@ function LandingPage() {
             <div className="carousel-indicators">
               {topItems.map((_, idx) => (
                 <button
-                  key={idx}
-                  type="button"
-                  data-bs-target="#topItemsCarousel"
-                  data-bs-slide-to={idx}
-                  className={
-                    idx === 0 ? "active indicator-btn" : "indicator-btn"
-                  }
-                  aria-current={idx === 0 ? "true" : undefined}
-                  aria-label={`Slide ${idx + 1}`}
-                />
+                type="button"
+                data-bs-target="#topItemsCarousel"
+                data-bs-slide-to={idx}
+                className={`mx-1 bg-danger border-0 ${idx === 0 ? "active" : ""}`}
+                aria-current={idx === 0 ? "true" : undefined}
+                aria-label={`Slide ${idx + 1}`}
+                style={{ width: "20px", height: "2px", borderRadius: "0" }}
+              />
+              
               ))}
             </div>
 
@@ -143,6 +157,9 @@ function LandingPage() {
                   key={item.name}
                 >
                   <div className="carousel-item-container">
+                  <div className="carousel-text mt-0">
+                      <h4>{item.restaurantName}</h4>
+                    </div>
                     <div className="carousel-img-wrapper">
                       <img
                         src={
@@ -159,7 +176,7 @@ function LandingPage() {
                     <div className="carousel-text">
                       <h4>{item.name}</h4>
                     </div>
-                    {item.restaurantId && (
+                    {item.restaurantId && userRole === "customer" && (
                       <div className="mt-1 text-center">
                         <Link
                           to={`/user/menu-page/${item.restaurantId}`}

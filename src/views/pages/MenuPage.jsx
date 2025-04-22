@@ -76,11 +76,11 @@ const MenuPage = () => {
   const [showLogoModal, setShowLogoModal] = useState(false);
 
 
-  useEffect(() => {
-    if (restaurantId && !isOwner) {
-      localStorage.setItem("restaurantId", restaurantId);
-    }
-  }, [restaurantId, isOwner]);
+  // useEffect(() => {
+  //   if (restaurantId && !isOwner) {
+  //     localStorage.setItem("restaurantId", restaurantId);
+  //   }
+  // }, [restaurantId, isOwner]);
 
   useEffect(() => {
     if (!restaurantId || isOwner === null) return;
@@ -245,6 +245,10 @@ const MenuPage = () => {
         setPendingItem(itemWithSize); // Save it temporarily
         setShowCartConflictModal(true); // Show conflict modal
         return;
+      }
+
+      if (restaurantId && !isOwner) {
+        localStorage.setItem("restaurantId", restaurantId);
       }
   
       await addToCart(itemWithSize);
@@ -1077,8 +1081,10 @@ const MenuPage = () => {
     <Button
       variant="danger"
       onClick={async () => {
-        await clear(); // clear existing cart
-        await addToCart(pendingItem); // add the new item
+        localStorage.setItem("restaurantId", restaurantId);
+
+        await clear(); 
+        await addToCart(pendingItem); 
         setShowCartConflictModal(false);
         setTimeout(() => {
           const img = itemImageRefs.current[pendingItem.itemId];
