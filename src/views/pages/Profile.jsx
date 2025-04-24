@@ -69,6 +69,14 @@ export default function Profile() {
   };
 
   const handlePasswordChange = async () => {
+    const confirmed = await confirmAction(
+      "Reset Password?",
+      `An email will be sent to ${userData.email} to reset your password.`,
+      "Send Reset Email"
+    );
+  
+    if (!confirmed) return;
+  
     try {
       await handlePasswordReset(userData.email);
       showSuccess("Password reset email sent.");
@@ -76,6 +84,7 @@ export default function Profile() {
       showError("Failed to send password reset email.");
     }
   };
+  
 
   const handleSaveChanges = async () => {
     setError("");

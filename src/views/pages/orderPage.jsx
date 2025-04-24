@@ -196,10 +196,9 @@ const OrderPage = () => {
       );
 
       await fetchPreviousOrders();
-    if (selectedOrder?.id === targetOrderId) {
-      setSelectedOrder((prev) => ({ ...prev, status: "Cancelled" }));
-    }
-
+      if (selectedOrder?.id === targetOrderId) {
+        setSelectedOrder((prev) => ({ ...prev, status: "Cancelled" }));
+      }
     } catch (error) {
       showError("Failed to cancel order.");
     }
@@ -228,7 +227,6 @@ const OrderPage = () => {
       if (selectedOrder?.id === targetOrderId) {
         setSelectedOrder((prev) => ({ ...prev, status: "Picked Up" }));
       }
-      
     } catch (error) {
       showError("Failed to picked up order.");
     }
@@ -311,7 +309,7 @@ const OrderPage = () => {
               className={`btn ${
                 order.status === "Placed" ? "btn-danger" : "btn-success"
               }`}
-              onClick={()=>
+              onClick={() =>
                 order.status === "Placed"
                   ? handleCancelOrder(orderId)
                   : handlePickedOrder(orderId)
@@ -365,9 +363,19 @@ const OrderPage = () => {
         )}
       </ul>
 
-      <h3 className="mt-3">
-        <strong>Total Amount: RM{parseFloat(order.total).toFixed(2)}</strong>
-      </h3>
+      <div className="d-flex align-items-center mt-3 fs-5 ">
+        <strong>
+          <span>Total Amount: RM{parseFloat(order.total).toFixed(2)}</span>
+        </strong>
+        <span
+          className={`badge ms-2 px-3 py-1 mt-1 ${
+            order.paymentMethod === "Stripe" ? "bg-success" : "bg-danger"
+          }`}
+          style={{ fontSize: "0.9rem", borderRadius: "0.75rem" }}
+        >
+          {order.paymentMethod === "Stripe" ? "Paid" : "Unpaid"}
+        </span>
+      </div>
 
       <h4 className="mt-5">All Orders</h4>
 
@@ -502,7 +510,7 @@ const OrderPage = () => {
                           className="btn btn-danger"
                           onClick={() => {
                             handleCancelOrder(selectedOrder.id);
-                            }}
+                          }}
                         >
                           Cancel Order
                         </button>

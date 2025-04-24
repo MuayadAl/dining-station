@@ -291,9 +291,24 @@ function RestaurantOrderManager() {
                 <strong>Time:</strong>{" "}
                 {new Date(order.time).toLocaleTimeString()}
               </p>
-              <p>
-                <strong>Total:</strong> RM{order.total || "0.00"}
-              </p>
+              <div
+                className="d-flex align-items-center"
+                style={{ marginLeft: "21px" }}
+              >
+                <span className="fw-Semibold ">
+                  Total: RM{order.total || "0.00"}
+                </span>
+                <span
+                  className={`badge ms-2 px-3 py-1   ${
+                    order.paymentMethod === "Stripe"
+                      ? "bg-success"
+                      : "bg-danger"
+                  }`}
+                  style={{ fontSize: "0.8rem", borderRadius: "0.75rem" }}
+                >
+                  {order.paymentMethod === "Stripe" ? "Paid" : "Unpaid"}
+                </span>
+              </div>
               <div className="mb-3">
                 <strong>Items:</strong>
                 <ul className="list-group list-group-flush">
@@ -304,7 +319,7 @@ function RestaurantOrderManager() {
                   ))}
                 </ul>
               </div>
-              <div className="d-flex justify-content-between align-items-center">
+              <div className="d-flex justify-content-between align-items-center gap-2">
                 <span
                   className={`badge ${getStatusBadgeClass(order.status)} p-2`}
                 >
@@ -401,7 +416,9 @@ function RestaurantOrderManager() {
         <ul className="nav nav-pills mb-4 overflow-auto flex-nowrap justify-content-center align-items-center">
           <li className="nav-item ">
             <button
-              className={`nav-link tab-button ${activeTab === "new" ? "active" : ""}`}
+              className={`nav-link tab-button ${
+                activeTab === "new" ? "active" : ""
+              }`}
               onClick={() => setActiveTab("new")}
             >
               🆕New Orders{" "}
@@ -410,7 +427,9 @@ function RestaurantOrderManager() {
           </li>
           <li className="nav-item ">
             <button
-              className={`nav-link tab-button ${activeTab === "active" ? "active" : ""}`}
+              className={`nav-link tab-button ${
+                activeTab === "active" ? "active" : ""
+              }`}
               onClick={() => setActiveTab("active")}
             >
               <FontAwesomeIcon icon={faFireBurner} /> Active Orders{" "}
