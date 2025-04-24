@@ -130,7 +130,7 @@ export default function SignUp({ isStaffRegistration = false }) {
         }
 
         const response = await fetch(
-          `${process.env.REACT_APP_API_BASE_URL}/create-user`,
+          `${process.env.REACT_APP_API_BASE_URL}/api/create-user`,
           {
             method: "POST",
             headers: {

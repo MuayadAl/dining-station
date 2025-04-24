@@ -20,6 +20,11 @@ router.get("/orders", isAdmin, async (req, res) => {
   }
 });
 
+// router.get("/admin/test", (req, res) => {
+//   res.send("Admin test route works!");
+// });
+
+
 router.get("/reports", isAdmin, async (req, res) => {
   try {
     const { start, end } = req.query;
@@ -34,7 +39,7 @@ router.get("/reports", isAdmin, async (req, res) => {
   }
 });
 
-// 🔧 Add this to adminRoutes.js
+// 🔧 Delete User
 router.post("/admin/deleteUser", isAdmin, async (req, res) => {
   const { uid } = req.body;
 

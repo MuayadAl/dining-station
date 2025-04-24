@@ -32,44 +32,11 @@ app.use((req, res, next) => {
   next();
 });
 
-// const allowedOrigins = [
-//   "https://dinging-station.web.app",
-//   "http://localhost:3000"
-// ];
-
-// const corsOptions = {
-//   origin: function (origin, callback) {
-//     // allow requests with no origin like mobile apps or curl
-//     if (!origin || allowedOrigins.includes(origin)) {
-//       callback(null, true);
-//     } else {
-//       callback(new Error("Not allowed by CORS"));
-//     }
-//   },
-//   credentials: true,
-//   methods: ["GET", "POST", "OPTIONS"],
-//   allowedHeaders: ["Content-Type", "Authorization"],
-// };
-
-// app.use(cors(corsOptions));
-// app.use(express.json());
-
-// // ✅ Universal CORS headers (for fallback)
-// app.use((req, res, next) => {
-//   const origin = req.headers.origin;
-//   if (allowedOrigins.includes(origin)) {
-//     res.setHeader("Access-Control-Allow-Origin", origin);
-//   }
-//   res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
-//   res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
-//   res.setHeader("Access-Control-Allow-Credentials", "true");
-//   next();
-// });
-
-
 // ✅ Stripe setup
-const stripeSecret = process.env.STRIPE_SECRET_KEY || functions.config().stripe?.secret;
-const frontendBaseUrl = process.env.FRONTEND_BASE_URL || functions.config().frontend?.base_url;
+const stripeSecret =
+  process.env.STRIPE_SECRET_KEY || functions.config().stripe?.secret;
+const frontendBaseUrl =
+  process.env.FRONTEND_BASE_URL || functions.config().frontend?.base_url;
 
 if (!stripeSecret || !frontendBaseUrl) {
   console.error("❌ Missing STRIPE_SECRET_KEY or FRONTEND_BASE_URL");
@@ -78,8 +45,12 @@ if (!stripeSecret || !frontendBaseUrl) {
 
 const stripe = Stripe(stripeSecret);
 
+// ✅ Register other routes
+app.use(adminRoutes);
+app.use("/orders", orderRoutes);
+
 // ✅ Handle preflight requests
-app.options("/api/create-checkout-session", (req, res) => {
+app.options("/create-checkout-session", (req, res) => {
   res.setHeader("Access-Control-Allow-Origin", allowedOrigin);
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
@@ -88,7 +59,7 @@ app.options("/api/create-checkout-session", (req, res) => {
 });
 
 // ✅ Checkout session endpoint
-app.post("/api/create-checkout-session", async (req, res) => {
+app.post("/create-checkout-session", async (req, res) => {
   res.setHeader("Access-Control-Allow-Origin", allowedOrigin);
   res.setHeader("Access-Control-Allow-Credentials", "true");
 
@@ -116,11 +87,7 @@ app.post("/api/create-checkout-session", async (req, res) => {
         restaurantId: req.body.restaurantId || "unknown-restaurant-id",
         restaurantName: req.body.restaurantName || "Unknown Restaurant",
       },
-
-      
-      
     });
-    
 
     res.status(200).json({ url: session.url });
   } catch (error) {
@@ -129,7 +96,7 @@ app.post("/api/create-checkout-session", async (req, res) => {
   }
 });
 
-app.get("/api/retrieve-checkout-session", async (req, res) => {
+app.get("/retrieve-checkout-session", async (req, res) => {
   const sessionId = req.query.session_id;
   try {
     const session = await stripe.checkout.sessions.retrieve(sessionId);
@@ -140,10 +107,6 @@ app.get("/api/retrieve-checkout-session", async (req, res) => {
   }
 });
 
-
-// ✅ Register other routes
-app.use("/api", adminRoutes);
-app.use("/orders", orderRoutes);
 
 // ✅ Export the function
 exports.api = functions.https.onRequest(app);

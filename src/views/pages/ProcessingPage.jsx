@@ -21,7 +21,7 @@ const ProcessingPage = () => {
 
       try {
         const response = await fetch(
-          `${process.env.REACT_APP_API_BASE_URL}/retrieve-checkout-session?session_id=${sessionId}`
+          `${process.env.REACT_APP_API_BASE_URL}/api/retrieve-checkout-session?session_id=${sessionId}`
         );
         const session = await response.json();
 

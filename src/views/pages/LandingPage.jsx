@@ -1,14 +1,13 @@
 import "bootstrap/dist/css/bootstrap.min.css";
 import React, { useState, useEffect } from "react";
 import { auth, db } from "../../models/firebase";
-import { collection, getDocs, doc, getDoc  } from "firebase/firestore";
+import { collection, getDocs, doc, getDoc } from "firebase/firestore";
 import { Link } from "react-router-dom";
 
 function LandingPage() {
   const [user, setUser] = useState(null);
   const [topItems, setTopItems] = useState([]);
   const [userRole, setUserRole] = useState(null);
-
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(async (currentUser) => {
@@ -23,10 +22,9 @@ function LandingPage() {
         setUserRole(null);
       }
     });
-  
+
     return () => unsubscribe();
   }, []);
-  
 
   useEffect(() => {
     const fetchTopItems = async () => {
@@ -37,7 +35,7 @@ function LandingPage() {
         ordersSnapshot.forEach((doc) => {
           const order = doc.data();
           const restaurantId = order.restaurantId || "";
-          const restaurantName = order.restaurantName ||"";
+          const restaurantName = order.restaurantName || "";
 
           if (Array.isArray(order.items)) {
             order.items.forEach((item) => {
@@ -47,7 +45,13 @@ function LandingPage() {
 
               if (name) {
                 if (!itemMap[name]) {
-                  itemMap[name] = { name, image, total: 0, restaurantId, restaurantName };
+                  itemMap[name] = {
+                    name,
+                    image,
+                    total: 0,
+                    restaurantId,
+                    restaurantName,
+                  };
                 }
                 itemMap[name].total += quantity;
 
@@ -136,15 +140,16 @@ function LandingPage() {
             <div className="carousel-indicators">
               {topItems.map((_, idx) => (
                 <button
-                type="button"
-                data-bs-target="#topItemsCarousel"
-                data-bs-slide-to={idx}
-                className={`mx-1 bg-danger border-0 ${idx === 0 ? "active" : ""}`}
-                aria-current={idx === 0 ? "true" : undefined}
-                aria-label={`Slide ${idx + 1}`}
-                style={{ width: "20px", height: "2px", borderRadius: "0" }}
-              />
-              
+                  type="button"
+                  data-bs-target="#topItemsCarousel"
+                  data-bs-slide-to={idx}
+                  className={`mx-1 bg-danger border-0 ${
+                    idx === 0 ? "active" : ""
+                  }`}
+                  aria-current={idx === 0 ? "true" : undefined}
+                  aria-label={`Slide ${idx + 1}`}
+                  style={{ width: "20px", height: "2px", borderRadius: "0" }}
+                />
               ))}
             </div>
 
@@ -156,7 +161,7 @@ function LandingPage() {
                   key={item.name}
                 >
                   <div className="carousel-item-container">
-                  <div className="carousel-text mt-0">
+                    <div className="carousel-text mt-0">
                       <h4>{item.restaurantName}</h4>
                     </div>
                     <div className="carousel-img-wrapper">
@@ -180,6 +185,9 @@ function LandingPage() {
                         <Link
                           to={`/user/menu-page/${item.restaurantId}`}
                           className="btn btn-danger"
+                          onClick={() => {
+                            window.scrollTo({ top: 0, behavior: "smooth" });
+                          }}
                         >
                           Order Now
                         </Link>

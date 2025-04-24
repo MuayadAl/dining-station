@@ -103,7 +103,7 @@ function App() {
             path="/admin/user-management"
             element={
               <ProtectedRoute
-                element={<AdminManageUsers />}
+                element={<AdminManageUsers  />}
                 allowedRoles={["admin", "restaurant-owner"]}
               />
             }

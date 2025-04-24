@@ -7,9 +7,17 @@ exports.isAdmin = async (req, res, next) => {
     if (!idToken) return res.status(401).json({ error: "Token missing" });
 
     const decodedToken = await admin.auth().verifyIdToken(idToken);
-    const userDoc = await admin.firestore().collection("users").doc(decodedToken.uid).get();
+    const userDoc = await admin
+      .firestore()
+      .collection("users")
+      .doc(decodedToken.uid)
+      .get();
 
-    if (!userDoc.exists || (userDoc.data().userRole !== "admin" && userDoc.data().userRole !== "restaurant-owner")) {
+    if (
+      !userDoc.exists ||
+      (userDoc.data().userRole !== "admin" &&
+        userDoc.data().userRole !== "restaurant-owner")
+    ) {
       return res.status(403).json({ error: "Admin access required" });
     }
 

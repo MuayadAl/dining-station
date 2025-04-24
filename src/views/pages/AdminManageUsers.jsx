@@ -24,7 +24,7 @@ const AdminManageUsers = () => {
   const { confirmAction, showSuccess, showError } = useAlert();
 
 
-  const BATCH_SIZE = 10;
+  const BATCH_SIZE = 20;
   const searchRef = useRef("");
 
 
@@ -219,7 +219,7 @@ const AdminManageUsers = () => {
     
       const token = await currentUser.getIdToken();
     
-      const res = await fetch(`${API_BASE_URL}/admin/deleteUser`, {
+      const res = await fetch(`${API_BASE_URL}/api/admin/deleteUser`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
