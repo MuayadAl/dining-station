@@ -16,6 +16,7 @@ export const useCart = () => useContext(CartContext);
 export const CartProvider = ({ children }) => {
   const [cartRestaurantId, setCartRestaurantId] = useState(null);
   const [cartItems, setCartItems] = useState([]);
+  
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -57,12 +58,27 @@ export const CartProvider = ({ children }) => {
     setCartItems([]);
     setCartRestaurantId(null);  
   };
+
+  
   
 
   const refreshCart = async () => {
-    const updated = await getCart();
-    setCartItems(updated);
+    try {
+      const updated = await getCart();
+      setCartItems(updated);
+  
+      if (updated.length > 0) {
+        setCartRestaurantId(updated[0].restaurantId);
+      } else {
+        setCartRestaurantId(null);
+      }
+    } catch (error) {
+      console.error("Failed to refresh cart:", error);
+      setCartItems([]);
+      setCartRestaurantId(null);
+    }
   };
+  
 
   const addToCart = async (item) => {
     try {

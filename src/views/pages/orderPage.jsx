@@ -81,7 +81,6 @@ const OrderPage = () => {
         const orderRef = doc(db, "orders", orderId);
         const unsubscribeOrder = onSnapshot(orderRef, async (docSnapshot) => {
           if (!docSnapshot.exists()) {
-            // showError("Order not found.");
             navigate(`/order/${orderId}`);
             setLoading(false);
             return;

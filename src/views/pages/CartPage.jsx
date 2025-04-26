@@ -97,16 +97,28 @@ const CartPage = () => {
   };
 
   const handleCheckout = () => {
-    const storedRestaurantId = localStorage.getItem("restaurantId");
-    if (!storedRestaurantId) {
+    let restaurantId = localStorage.getItem("restaurantId");
+  
+    // If not found in localStorage, try to find from cart items
+    if (!restaurantId && cartItems.length > 0) {
+      restaurantId = cartItems[0].restaurantId; 
+    }
+  
+    if (!restaurantId) {
       showError(
-        "Error: No restaurant selected. Please select a restaurant first."
+        "Error: No restaurant found for the cart. Please add an item first."
       );
       return;
     }
-
-    navigate(`/checkout/${storedRestaurantId}`);
+  
+    // If localStorage doesn't have it but cart has it, store it for future
+    if (!localStorage.getItem("restaurantId")) {
+      localStorage.setItem("restaurantId", restaurantId);
+    }
+  
+    navigate(`/checkout/${restaurantId}`);
   };
+  
 
   return (
     <div className="page-wrapper flex-column min-vh-100">

@@ -75,12 +75,8 @@ const MenuPage = () => {
 
   const [showLogoModal, setShowLogoModal] = useState(false);
 
-
-  // useEffect(() => {
-  //   if (restaurantId && !isOwner) {
-  //     localStorage.setItem("restaurantId", restaurantId);
-  //   }
-  // }, [restaurantId, isOwner]);
+  
+const { refreshCart } = useCart(); 
 
   useEffect(() => {
     if (!restaurantId || isOwner === null) return;
@@ -129,7 +125,21 @@ const MenuPage = () => {
     return () => {
       isMounted = false;
     };
-  }, [restaurantId, isOwner]); // Dependency array includes isOwner
+  }, [restaurantId, isOwner]);
+
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        refreshCart(); 
+      }
+    };
+  
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+  
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [refreshCart]);
 
   const animateToCart = (imgElement) => {
     const cartIcon = cartIconRef.current;

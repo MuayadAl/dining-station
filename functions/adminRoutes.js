@@ -20,10 +20,6 @@ router.get("/orders", isAdmin, async (req, res) => {
   }
 });
 
-// router.get("/admin/test", (req, res) => {
-//   res.send("Admin test route works!");
-// });
-
 
 router.get("/reports", isAdmin, async (req, res) => {
   try {

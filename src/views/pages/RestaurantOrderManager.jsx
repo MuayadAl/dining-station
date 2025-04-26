@@ -362,7 +362,7 @@ function RestaurantOrderManager() {
 
   return (
     <div className="container">
-      <div className="w-100 row justify-content-center align-items-center  p-3 my-4 bg-body rounded-3">
+      <div className="w-100 row justify-content-center align-items-center  p-3 bg-body rounded-3">
         <div className="d-flex justify-content-between align-items-center mb-2">
           <h2>
             <FontAwesomeIcon icon={faKitchenSet} className="me-2" />
