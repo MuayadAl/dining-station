@@ -27,6 +27,10 @@ const CartPage = () => {
     fetchCart();
   }, []);
 
+  useEffect(() => {
+    import('./CheckoutPage'); // preload CheckoutPage after Cart
+  }, []);
+
   const handleRemoveItem = async (itemId, selectedSize) => {
 
     

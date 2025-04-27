@@ -32,7 +32,7 @@ import { useCart } from "../../contexts/CartContext";
 import imagePlaceHolder from "../../assets/image-placeholder.jpg";
 import foodPlaceHolder from "../../assets/food-placeHolder.png";
 
-import Loader from "../components/Loader";
+import SpinnerFallback from "../components/SpinnerFallback";
 
 const MenuPage = () => {
   const { restaurantId } = useParams();
@@ -75,8 +75,7 @@ const MenuPage = () => {
 
   const [showLogoModal, setShowLogoModal] = useState(false);
 
-  
-const { refreshCart } = useCart(); 
+  const { refreshCart } = useCart();
 
   useEffect(() => {
     if (!restaurantId || isOwner === null) return;
@@ -128,14 +127,18 @@ const { refreshCart } = useCart();
   }, [restaurantId, isOwner]);
 
   useEffect(() => {
+    import("./CartPage"); // preload CartPage after Menu
+  }, []);
+
+  useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.visibilityState === "visible") {
-        refreshCart(); 
+        refreshCart();
       }
     };
-  
+
     document.addEventListener("visibilitychange", handleVisibilityChange);
-  
+
     return () => {
       document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
@@ -194,64 +197,68 @@ const { refreshCart } = useCart();
   const handleAddToCart = async (item, e = null, manualImgElement = null) => {
     const defaultSize = item.sizes?.[0];
     setAddingItemId(item.itemId);
-  
+
     try {
       const restaurantRef = doc(db, "restaurants", restaurantId);
       const restaurantSnap = await getDoc(restaurantRef);
-  
+
       if (!restaurantSnap.exists()) {
         showError("Restaurant not found.");
         navigate("/restaurants");
         return;
       }
-  
+
       const restaurantData = restaurantSnap.data();
       const currentStatus = getRestaurantStatus(
         restaurantData.openingHours,
         restaurantData.status
       );
-  
+
       if (currentStatus.toLowerCase() !== "open") {
         showError("This restaurant is currently closed. Redirecting...");
         navigate("/restaurants");
         return;
       }
-  
+
       const existingCartItem = cartItems.find(
         (ci) =>
           ci.itemId === item.itemId && ci.selectedSize === defaultSize?.size
       );
-  
+
       const availableQty =
         typeof item.availableQuantity === "number" ? item.availableQuantity : 0;
       const currentQuantityInCart = existingCartItem?.quantity || 0;
-  
+
       if (availableQty <= 0) {
         showError(`${item.name} is currently out of stock.`);
         return;
       }
-  
+
       if (currentQuantityInCart + 1 > availableQty) {
         showError(
           `Only ${availableQty} of ${item.name} available. You've reached the limit.`
         );
         return;
       }
-  
+
       if (!defaultSize || !defaultSize.size || defaultSize.price == null) {
         showError("This item does not have a valid default size or price.");
         return;
       }
-  
+
       const itemWithSize = {
         ...item,
         restaurantId, // important for tracking cart source
         selectedSize: defaultSize.size,
         selectedPrice: defaultSize.price,
       };
-  
+
       // 🧠 Check for conflict
-      if (cartItems.length > 0 && cartRestaurantId && cartRestaurantId !== restaurantId) {
+      if (
+        cartItems.length > 0 &&
+        cartRestaurantId &&
+        cartRestaurantId !== restaurantId
+      ) {
         setPendingItem(itemWithSize); // Save it temporarily
         setShowCartConflictModal(true); // Show conflict modal
         return;
@@ -260,14 +267,14 @@ const { refreshCart } = useCart();
       if (restaurantId && !isOwner) {
         localStorage.setItem("restaurantId", restaurantId);
       }
-  
+
       await addToCart(itemWithSize);
-  
+
       setTimeout(() => {
         const img = manualImgElement || itemImageRefs.current[item.itemId];
         if (img) animateToCart(img);
       }, 0);
-  
+
       if (manualImgElement) {
         setTimeout(() => {
           setShowViewModal(false);
@@ -279,7 +286,7 @@ const { refreshCart } = useCart();
     } finally {
       setAddingItemId(null);
     }
-  };  
+  };
 
   useEffect(() => {
     let isMounted = true;
@@ -467,7 +474,7 @@ const { refreshCart } = useCart();
   };
 
   if (loading) {
-    return Loader("Loading...");
+    return SpinnerFallback("Loading...");
   }
 
   return (
@@ -509,18 +516,22 @@ const { refreshCart } = useCart();
 
       {/* Restaurant Logo */}
       <div className="container d-flex justify-content-center align-items-center">
-      <img
-  src={restaurantImgUrl || imagePlaceHolder}
-  onError={(e) => {
-    e.target.onerror = null;
-    e.target.src = imagePlaceHolder;
-  }}
-  alt="restaurant logo"
-  className="img-fluid mt-2"
-  style={{ height: "100px", width: "100px", borderRadius: "50%", cursor: "pointer" }}
-  onClick={() => setShowLogoModal(true)}
-/>
-
+        <img
+          src={restaurantImgUrl || imagePlaceHolder}
+          onError={(e) => {
+            e.target.onerror = null;
+            e.target.src = imagePlaceHolder;
+          }}
+          alt="restaurant logo"
+          className="img-fluid mt-2"
+          style={{
+            height: "100px",
+            width: "100px",
+            borderRadius: "50%",
+            cursor: "pointer",
+          }}
+          onClick={() => setShowLogoModal(true)}
+        />
       </div>
 
       {/* Restaurant Name */}
@@ -1073,66 +1084,70 @@ const { refreshCart } = useCart();
 
       {/* Replace Cart Modal */}
       <Modal
-  show={showCartConflictModal}
-  onHide={() => setShowCartConflictModal(false)}
-  backdrop="static"
-  centered
->
-  <Modal.Header closeButton>
-    <Modal.Title>Replace Cart?</Modal.Title>
-  </Modal.Header>
-  <Modal.Body>
-    You already have items in your cart from a different restaurant. Do you want to clear the cart and add this new item instead?
-  </Modal.Body>
-  <Modal.Footer>
-    <Button variant="secondary" onClick={() => setShowCartConflictModal(false)}>
-      Cancel
-    </Button>
-    <Button
-      variant="danger"
-      onClick={async () => {
-        localStorage.setItem("restaurantId", restaurantId);
+        show={showCartConflictModal}
+        onHide={() => setShowCartConflictModal(false)}
+        backdrop="static"
+        centered
+      >
+        <Modal.Header closeButton>
+          <Modal.Title>Replace Cart?</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          You already have items in your cart from a different restaurant. Do
+          you want to clear the cart and add this new item instead?
+        </Modal.Body>
+        <Modal.Footer>
+          <Button
+            variant="secondary"
+            onClick={() => setShowCartConflictModal(false)}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="danger"
+            onClick={async () => {
+              localStorage.setItem("restaurantId", restaurantId);
 
-        await clear(); 
-        await addToCart(pendingItem); 
-        setShowCartConflictModal(false);
-        setTimeout(() => {
-          const img = itemImageRefs.current[pendingItem.itemId];
-          if (img) animateToCart(img);
-        }, 0);
-      }}
-    >
-      Replace Cart
-    </Button>
-  </Modal.Footer>
-</Modal>
+              await clear();
+              await addToCart(pendingItem);
+              setShowCartConflictModal(false);
+              setTimeout(() => {
+                const img = itemImageRefs.current[pendingItem.itemId];
+                if (img) animateToCart(img);
+              }, 0);
+            }}
+          >
+            Replace Cart
+          </Button>
+        </Modal.Footer>
+      </Modal>
 
-
-{/* Logo Image Modal */}
-<Modal
-  show={showLogoModal}
-  onHide={() => setShowLogoModal(false)}
-  size="lg"
-  centered
-  backdrop={true}
-  keyboard={true}
->
-  <Modal.Body className="p-0 bg-dark text-center"  onClick={() => setShowLogoModal(false)}>
-    <img
-      src={restaurantImgUrl || imagePlaceHolder}
-      alt="Restaurant Large"
-      className="img-fluid"
-      style={{
-        width: "100%",
-        height: "auto",
-        maxHeight: "90vh",
-        objectFit: "cover",
-      }}
-    />
-  </Modal.Body>
-</Modal>
-
-
+      {/* Logo Image Modal */}
+      <Modal
+        show={showLogoModal}
+        onHide={() => setShowLogoModal(false)}
+        size="lg"
+        centered
+        backdrop={true}
+        keyboard={true}
+      >
+        <Modal.Body
+          className="p-0 bg-dark text-center"
+          onClick={() => setShowLogoModal(false)}
+        >
+          <img
+            src={restaurantImgUrl || imagePlaceHolder}
+            alt="Restaurant Large"
+            className="img-fluid"
+            style={{
+              width: "100%",
+              height: "auto",
+              maxHeight: "90vh",
+              objectFit: "cover",
+            }}
+          />
+        </Modal.Body>
+      </Modal>
     </div>
   );
 };

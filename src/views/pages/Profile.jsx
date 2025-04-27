@@ -5,12 +5,15 @@ import React, { useState, useEffect } from "react";
 import { auth, db } from "../../models/firebase";
 import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
-import { updateUserName, deleteUserAccount } from "../../controllers/userController";
+import {
+  updateUserName,
+  deleteUserAccount,
+} from "../../controllers/userController";
 import { handlePasswordReset } from "../../controllers/authController";
 // Firebase and controller import ends
 
 // Components
-import Loader from "../components/Loader";
+import SpinnerFallback from "../components/SpinnerFallback";
 
 // Font Awesome
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -74,9 +77,9 @@ export default function Profile() {
       `An email will be sent to ${userData.email} to reset your password.`,
       "Send Reset Email"
     );
-  
+
     if (!confirmed) return;
-  
+
     try {
       await handlePasswordReset(userData.email);
       showSuccess("Password reset email sent.");
@@ -84,7 +87,6 @@ export default function Profile() {
       showError("Failed to send password reset email.");
     }
   };
-  
 
   const handleSaveChanges = async () => {
     setError("");
@@ -142,12 +144,15 @@ export default function Profile() {
   };
 
   if (loading) {
-    return <Loader message="Loading your profile..." />;
+    return <SpinnerFallback message="Loading your profile..." />;
   }
 
   return (
     <div className="container d-flex justify-content-center align-items-center vh-100">
-      <div className="card shadow-lg p-4" style={{ width: "100%", maxWidth: "800px" }}>
+      <div
+        className="card shadow-lg p-4"
+        style={{ width: "100%", maxWidth: "800px" }}
+      >
         <h3 className="text-center mb-4">
           <i className="fa fa-user"></i> Profile
         </h3>
@@ -208,18 +213,34 @@ export default function Profile() {
           {/* Action Buttons */}
           <div className="d-flex justify-content-between gap-2">
             {editing ? (
-              <button type="button" className="btn btn-primary" onClick={handleSaveChanges}>
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={handleSaveChanges}
+              >
                 <FontAwesomeIcon icon={faFloppyDisk} /> Save Changes
               </button>
             ) : (
-              <button type="button" className="btn btn-secondary" onClick={() => setEditing(true)}>
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={() => setEditing(true)}
+              >
                 <FontAwesomeIcon icon={faPenToSquare} /> Edit Profile
               </button>
             )}
-            <button type="button" className="btn btn-primary" onClick={handlePasswordChange}>
+            <button
+              type="button"
+              className="btn btn-primary"
+              onClick={handlePasswordChange}
+            >
               <i className="fa-solid fa-lock"></i> Change Password
             </button>
-            <button type="button" className="btn btn-danger" onClick={handleDeleteAccount}>
+            <button
+              type="button"
+              className="btn btn-danger"
+              onClick={handleDeleteAccount}
+            >
               <FontAwesomeIcon icon={faTrashCan} /> Delete Account
             </button>
           </div>

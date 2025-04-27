@@ -36,6 +36,11 @@ export default function SignUp({ isStaffRegistration = false }) {
   const navigate = useNavigate();
   const { showSuccess, showError } = useAlert();
 
+  // Pre load Page
+  useEffect(() => {
+    import("./LandingPage");
+  }, []);
+
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {

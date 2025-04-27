@@ -1,7 +1,3 @@
-import "../style/styleSheet.css";
-import "../style/responsive.css";
-
-import "bootstrap/dist/css/bootstrap.min.css";
 
 function Footer() {
   return (

@@ -9,6 +9,7 @@ function LandingPage() {
   const [topItems, setTopItems] = useState([]);
   const [userRole, setUserRole] = useState(null);
 
+
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(async (currentUser) => {
       setUser(currentUser);
@@ -73,6 +74,11 @@ function LandingPage() {
     };
 
     fetchTopItems();
+  }, []);
+
+  // Preload Page
+  useEffect(() => {
+    import('./RestaurantsPage');
   }, []);
 
   return (

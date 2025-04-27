@@ -15,8 +15,8 @@ import "./../style/responsive.css";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "bootstrap/dist/js/bootstrap.bundle.min.js";
 import { NavLink } from "react-router-dom";
-import "../style/responsive.css"
-import Loader from "../components/Loader";
+import "../style/responsive.css";
+import SpinnerFallback from "../components/SpinnerFallback";
 const BATCH_SIZE = 6; // Number of restaurants loaded per batch
 
 function RestaurantsPage() {
@@ -60,11 +60,10 @@ function RestaurantsPage() {
         })
         .filter((restaurant) => restaurant.approvalStatus === "approved");
 
-        newRestaurants.sort((a, b) => {
-          const statusPriority = { open: 0, busy: 1, closed: 2 };
-          return statusPriority[a.status] - statusPriority[b.status];
-        });
-        
+      newRestaurants.sort((a, b) => {
+        const statusPriority = { open: 0, busy: 1, closed: 2 };
+        return statusPriority[a.status] - statusPriority[b.status];
+      });
 
       // Avoid duplicates
       setRestaurants((prevRestaurants) => {
@@ -85,6 +84,10 @@ function RestaurantsPage() {
     }
     setLoading(false);
   }, [lastVisible, loading, hasMore]);
+
+  useEffect(() => {
+    import("./MenuPage"); // preload MenuPage after Restaurants
+  }, []);
 
   useEffect(() => {
     fetchRestaurants();
@@ -113,19 +116,18 @@ function RestaurantsPage() {
           ...r,
           status: getRestaurantStatus(r.openingHours, r.status),
         }));
-  
+
         updated.sort((a, b) => {
           const statusPriority = { open: 0, busy: 1, closed: 2 };
           return statusPriority[a.status] - statusPriority[b.status];
         });
-  
+
         return updated;
       });
     }, 60000); // Every 60 seconds
-  
+
     return () => clearInterval(interval);
   }, []);
-  
 
   const getRestaurantStatus = (openingHours, manualStatus) => {
     if (manualStatus === "closed") return "closed";
@@ -176,7 +178,6 @@ function RestaurantsPage() {
     </div>
   );
 
-  if(loading) return Loader("Loading Restaurants...");
 
   return (
     <div className="container p-4 text-center">
@@ -233,7 +234,7 @@ function RestaurantsPage() {
                     {restaurant.status}
                   </span>
                 </div>
-
+  
                 <div className="restaurant_box">
                   <h3 className="types_text" title={restaurant.name}>
                     {restaurant.name}
@@ -259,19 +260,15 @@ function RestaurantsPage() {
               </div>
             </div>
           ))
-        ) : loading ? (
-          // Show placeholders if loading and no restaurants yet
-          <>
-            {Array.from({ length: BATCH_SIZE }).map((_, index) => (
-              <RestaurantCardPlaceholder key={index} />
-            ))}
-          </>
         ) : (
-          <p>Please log in to view restaurants.</p>
+          <div className="text-center my-5">
+            <h5>No restaurants available at the moment.</h5>
+          </div>
         )}
       </div>
     </div>
   );
+  
 }
 
 export default RestaurantsPage;

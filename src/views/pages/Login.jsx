@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "font-awesome/css/font-awesome.min.css";
 import { NavLink, useNavigate } from "react-router-dom";
@@ -18,6 +18,11 @@ export default function Login() {
   const [resetMessage, setResetMessage] = useState("");
 
   const navigate = useNavigate();
+
+  // Pre load Page
+  useEffect(() => {
+    import("./LandingPage");
+  }, []);
 
   // Toggle password visibility
   const togglePassword = () => {
@@ -151,7 +156,8 @@ export default function Login() {
               className="small"
               onClick={() => setShowResetModal(true)}
             >
-              <i className="fa fa-question-circle mt-2"></i> Forgot your password?
+              <i className="fa fa-question-circle mt-2"></i> Forgot your
+              password?
             </a>
           </div>
 

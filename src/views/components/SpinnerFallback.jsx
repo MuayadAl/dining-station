@@ -1,10 +1,9 @@
-
 // src/components/Loader.jsx
-import React from 'react';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faSpinner } from '@fortawesome/free-solid-svg-icons';
+import React from "react";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faSpinner } from "@fortawesome/free-solid-svg-icons";
 
-const Loader = ({ message = "Loading..." }) => {
+const SpinnerFallback = ({ message = "Loading..." }) => {
   return (
     <div className="container vh-100 d-flex justify-content-center align-items-center">
       <div className="text-center">
@@ -20,4 +19,4 @@ const Loader = ({ message = "Loading..." }) => {
   );
 };
 
-export default Loader;
+export default SpinnerFallback;

@@ -12,7 +12,7 @@ import {
 } from "firebase/firestore";
 import { db } from "../../models/firebase";
 import { getAuth } from "firebase/auth";
-import Loader from "../components/Loader";
+import SpinnerFallback from "../components/SpinnerFallback";
 import "bootstrap/dist/css/bootstrap.min.css";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -358,7 +358,7 @@ function RestaurantOrderManager() {
     );
   };
 
-  if (loading) return Loader("Loading...");
+  if (loading) return SpinnerFallback("Loading...");
 
   return (
     <div className="container">

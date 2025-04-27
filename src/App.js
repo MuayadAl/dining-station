@@ -1,45 +1,42 @@
-import React from "react";
-import {
-  BrowserRouter as Router,
-  Route,
-  Routes,
-  Navigate,
-} from "react-router-dom";
+import React, { lazy, Suspense } from "react";
+import { BrowserRouter as Router, Route, Routes, Navigate } from "react-router-dom";
 import "font-awesome/css/font-awesome.min.css";
 import { CartProvider } from "./contexts/CartContext";
-
-// Protected route
-import ProtectedRoute from "./routes/ProtectedRoute";
 import { useAuth } from "./contexts/AuthContext";
 
-// Pages Imports
-import LandingPage from "./views/pages/LandingPage";
+// Protected Route
+import ProtectedRoute from "./routes/ProtectedRoute";
+
+// Components
 import Header from "./views/components/Header";
 import Footer from "./views/components/Footer";
-import Login from "./views/pages/Login";
-import SignUp from "./views/pages/SignUp";
-import AboutPage from "./views/pages/AboutPage";
-import RestaurantsPage from "./views/pages/RestaurantsPage";
-import Contact from "./views/pages/Contact";
-import Profile from "./views/pages/Profile";
-import AddRestaurant from "./views/pages/AddRestaurant";
-import EditRestaurant from "./views/pages/EditRestaurant";
-import RestaurantStatusReports from "./views/pages/RestaurantStatusReport";
-import AdminMessages from "./views/pages/AdminMessages";
-import AdminRestaurantApprovalPage from "./views/pages/AdminRestaurantApprovalPage";
-import AddMenuItem from "./views/pages/AddMenuItem";
-import MenuPage from "./views/pages/MenuPage";
-import CartPage from "./views/pages/CartPage";
-import CheckoutPage from "./views/pages/CheckoutPage";
-import RestaurantOrderManager from "./views/pages/RestaurantOrderManager";
-import AdminReportPage from "./views/pages/AdminReportPage";
-import AdminManageUsers from "./views/pages/AdminManageUsers";
-import Forbidden403 from "./views/pages/Forbidden403";
-import ProcessingPage from "./views/pages/ProcessingPage";
+import SpinnerFallback from "./views/components/SpinnerFallback";
+import CardSkeletonFallback from "./views/components/CardSkeletonFallback";
 
-// Stripe pages
-import Cancel from "./views/pages/Cancel";
-import OrderPage from "./views/pages/orderPage";
+// Lazy Loaded Pages
+const LandingPage = lazy(() => import("./views/pages/LandingPage"));
+const Login = lazy(() => import("./views/pages/Login"));
+const SignUp = lazy(() => import("./views/pages/SignUp"));
+const AboutPage = lazy(() => import("./views/pages/AboutPage"));
+const RestaurantsPage = lazy(() => import("./views/pages/RestaurantsPage"));
+const Contact = lazy(() => import("./views/pages/Contact"));
+const Profile = lazy(() => import("./views/pages/Profile"));
+const AddRestaurant = lazy(() => import("./views/pages/AddRestaurant"));
+const EditRestaurant = lazy(() => import("./views/pages/EditRestaurant"));
+const RestaurantStatusReports = lazy(() => import("./views/pages/RestaurantStatusReport"));
+const AdminMessages = lazy(() => import("./views/pages/AdminMessages"));
+const AdminRestaurantApprovalPage = lazy(() => import("./views/pages/AdminRestaurantApprovalPage"));
+const AddMenuItem = lazy(() => import("./views/pages/AddMenuItem"));
+const MenuPage = lazy(() => import("./views/pages/MenuPage"));
+const CartPage = lazy(() => import("./views/pages/CartPage"));
+const CheckoutPage = lazy(() => import("./views/pages/CheckoutPage"));
+const RestaurantOrderManager = lazy(() => import("./views/pages/RestaurantOrderManager"));
+const AdminReportPage = lazy(() => import("./views/pages/AdminReportPage"));
+const AdminManageUsers = lazy(() => import("./views/pages/AdminManageUsers"));
+const Forbidden403 = lazy(() => import("./views/pages/Forbidden403"));
+const Cancel = lazy(() => import("./views/pages/Cancel"));
+const OrderPage = lazy(() => import("./views/pages/OrderPage"));
+const ProcessingPage = lazy(() => import("./views/pages/ProcessingPage"));
 
 function App() {
   const { currentUser } = useAuth();
@@ -49,179 +46,207 @@ function App() {
       <Router>
         <Header />
         <Routes>
+
           {/* Public Routes */}
           <Route path="/" element={<Navigate to="/landing" />} />
-          <Route path="/landing" element={<LandingPage />} />
-          <Route path="/about" element={<AboutPage />} />
-          <Route path="/contact" element={<Contact />} />
-          <Route
-            path="/login"
-            element={
-              currentUser ? <Navigate to="/landing" replace /> : <Login />
-            }
-          />
-          <Route path="/signup" element={<SignUp />} />
-          <Route path="/cancel" element={<Cancel />} />
-          <Route path="/403" element={<Forbidden403 />} />
-          <Route path="/order/processing" element={<ProcessingPage />} />
+
+          <Route path="/landing" element={
+            <Suspense fallback={<SpinnerFallback />}>
+              <LandingPage />
+            </Suspense>
+          } />
+
+          <Route path="/about" element={
+            <Suspense fallback={<SpinnerFallback />}>
+              <AboutPage />
+            </Suspense>
+          } />
+
+          <Route path="/contact" element={
+            <Suspense fallback={<SpinnerFallback />}>
+              <Contact />
+            </Suspense>
+          } />
+
+          <Route path="/login" element={
+            <Suspense fallback={<SpinnerFallback />}>
+              {currentUser ? <Navigate to="/landing" replace /> : <Login />}
+            </Suspense>
+          } />
+
+          <Route path="/signup" element={
+            <Suspense fallback={<SpinnerFallback />}>
+              <SignUp />
+            </Suspense>
+          } />
+
+          <Route path="/403" element={
+            <Suspense fallback={<SpinnerFallback />}>
+              <Forbidden403 />
+            </Suspense>
+          } />
+
+          <Route path="/cancel" element={
+            <Suspense fallback={<SpinnerFallback />}>
+              <Cancel />
+            </Suspense>
+          } />
+
+          <Route path="/order/processing" element={
+            <Suspense fallback={<SpinnerFallback />}>
+              <ProcessingPage />
+            </Suspense>
+          } />
 
           {/* Shared Routes */}
-          <Route
-            path="/profile"
-            element={
+          <Route path="/profile" element={
+            <Suspense fallback={<SpinnerFallback />}>
               <ProtectedRoute
                 element={<Profile />}
-                allowedRoles={[
-                  "customer",
-                  "restaurant-owner",
-                  "restaurant-staff",
-                  "admin",
-                ]}
+                allowedRoles={["customer", "restaurant-owner", "restaurant-staff", "admin"]}
               />
-            }
-          />
-          <Route
-            path="/restaurants"
-            element={
+            </Suspense>
+          } />
+
+          <Route path="/admin/user-management" element={
+            <Suspense fallback={<SpinnerFallback />}>
+              <ProtectedRoute
+                element={<AdminManageUsers />}
+                allowedRoles={["admin", "restaurant-owner"]}
+              />
+            </Suspense>
+          } />
+
+          {/* Special Skeleton Routes */}
+          <Route path="/restaurants" element={
+            <Suspense fallback={<CardSkeletonFallback />}>
               <ProtectedRoute
                 element={<RestaurantsPage />}
                 allowedRoles={["customer", "admin"]}
               />
-            }
-          />
+            </Suspense>
+          } />
 
-          <Route
-            path="/user/menu-page/:restaurantId"
-            element={
+          <Route path="/user/menu-page/:restaurantId" element={
+            <Suspense fallback={<CardSkeletonFallback />}>
               <ProtectedRoute
                 element={<MenuPage />}
                 allowedRoles={["customer", "restaurant-owner", "admin"]}
               />
-            }
-          />
-          <Route
-            path="/admin/user-management"
-            element={
-              <ProtectedRoute
-                element={<AdminManageUsers  />}
-                allowedRoles={["admin", "restaurant-owner"]}
-              />
-            }
-          />
+            </Suspense>
+          } />
 
           {/* Customer Routes */}
-          <Route
-            path="/order/:orderId"
-            element={
+          <Route path="/order/:orderId" element={
+            <Suspense fallback={<SpinnerFallback />}>
               <ProtectedRoute
                 element={<OrderPage />}
                 allowedRoles={["customer"]}
               />
-            }
-          />
-          <Route
-            path="/cart"
-            element={
+            </Suspense>
+          } />
+
+          <Route path="/cart" element={
+            <Suspense fallback={<SpinnerFallback />}>
               <ProtectedRoute
                 element={<CartPage />}
                 allowedRoles={["customer"]}
               />
-            }
-          />
-          <Route
-            path="/checkout/:restaurantId"
-            element={
+            </Suspense>
+          } />
+
+          <Route path="/checkout/:restaurantId" element={
+            <Suspense fallback={<SpinnerFallback />}>
               <ProtectedRoute
                 element={<CheckoutPage />}
                 allowedRoles={["customer"]}
               />
-            }
-          />
+            </Suspense>
+          } />
 
-          {/* Restaurant Routes */}
-          <Route
-            path="/my-restaurant/add"
-            element={
+          {/* Restaurant Owner Routes */}
+          <Route path="/my-restaurant/add" element={
+            <Suspense fallback={<SpinnerFallback />}>
               <ProtectedRoute
                 element={<AddRestaurant />}
                 allowedRoles={["restaurant-owner"]}
               />
-            }
-          />
-          <Route
-            path="/my-restaurant/edit"
-            element={
+            </Suspense>
+          } />
+
+          <Route path="/my-restaurant/edit" element={
+            <Suspense fallback={<SpinnerFallback />}>
               <ProtectedRoute
                 element={<EditRestaurant />}
                 allowedRoles={["restaurant-owner"]}
               />
-            }
-          />
-          <Route
-            path="/my-restaurant/status-report"
-            element={
+            </Suspense>
+          } />
+
+          <Route path="/my-restaurant/status-report" element={
+            <Suspense fallback={<SpinnerFallback />}>
               <ProtectedRoute
                 element={<RestaurantStatusReports />}
                 allowedRoles={["restaurant-owner"]}
               />
-            }
-          />
-          <Route
-            path="/my-restaurant-add-menu"
-            element={
+            </Suspense>
+          } />
+
+          <Route path="/my-restaurant-add-menu" element={
+            <Suspense fallback={<SpinnerFallback />}>
               <ProtectedRoute
                 element={<AddMenuItem />}
                 allowedRoles={["restaurant-owner"]}
               />
-            }
-          />
-          <Route
-            path="/my-restaurant/orders"
-            element={
+            </Suspense>
+          } />
+
+          <Route path="/my-restaurant/orders" element={
+            <Suspense fallback={<SpinnerFallback />}>
               <ProtectedRoute
                 element={<RestaurantOrderManager />}
                 allowedRoles={["restaurant-owner", "restaurant-staff"]}
               />
-            }
-          />
-          <Route
-            path="/my-restaurant/register-staff"
-            element={
+            </Suspense>
+          } />
+
+          <Route path="/my-restaurant/register-staff" element={
+            <Suspense fallback={<SpinnerFallback />}>
               <ProtectedRoute
                 element={<SignUp isStaffRegistration />}
                 allowedRoles={["restaurant-owner"]}
               />
-            }
-          />
+            </Suspense>
+          } />
 
           {/* Admin Routes */}
-          <Route
-            path="/admin/restaurants-requests"
-            element={
+          <Route path="/admin/restaurants-requests" element={
+            <Suspense fallback={<SpinnerFallback />}>
               <ProtectedRoute
                 element={<AdminRestaurantApprovalPage />}
                 allowedRoles={["admin"]}
               />
-            }
-          />
-          <Route
-            path="/admin-messages"
-            element={
+            </Suspense>
+          } />
+
+          <Route path="/admin-messages" element={
+            <Suspense fallback={<SpinnerFallback />}>
               <ProtectedRoute
                 element={<AdminMessages />}
                 allowedRoles={["admin"]}
               />
-            }
-          />
-          <Route
-            path="/admin/report"
-            element={
+            </Suspense>
+          } />
+
+          <Route path="/admin/report" element={
+            <Suspense fallback={<SpinnerFallback />}>
               <ProtectedRoute
                 element={<AdminReportPage />}
                 allowedRoles={["admin"]}
               />
-            }
-          />
+            </Suspense>
+          } />
+
         </Routes>
         <Footer />
       </Router>
