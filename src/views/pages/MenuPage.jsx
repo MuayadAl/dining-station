@@ -32,8 +32,6 @@ import { useCart } from "../../contexts/CartContext";
 import imagePlaceHolder from "../../assets/image-placeholder.jpg";
 import foodPlaceHolder from "../../assets/food-placeHolder.png";
 
-import SpinnerFallback from "../components/SpinnerFallback";
-
 const MenuPage = () => {
   const { restaurantId } = useParams();
   const [restaurantImgUrl, setRestaurantImgUrl] = useState("");
@@ -472,10 +470,6 @@ const MenuPage = () => {
       ? "Open"
       : "Closed";
   };
-
-  if (loading) {
-    return SpinnerFallback("Loading...");
-  }
 
   return (
     <div className="container p-1 ">

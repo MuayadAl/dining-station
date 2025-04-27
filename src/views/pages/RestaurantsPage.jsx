@@ -16,7 +16,6 @@ import "bootstrap/dist/css/bootstrap.min.css";
 import "bootstrap/dist/js/bootstrap.bundle.min.js";
 import { NavLink } from "react-router-dom";
 import "../style/responsive.css";
-import SpinnerFallback from "../components/SpinnerFallback";
 const BATCH_SIZE = 6; // Number of restaurants loaded per batch
 
 function RestaurantsPage() {

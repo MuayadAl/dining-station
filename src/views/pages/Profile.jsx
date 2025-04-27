@@ -12,8 +12,6 @@ import {
 import { handlePasswordReset } from "../../controllers/authController";
 // Firebase and controller import ends
 
-// Components
-import SpinnerFallback from "../components/SpinnerFallback";
 
 // Font Awesome
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -142,10 +140,6 @@ export default function Profile() {
       }
     }
   };
-
-  if (loading) {
-    return <SpinnerFallback message="Loading your profile..." />;
-  }
 
   return (
     <div className="container d-flex justify-content-center align-items-center vh-100">

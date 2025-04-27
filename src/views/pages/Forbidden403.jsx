@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { NavLink } from "react-router-dom";
 import "../style/styleSheet.css";
-import SpinnerFallback from "../components/SpinnerFallback";
 const Forbidden403 = () => {
   const [loading, setLoading] = useState(true);
 
@@ -13,7 +12,6 @@ const Forbidden403 = () => {
     return () => clearTimeout(timer);
   }, []);
 
-  if (loading) return <SpinnerFallback />;
 
   return (
     <div

@@ -14,7 +14,6 @@ import {
 } from "firebase/firestore";
 import { db, auth } from "../../models/firebase";
 import useAlert from "../../hooks/userAlert";
-import SpinnerFallback from "../components/SpinnerFallback";
 import { clearCart } from "../../controllers/cartController";
 
 import {
@@ -231,7 +230,6 @@ const OrderPage = () => {
     }
   };
 
-  if (loading) return SpinnerFallback("Loading order details...");
   if (!order)
     return (
       <div className="container mb-4">

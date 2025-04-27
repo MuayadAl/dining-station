@@ -18,7 +18,6 @@ import {
   faDoorOpen,
   faDoorClosed,
 } from "@fortawesome/free-solid-svg-icons";
-import SpinnerFallback from "../components/SpinnerFallback";
 
 const RestaurantStatusReports = () => {
   const [restaurant, setRestaurant] = useState(null);
@@ -248,10 +247,6 @@ const RestaurantStatusReports = () => {
 
     return () => unsubscribe(); // Cleanup on unmount
   }, []);
-
-  if (loading) {
-    return SpinnerFallback("Loading");
-  }
 
   if (error) {
     return (
