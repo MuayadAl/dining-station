@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { collection, query, where, getDocs } from "firebase/firestore";
-import { db, auth } from "../../models/firebase"; // Adjust the import path as needed
+import { db, auth } from "../../models/firebase"; 
 import { onAuthStateChanged } from "firebase/auth";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -25,13 +25,18 @@ const RestaurantStatusReports = () => {
   const [error, setError] = useState("");
   const [restaurantStatus, setRestaurantStatus] =
     useState("Checking status...");
-  const [orderStats, setOrderStats] = useState({
-    totalIncome: 0,
-    completedOrders: 0,
-    cancelledOrders: 0,
-    topItems: [],
-    dailyTotals: [],
-  });
+    const [orderStats, setOrderStats] = useState({
+      totalIncome: 0,
+      completedOrders: 0,
+      cancelledOrders: 0,
+      topItems: [],
+      dailyTotals: [],
+      weeklyTotals: [],
+      monthlyTotals: [],
+      totalOrders: 0,
+      avgTicket: 0,
+    });
+    
   const [orders, setOrders] = useState([]);
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
@@ -461,7 +466,7 @@ const RestaurantStatusReports = () => {
                 <div className="card-body text-success text-center">
                   <h5>Total Income</h5>
                   <h3 className="fw-bold">
-                    RM {orderStats.totalIncome.toFixed(2)}
+                  RM {typeof orderStats.totalIncome === "number" ? orderStats.totalIncome.toFixed(2) : "0.00"}
                   </h3>
                 </div>
               </div>
@@ -524,9 +529,9 @@ const RestaurantStatusReports = () => {
                 ) : (
                   orderStats.dailyTotals.map((day, idx) => (
                     <tr key={idx}>
-                      <td>{day.date}</td>
-                      <td>RM {day.total.toFixed(2)}</td>
-                    </tr>
+                    <td>{day.date}</td>
+                    <td>RM {typeof day.total === "number" ? day.total.toFixed(2) : "0.00"}</td>
+                  </tr>
                   ))
                 )}
               </tbody>
@@ -548,7 +553,7 @@ const RestaurantStatusReports = () => {
                 <div className="card-body text-secondary text-center">
                   <h5>Avg Ticket Size</h5>
                   <h3 className="fw-bold">
-                    RM {orderStats.avgTicket.toFixed(2)}
+                  RM {typeof orderStats.avgTicket === "number" ? orderStats.avgTicket.toFixed(2) : "0.00"}
                   </h3>
                 </div>
               </div>
@@ -574,9 +579,9 @@ const RestaurantStatusReports = () => {
                 ) : (
                   orderStats.weeklyTotals.map(([week, total], idx) => (
                     <tr key={idx}>
-                      <td>{week}</td>
-                      <td>RM {total.toFixed(2)}</td>
-                    </tr>
+                    <td>{week}</td>
+                    <td>RM {typeof total === "number" ? total.toFixed(2) : "0.00"}</td>
+                  </tr>
                   ))
                 )}
               </tbody>
@@ -602,9 +607,9 @@ const RestaurantStatusReports = () => {
                 ) : (
                   orderStats.monthlyTotals.map(([month, total], idx) => (
                     <tr key={idx}>
-                      <td>{month}</td>
-                      <td>RM {total.toFixed(2)}</td>
-                    </tr>
+                    <td>{month}</td>
+                    <td>RM {typeof total === "number" ? total.toFixed(2) : "0.00"}</td>
+                  </tr>
                   ))
                 )}
               </tbody>
