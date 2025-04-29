@@ -32,7 +32,6 @@ function RestaurantsPage() {
     try {
       let restaurantQuery = query(
         collection(db, "restaurants"),
-        // where("approvalStatus", "==", "approved"), // Only fetch approved restaurants
         orderBy("name"),
         limit(BATCH_SIZE)
       );
@@ -40,7 +39,6 @@ function RestaurantsPage() {
       if (lastVisible) {
         restaurantQuery = query(
           collection(db, "restaurants"),
-          // where("approvalStatus", "==", "approved"), // Ensure this applies for pagination
           orderBy("name"),
           startAfter(lastVisible),
           limit(BATCH_SIZE)
@@ -240,6 +238,9 @@ function RestaurantsPage() {
                   </h3>
                   <p className="looking_text" title={restaurant.description}>
                     {restaurant.description}
+                  </p>
+                  <p className="looking_text" title={restaurant.location}>
+                  <i class="fa-solid fa-location-dot"></i> {restaurant.location}
                   </p>
                   <div className="read_bt">
                     {restaurant.status === "open" ? (
