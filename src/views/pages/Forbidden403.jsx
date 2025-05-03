@@ -18,7 +18,7 @@ const Forbidden403 = () => {
       className="container d-flex align-items-center justify-content-center text-center"
       style={{ height: "90vh" }}
     >
-      <div className="row w-50 p-4 rounded bg-white shadow">
+      <div className="row col-lg-6 p-4 rounded bg-white shadow">
         <h1 className="forbidden-code text-danger">403</h1>
         <h2 className="forbidden-heading">Access Denied</h2>
         <p className="forbidden-message mb-4">

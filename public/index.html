@@ -21,18 +21,21 @@
     <link rel="preconnect" href="https://firestore.googleapis.com" crossorigin />
     <link rel="preconnect" href="https://www.gstatic.com" crossorigin />
 
-    <!-- FontAwesome (Optional, for icons) -->
+    <!-- FontAwesome -->
     <link
-    rel="stylesheet"
+    rel="preload"
     href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
-    crossorigin="anonymous"
-    referrerpolicy="no-referrer"
-  />
+    as="style"
+    onload="this.onload=null;this.rel='stylesheet';"
+  >
+  <noscript>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    />
+  </noscript>
+  
 
-    <!-- Google Fonts (add your chosen font here if needed) -->
-    <!-- Example:
-    <link href="https://fonts.googleapis.com/css2?family=Inter&display=swap" rel="stylesheet"> 
-    -->
 
     <title>Dining Station</title>
   </head>

@@ -1,4 +1,7 @@
 import "bootstrap/dist/css/bootstrap.min.css";
+import "bootstrap/dist/js/bootstrap.bundle.min.js";
+import { Carousel } from 'bootstrap';
+
 import React, { useState, useEffect } from "react";
 import { auth, db } from "../../models/firebase";
 import { collection, getDocs, doc, getDoc } from "firebase/firestore";
@@ -8,6 +11,8 @@ function LandingPage() {
   const [user, setUser] = useState(null);
   const [topItems, setTopItems] = useState([]);
   const [userRole, setUserRole] = useState(null);
+
+
 
 
   useEffect(() => {
@@ -75,6 +80,24 @@ function LandingPage() {
 
     fetchTopItems();
   }, []);
+
+  
+
+  useEffect(() => {
+    if (topItems.length > 0) {
+      const carouselEl = document.querySelector('#topItemsCarousel');
+      if (carouselEl) {
+        const carousel = new Carousel(carouselEl, {
+          interval: 3000,
+          ride: 'carousel',
+          touch: true,
+          pause: false,
+          wrap: true,
+        });
+      }
+    }
+  }, [topItems]);
+  
 
   // Preload Page
   useEffect(() => {

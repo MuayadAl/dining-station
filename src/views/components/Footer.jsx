@@ -1,7 +1,7 @@
 
 function Footer() {
   return (
-    <footer className="mt-auto">
+    <footer className="">
       <div className="footer_section layout_padding">
         <div className="container">
           <div className="row">

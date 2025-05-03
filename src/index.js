@@ -1,4 +1,8 @@
-import "bootstrap/dist/js/bootstrap.bundle.min";
+import "bootstrap/dist/css/bootstrap.min.css";
+import "bootstrap/dist/js/bootstrap.bundle.min.js";
+import * as bootstrap from 'bootstrap';
+
+import "font-awesome/css/font-awesome.min.css";
 import React from "react";
 import ReactDOM from "react-dom/client";
 import "./views/style/styleSheet.css";
