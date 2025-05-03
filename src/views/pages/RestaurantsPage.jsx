@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -10,14 +11,9 @@ import {
   where,
 } from "firebase/firestore";
 import { db } from "../../models/firebase";
-import "../style/styleSheet.css";
-import "./../style/responsive.css";
-import "bootstrap/dist/css/bootstrap.min.css";
-import "bootstrap/dist/js/bootstrap.bundle.min.js";
 import { NavLink } from "react-router-dom";
-import "../style/responsive.css";
-const BATCH_SIZE = 6; // Number of restaurants loaded per batch
 
+const BATCH_SIZE = 6; // Number of restaurants loaded per batch
 function RestaurantsPage() {
   const [restaurants, setRestaurants] = useState([]);
   const [lastVisible, setLastVisible] = useState(null);
@@ -175,10 +171,9 @@ function RestaurantsPage() {
     </div>
   );
 
-
   return (
     <div className="container p-4 text-center">
-      <h1 className="restaurant_title">RESTAURANTS</h1>
+      <h1 className="restaurant_title mb-3">RESTAURANTS</h1>
       <div className="row justify-content-start shadow p-3 mb-5 bg-body rounded-3">
         {restaurants.length > 0 ? (
           restaurants.map((restaurant) => (
@@ -231,7 +226,7 @@ function RestaurantsPage() {
                     {restaurant.status}
                   </span>
                 </div>
-  
+
                 <div className="restaurant_box">
                   <h3 className="types_text" title={restaurant.name}>
                     {restaurant.name}
@@ -240,7 +235,8 @@ function RestaurantsPage() {
                     {restaurant.description}
                   </p>
                   <p className="looking_text" title={restaurant.location}>
-                  <i class="fa-solid fa-location-dot"></i> {restaurant.location}
+                    <i class="fa-solid fa-location-dot"></i>{" "}
+                    {restaurant.location}
                   </p>
                   <div className="read_bt">
                     {restaurant.status === "open" ? (
@@ -268,7 +264,6 @@ function RestaurantsPage() {
       </div>
     </div>
   );
-  
 }
 
 export default RestaurantsPage;

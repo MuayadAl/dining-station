@@ -229,7 +229,7 @@ const CheckoutPage = () => {
 
   return (
     <div className="container">
-      <h2 className="text-center">Checkout</h2>
+      <h2 className="text-center mt-2">Checkout</h2>
       <div className="card shadow p-4 col-12 my-3">
         {cartItems.length === 0 ? (
           <p className="text-center text-muted">Your cart is empty.</p>

@@ -48,42 +48,54 @@ const CartPage = () => {
     if (newQuantity < 1) {
       return;
     }
-
+  
     try {
-      const restaurantId = localStorage.getItem("restaurantId");
+      // Always fetch current cart to get latest restaurantId
+      const cartData = await getCart();
+      setCartItems(cartData);
+  
+      let restaurantId = localStorage.getItem("restaurantId");
+  
+      // Fallback: get from cart if localStorage is empty
+      if (!restaurantId && cartData.length > 0) {
+        restaurantId = cartData[0].restaurantId;
+        localStorage.setItem("restaurantId", restaurantId); // Save for future
+      }
+  
       if (!restaurantId) {
         showError("Restaurant not found.");
         return;
       }
-
+  
+      // Get menu from Firestore
       const menuRef = doc(db, "menu", restaurantId);
       const menuSnap = await getDoc(menuRef);
-
+  
       if (!menuSnap.exists()) {
         showError("Menu not found.");
         return;
       }
-
+  
       const menuData = menuSnap.data();
       const allItems = menuData.items || [];
-
+  
       const menuItem = allItems.find((item) => item.itemId === itemId);
       if (!menuItem) {
         showError("Item no longer exists.");
         return;
       }
-
-      const availableQty =
-        typeof menuItem.availableQuantity === "number"
-          ? menuItem.availableQuantity
-          : 0;
-
+  
+      const availableQty = typeof menuItem.availableQuantity === "number"
+        ? menuItem.availableQuantity
+        : 0;
+  
       if (newQuantity > availableQty) {
         showError(`Only ${availableQty} ${menuItem.name} in stock.`);
         return;
       }
-
-      await updateCartQuantity(itemId, selectedSize, newQuantity); // pass size
+  
+      // Update quantity and refresh cart
+      await updateCartQuantity(itemId, selectedSize, newQuantity);
       const updatedCart = await getCart();
       setCartItems(updatedCart);
     } catch (error) {
@@ -91,6 +103,7 @@ const CartPage = () => {
       showError("Failed to update item quantity.");
     }
   };
+  
 
   const handleClearCart = async () => {
     await clearCart();
