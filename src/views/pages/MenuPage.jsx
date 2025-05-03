@@ -34,7 +34,7 @@ import foodPlaceHolder from "../../assets/food-placeHolder.png";
 
 const MenuPage = () => {
   const { restaurantId } = useParams();
-  const [restaurantImgUrl, setRestaurantImgUrl] = useState("");
+  const [restaurantImgUrl, setRestaurantImgUrl] = useState(null);
   const [restaurantName, setRestaurantName] = useState("");
   const [openingHours, setOpeningHours] = useState({});
   const [restaurantStatus, setRestaurantStatus] =
@@ -74,6 +74,8 @@ const MenuPage = () => {
   const [showLogoModal, setShowLogoModal] = useState(false);
 
   const { refreshCart } = useCart();
+  const [userRole, setUserRole] = useState(null);
+  const [logoLoading, setLogoLoading] = useState(true);
 
   useEffect(() => {
     if (!restaurantId || isOwner === null) return;
@@ -289,18 +291,29 @@ const MenuPage = () => {
   useEffect(() => {
     let isMounted = true;
 
-    const fetchData = async () => {
+    const fetchAllData = async () => {
       try {
+        const user = auth.currentUser;
+        if (!user || !restaurantId) return;
+
+        // 🔹 1. Fetch user role
+        const userDocRef = doc(db, "users", user.uid);
+        const userDoc = await getDoc(userDocRef);
+        if (userDoc.exists() && isMounted) {
+          const data = userDoc.data();
+          setUserRole(data.userRole || "guest"); // fallback
+        }
+
+        // 🔹 2. Fetch restaurant info
         const restaurantRef = doc(db, "restaurants", restaurantId);
         const restaurantSnap = await getDoc(restaurantRef);
-
         if (!restaurantSnap.exists() || !isMounted) return;
 
         const restaurantData = restaurantSnap.data();
 
-        const ownerCheck = restaurantData.userId === auth.currentUser?.uid;
+        const ownerCheck = restaurantData.userId === user.uid;
         setIsOwner(ownerCheck);
-        setRestaurantImgUrl(restaurantData.imgUrl || "");
+        setRestaurantImgUrl(restaurantData.imgUrl || null);
         setRestaurantName(restaurantData.name || "");
         setOpeningHours(restaurantData.openingHours || {});
 
@@ -310,7 +323,7 @@ const MenuPage = () => {
         );
         setRestaurantStatus(status);
 
-        // Fetch Menu after owner check
+        // 🔹 3. Fetch Menu items
         const q = query(
           collection(db, "menu"),
           where("restaurantId", "==", restaurantId)
@@ -335,18 +348,18 @@ const MenuPage = () => {
           );
         });
 
-        setMenuItems(fetchedItems);
-        setCategories(Array.from(fetchedCategories));
+        if (isMounted) {
+          setMenuItems(fetchedItems);
+          setCategories(Array.from(fetchedCategories));
+        }
       } catch (error) {
-        console.error("Error loading restaurant or menu:", error);
+        console.error("Error loading user/restaurant/menu:", error);
       } finally {
-        if (isMounted) setLoading(false); // ✅ Ensure we stop the spinner
+        if (isMounted) setLoading(false);
       }
     };
 
-    if (restaurantId) {
-      fetchData();
-    }
+    fetchAllData();
 
     return () => {
       isMounted = false;
@@ -474,7 +487,7 @@ const MenuPage = () => {
   return (
     <div className="container p-1 ">
       {/* Floating cart */}
-      {isOwner === false && restaurantId && (
+      {isOwner === false && restaurantId && userRole === "customer" && (
         <div
           className="bg-dark p-2 cart_hover"
           style={{
@@ -509,24 +522,39 @@ const MenuPage = () => {
       )}
 
       {/* Restaurant Logo */}
-      <div className="container d-flex justify-content-center align-items-center">
-        <img
-          src={restaurantImgUrl || imagePlaceHolder}
-          onError={(e) => {
-            e.target.onerror = null;
-            e.target.src = imagePlaceHolder;
-          }}
-          alt="restaurant logo"
-          className="img-fluid mt-2"
-          style={{
-            height: "100px",
-            width: "100px",
-            borderRadius: "50%",
-            cursor: "pointer",
-          }}
-          onClick={() => setShowLogoModal(true)}
-        />
-      </div>
+      <div
+  className="container d-flex justify-content-center align-items-center"
+  style={{ minHeight: "120px" }}
+>
+  {logoLoading && (
+    <div className="spinner-border text-secondary" role="status">
+      <span className="visually-hidden">Loading...</span>
+    </div>
+  )}
+
+  {(restaurantImgUrl || !logoLoading) && (
+    <img
+      src={restaurantImgUrl || imagePlaceHolder}
+      onError={(e) => {
+        e.target.onerror = null;
+        e.target.src = imagePlaceHolder;
+        setLogoLoading(false);
+      }}
+      onLoad={() => setLogoLoading(false)}
+      alt="restaurant logo"
+      className="img-fluid mt-2"
+      style={{
+        display: logoLoading ? "none" : "block", // Hide until fully loaded
+        height: "100px",
+        width: "100px",
+        borderRadius: "50%",
+        cursor: "pointer",
+      }}
+      onClick={() => setShowLogoModal(true)}
+    />
+  )}
+</div>
+
 
       {/* Restaurant Name */}
 
@@ -751,17 +779,31 @@ const MenuPage = () => {
                                     <button
                                       onClick={(e) => {
                                         e.stopPropagation();
+                                        if (userRole !== "customer") {
+                                          showError(
+                                            "Only customers can add items to the cart."
+                                          );
+                                          return;
+                                        }
                                         handleAddToCart(
                                           item,
                                           null,
                                           itemImageRefs.current[item.itemId]
                                         );
                                       }}
-                                      disabled={addingItemId === item.itemId}
+                                      disabled={
+                                        addingItemId === item.itemId ||
+                                        userRole !== "customer"
+                                      }
+                                      title={
+                                        userRole !== "customer"
+                                          ? "Only customers can order"
+                                          : ""
+                                      }
                                     >
                                       {addingItemId === item.itemId ? (
                                         <>
-                                          <i class="fa-solid fa-spinner fa-spin"></i>{" "}
+                                          <i className="fa-solid fa-spinner fa-spin"></i>{" "}
                                           Adding...
                                         </>
                                       ) : (
@@ -1044,8 +1086,13 @@ const MenuPage = () => {
           </Button>
           <Button
             variant="danger"
-            disabled={isAdding}
+            disabled={isAdding || userRole !== "customer"}
             onClick={async () => {
+              if (userRole !== "customer") {
+                showError("Only customers can add items to the cart.");
+                return;
+              }
+
               if (!selectedSize) return showError("Please select a size.");
 
               setIsAdding(true); // start loading
@@ -1067,7 +1114,7 @@ const MenuPage = () => {
           >
             {isAdding ? (
               <>
-                <i class="fa-solid fa-spinner fa-spin"></i> Adding...
+                <i className="fa-solid fa-spinner fa-spin"></i> Adding...
               </>
             ) : (
               "Add to Cart"

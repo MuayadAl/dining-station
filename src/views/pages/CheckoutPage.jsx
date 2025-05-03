@@ -54,24 +54,69 @@ const CheckoutForm = ({ cartItems, total, user, restaurant }) => {
     await updateDoc(menuRef, { items: updatedItems });
   };
 
+  const getRestaurantStatus = (openingHours, manualStatus) => {
+    if (manualStatus === "closed") return "Closed";
+    if (manualStatus === "busy") return "Busy";
+    if (manualStatus === "open") return "Open";
+  
+    if (manualStatus !== "auto") return "Closed"; // fallback
+    if (!openingHours) return "Closed";
+  
+    const now = new Date();
+    const currentDay = now.toLocaleString("en-US", { weekday: "long" });
+    const currentTime = now.toTimeString().slice(0, 5); // HH:MM format
+  
+    const todayHours = openingHours[currentDay];
+    if (!todayHours || !todayHours.enabled) return "Closed";
+  
+    return currentTime >= todayHours.open && currentTime <= todayHours.close
+      ? "Open"
+      : "Closed";
+  };
+  
+
   const handlePayment = async () => {
     if (cartItems.length === 0) {
       showError("Your cart is empty.");
       return;
     }
-
+  
     if (!user || !restaurant) {
-      console.error("Missing user or restaurant details", { user, restaurant });
       showError("Error retrieving user or restaurant details.");
       return;
     }
-
+  
+    // 🔍 Check if restaurant is open before proceeding
+    try {
+      const restaurantRef = doc(db, "restaurants", restaurant.id);
+      const restaurantSnap = await getDoc(restaurantRef);
+      if (!restaurantSnap.exists()) {
+        showError("Restaurant not found.");
+        return;
+      }
+  
+      const restaurantData = restaurantSnap.data();
+      const currentStatus = getRestaurantStatus(
+        restaurantData.openingHours,
+        restaurantData.status
+      );
+  
+      if (currentStatus.toLowerCase() !== "open") {
+        showError(`The restaurant is currently ${currentStatus}. Please try again later.`);
+        return;
+      }
+    } catch (err) {
+      console.error("Failed to check restaurant status:", err);
+      showError("Unable to verify restaurant status.");
+      return;
+    }
+  
     if (paymentMethod === "ApCard") {
       setLoading(true);
       try {
         const orderRef = doc(collection(db, "orders"));
         const orderId = orderRef.id;
-
+  
         const orderData = {
           orderId,
           userId: user.id,
@@ -84,11 +129,11 @@ const CheckoutForm = ({ cartItems, total, user, restaurant }) => {
           status: "Placed",
           paymentMethod,
         };
-
+  
         await setDoc(orderRef, orderData, { merge: true });
         await deductItemQuantities(restaurant.id, cartItems);
         await clearCart();
-
+  
         navigate(`/order/${orderId}`);
         showSuccess(`Your order has been placed with ${paymentMethod}.`);
       } catch (error) {
@@ -99,7 +144,7 @@ const CheckoutForm = ({ cartItems, total, user, restaurant }) => {
       }
       return;
     }
-
+  
     // Stripe Payment
     setLoading(true);
     try {
@@ -116,13 +161,13 @@ const CheckoutForm = ({ cartItems, total, user, restaurant }) => {
           }),
         }
       );
-
+  
       const data = await response.json();
       if (!response.ok || !data.url) {
         showError(data.error || "Payment failed. Please try again.");
         return;
       }
-
+  
       window.location.href = data.url;
     } catch (err) {
       console.error("Network error:", err);
@@ -131,6 +176,7 @@ const CheckoutForm = ({ cartItems, total, user, restaurant }) => {
       setLoading(false);
     }
   };
+  
 
   return (
     <>
