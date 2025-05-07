@@ -12,6 +12,7 @@ import Header from "./views/components/Header";
 import Footer from "./views/components/Footer";
 import SpinnerFallback from "./views/components/SpinnerFallback";
 import CardSkeletonFallback from "./views/components/CardSkeletonFallback";
+import OfflineBanner from "./views/components/OfflineBanner";
 
 // Lazy Loaded Pages
 const LandingPage = lazy(() => import("./views/pages/LandingPage"));
@@ -45,7 +46,7 @@ function App() {
     <CartProvider>
       <Router>
         <div className="app-container">
-
+        <OfflineBanner />
         <Header />
         <main className="main-content">
         <Routes>

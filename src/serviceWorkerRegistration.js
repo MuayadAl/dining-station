@@ -9,11 +9,8 @@ const isLocalhost = Boolean(
  * @param {Object} config Optional configuration callbacks
  */
 export function register(config) {
-  if (
-    process.env.NODE_ENV !== 'development' || // ✅ Only allow in dev for now
-    !('serviceWorker' in navigator)
-  ) {
-    console.log('🛑 Skipping service worker registration (not development or unsupported)');
+  if (!('serviceWorker' in navigator)) {
+    console.log('🛑 Service workers not supported');
     return;
   }
 
