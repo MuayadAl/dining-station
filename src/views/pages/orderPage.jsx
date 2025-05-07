@@ -99,7 +99,6 @@ const OrderPage = () => {
             const alreadyShown = localStorage.getItem(toastKey);
 
             if (!alreadyShown) {
-              showSuccess("Payment successful!");
               localStorage.setItem(toastKey, "true");
             }
           }
@@ -111,7 +110,7 @@ const OrderPage = () => {
           ) {
             new Notification("Order Update", {
               body: `Your order is now: ${fetchedOrder.status}`,
-              icon: "/icons/icon-192x192.png",
+              icon: "/icons/web-app-manifest-192x192.png",
             });
 
             try {
@@ -152,7 +151,7 @@ const OrderPage = () => {
       const orders = querySnapshot.docs
         .map((doc) => ({ id: doc.id, ...doc.data() }))
         .filter((o) => o.id !== orderId)
-        .sort((a, b) => new Date(b.time) - new Date(a.time)); // ✅ Newest first
+        .sort((a, b) => new Date(b.time) - new Date(a.time)); 
 
       setPreviousOrders(orders);
       setOrdersLoaded(true);
