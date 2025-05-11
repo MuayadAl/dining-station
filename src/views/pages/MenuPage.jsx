@@ -420,6 +420,23 @@ const MenuPage = () => {
         }));
       }
 
+      if (Array.isArray(selectedItem?.sizes)) {
+        const uniqueSizes = new Set();
+        selectedItem.sizes = selectedItem.sizes.filter((sizeObj) => {
+          if (sizeObj.size && !uniqueSizes.has(sizeObj.size.toLowerCase())) {
+            uniqueSizes.add(sizeObj.size.toLowerCase());
+            sizeObj.price = Number(sizeObj.price);
+            return true;
+          }
+          return false;
+        });
+
+        const sizeOrder = { Small: 1, Medium: 2, Large: 3 };
+        selectedItem.sizes.sort(
+          (a, b) => sizeOrder[a.size] - sizeOrder[b.size]
+        );
+      }
+
       const updatedItem = {
         ...selectedItem,
         imgUrl: updatedImgUrl,
@@ -523,38 +540,37 @@ const MenuPage = () => {
 
       {/* Restaurant Logo */}
       <div
-  className="container d-flex justify-content-center align-items-center"
-  style={{ minHeight: "120px" }}
->
-  {logoLoading && (
-    <div className="spinner-border text-secondary" role="status">
-      <span className="visually-hidden">Loading...</span>
-    </div>
-  )}
+        className="container d-flex justify-content-center align-items-center"
+        style={{ minHeight: "120px" }}
+      >
+        {logoLoading && (
+          <div className="spinner-border text-secondary" role="status">
+            <span className="visually-hidden">Loading...</span>
+          </div>
+        )}
 
-  {(restaurantImgUrl || !logoLoading) && (
-    <img
-      src={restaurantImgUrl || imagePlaceHolder}
-      onError={(e) => {
-        e.target.onerror = null;
-        e.target.src = imagePlaceHolder;
-        setLogoLoading(false);
-      }}
-      onLoad={() => setLogoLoading(false)}
-      alt="restaurant logo"
-      className="img-fluid mt-2"
-      style={{
-        display: logoLoading ? "none" : "block", // Hide until fully loaded
-        height: "100px",
-        width: "100px",
-        borderRadius: "50%",
-        cursor: "pointer",
-      }}
-      onClick={() => setShowLogoModal(true)}
-    />
-  )}
-</div>
-
+        {(restaurantImgUrl || !logoLoading) && (
+          <img
+            src={restaurantImgUrl || imagePlaceHolder}
+            onError={(e) => {
+              e.target.onerror = null;
+              e.target.src = imagePlaceHolder;
+              setLogoLoading(false);
+            }}
+            onLoad={() => setLogoLoading(false)}
+            alt="restaurant logo"
+            className="img-fluid mt-2"
+            style={{
+              display: logoLoading ? "none" : "block", // Hide until fully loaded
+              height: "100px",
+              width: "100px",
+              borderRadius: "50%",
+              cursor: "pointer",
+            }}
+            onClick={() => setShowLogoModal(true)}
+          />
+        )}
+      </div>
 
       {/* Restaurant Name */}
 
@@ -836,7 +852,7 @@ const MenuPage = () => {
         }}
       >
         <Modal.Header closeButton>
-          <Modal.Title>Fast Edit Menu Item</Modal.Title>
+          <Modal.Title>Edit Menu Item</Modal.Title>
         </Modal.Header>
         <Modal.Body>
           <Form>
@@ -855,7 +871,6 @@ const MenuPage = () => {
                     maxHeight: "200px",
                     objectFit: "cover",
                     cursor: "pointer",
-                    border: "2px dashed #aaa",
                   }}
                   onClick={() =>
                     document.getElementById("editItemImageInput")?.click()
@@ -919,38 +934,118 @@ const MenuPage = () => {
             </Form.Group>
             <Form.Group>
               <Form.Label>Sizes & Prices</Form.Label>
-              {selectedItem?.sizes?.map((size, index) => (
-                <div key={index} className="d-flex align-items-center mb-2">
-                  {/* Size Dropdown */}
-                  <Form.Select
-                    value={size.size}
-                    onChange={(e) => {
-                      const updatedSizes = [...selectedItem.sizes];
-                      updatedSizes[index].size = e.target.value;
-                      setSelectedItem({ ...selectedItem, sizes: updatedSizes });
-                    }}
-                    className="me-2"
-                  >
-                    <option value="">Select a Size</option>
-                    <option value="Small">Small</option>
-                    <option value="Medium">Medium</option>
-                    <option value="Large">Large</option>
-                  </Form.Select>
+              {(selectedItem?.sizes || [])
+                .map((size, originalIndex) => ({ ...size, originalIndex }))
+                .sort((a, b) => {
+                  const order = { Small: 1, Medium: 2, Large: 3 };
+                  return order[a.size] - order[b.size];
+                })
+                .map((sortedSize, displayIndex) => {
+                  const index = sortedSize.originalIndex;
+                  return (
+                    <div key={index} className="d-flex align-items-center mb-2">
+                      {/* Size Dropdown */}
+                      <Form.Select
+                        value={sortedSize.size}
+                        onChange={(e) => {
+                          const selectedSize = e.target.value;
+                          const isDuplicate = selectedItem.sizes.some(
+                            (s, i) =>
+                              i !== index &&
+                              s.size.toLowerCase() ===
+                                selectedSize.toLowerCase()
+                          );
 
-                  {/* Price Input */}
-                  <Form.Control
-                    type="number"
-                    value={size.price}
-                    onChange={(e) => {
-                      const updatedSizes = [...selectedItem.sizes];
-                      updatedSizes[index].price = e.target.value;
+                          if (isDuplicate) {
+                            showError(
+                              `The size "${selectedSize}" has already been added.`
+                            );
+                            return;
+                          }
+
+                          const updatedSizes = [...selectedItem.sizes];
+                          updatedSizes[index].size = selectedSize;
+                          setSelectedItem({
+                            ...selectedItem,
+                            sizes: updatedSizes,
+                          });
+                        }}
+                      >
+                        {["Small", "Medium", "Large"].map((s) => (
+                          <option
+                            key={s}
+                            value={s}
+                            disabled={selectedItem.sizes.some(
+                              (sz, i) => sz.size === s && i !== index
+                            )}
+                          >
+                            {s}
+                          </option>
+                        ))}
+                      </Form.Select>
+
+                      {/* Price Input */}
+                      <Form.Control
+                        type="number"
+                        value={sortedSize.price}
+                        onChange={(e) => {
+                          const updatedSizes = [...selectedItem.sizes];
+                          updatedSizes[index].price = e.target.value;
+                          setSelectedItem({
+                            ...selectedItem,
+                            sizes: updatedSizes,
+                          });
+                        }}
+                        min="0"
+                        step="0.01"
+                      />
+
+                      {selectedItem.sizes.length > 1 && (
+                        <Button
+                          variant="danger"
+                          className="ms-2"
+                          onClick={() => {
+                            const updatedSizes = selectedItem.sizes.filter(
+                              (_, i) => i !== index
+                            );
+                            setSelectedItem({
+                              ...selectedItem,
+                              sizes: updatedSizes,
+                            });
+                          }}
+                        >
+                          <i className="fa fa-trash"></i>
+                        </Button>
+                      )}
+                    </div>
+                  );
+                })}
+
+              {(() => {
+                const sizeNames =
+                  selectedItem?.sizes?.map((s) => s.size.toLowerCase()) || [];
+                const availableOptions = ["Small", "Medium", "Large"].filter(
+                  (opt) => !sizeNames.includes(opt.toLowerCase())
+                );
+
+                return availableOptions.length > 0 ? (
+                  <Button
+                    variant="outline-secondary"
+                    className="mt-2"
+                    onClick={() => {
+                      const newSize = availableOptions[0];
+                      const updatedSizes = [
+                        ...selectedItem.sizes,
+                        { size: newSize, price: "" },
+                      ];
+
                       setSelectedItem({ ...selectedItem, sizes: updatedSizes });
                     }}
-                    min="0"
-                    step="0.01"
-                  />
-                </div>
-              ))}
+                  >
+                    <i class="fa-solid fa-plus"></i> Add Size
+                  </Button>
+                ) : null;
+              })()}
             </Form.Group>
 
             <Form.Group className="form-check form-switch">

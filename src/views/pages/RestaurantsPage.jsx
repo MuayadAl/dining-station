@@ -19,10 +19,13 @@ function RestaurantsPage() {
   const [lastVisible, setLastVisible] = useState(null);
   const [loading, setLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
+  const [initialLoad, setInitialLoad] = useState(false);
+
 
   const navigate = useNavigate();
   const fetchRestaurants = useCallback(async () => {
     if (loading || !hasMore) return;
+
 
     setLoading(true);
     try {
@@ -66,6 +69,9 @@ function RestaurantsPage() {
         );
         return [...prevRestaurants, ...uniqueRestaurants];
       });
+
+      if (!initialLoad) setInitialLoad(true);
+
 
       if (querySnapshot.docs.length > 0) {
         setLastVisible(querySnapshot.docs[querySnapshot.docs.length - 1]);
@@ -172,98 +178,103 @@ function RestaurantsPage() {
   );
 
   return (
-    <div className="container p-4 text-center">
-      <h1 className="restaurant_title mb-3">RESTAURANTS</h1>
-      <div className="row justify-content-start shadow p-3 mb-5 bg-body rounded-3">
-        {restaurants.length > 0 ? (
-          restaurants.map((restaurant) => (
+  <div className="container p-4 text-center">
+    <h1 className="restaurant_title mb-3">RESTAURANTS</h1>
+    <div className="row justify-content-start shadow p-3 mb-5 bg-body rounded-3">
+      {restaurants.length > 0 ? (
+        restaurants.map((restaurant) => (
+          <div
+            key={restaurant.id}
+            className="col-lg-3 col-md-6 d-flex justify-content-center"
+          >
             <div
-              key={restaurant.id}
-              className="col-lg-3 col-md-6 d-flex justify-content-center"
+              className={`restaurant_card mb-4 mx-2 ${
+                restaurant.status === "open"
+                  ? ""
+                  : "disabled pointer-event-none opacity-75"
+              }`}
+              onClick={() => {
+                if (restaurant.status === "open") {
+                  handleNavigation(restaurant.id);
+                }
+              }}
             >
-              <div
-                className={`restaurant_card mb-4 mx-2 ${
-                  restaurant.status === "open"
-                    ? ""
-                    : "disabled pointer-event-none opacity-75"
-                }`}
-                onClick={() => {
-                  if (restaurant.status === "open") {
-                    handleNavigation(restaurant.id);
-                  }
-                }}
-              >
-                <div className="restaurant_img position-relative">
-                  <img
-                    src={restaurant.imgUrl}
-                    alt={restaurant.name}
-                    loading="lazy"
-                    className="w-100 mt-0"
-                  />
-                  <span
-                    title={`Manual: ${
-                      restaurant.manualStatus || "N/A"
-                    }, Schedule: ${getRestaurantStatus(
-                      restaurant.openingHours,
-                      "open"
-                    )}`}
-                    className={`position-absolute top-0 start-0 m-2 px-2 py-1 rounded ${
+              <div className="restaurant_img position-relative">
+                <img
+                  src={restaurant.imgUrl}
+                  alt={restaurant.name}
+                  loading="lazy"
+                  className="w-100 mt-0"
+                />
+                <span
+                  title={`Manual: ${
+                    restaurant.manualStatus || "N/A"
+                  }, Schedule: ${getRestaurantStatus(
+                    restaurant.openingHours,
+                    "open"
+                  )}`}
+                  className={`position-absolute top-0 start-0 m-2 px-2 py-1 rounded ${
+                    restaurant.status === "open"
+                      ? "bg-success"
+                      : restaurant.status === "closed"
+                      ? "bg-danger"
+                      : "bg-warning"
+                  } text-white fw-bold`}
+                  style={{ fontSize: "0.8rem" }}
+                >
+                  <i
+                    className={`fa-solid ${
                       restaurant.status === "open"
-                        ? "bg-success"
-                        : restaurant.status === "closed"
-                        ? "bg-danger"
-                        : "bg-warning"
-                    } text-white fw-bold`}
-                    style={{ fontSize: "0.8rem" }}
-                  >
-                    <i
-                      className={`fa-solid ${
-                        restaurant.status === "open"
-                          ? "fa-door-open"
-                          : "fa-door-closed"
-                      } me-1`}
-                    ></i>
-                    {restaurant.status}
-                  </span>
-                </div>
+                        ? "fa-door-open"
+                        : "fa-door-closed"
+                    } me-1`}
+                  ></i>
+                  {restaurant.status}
+                </span>
+              </div>
 
-                <div className="restaurant_box">
-                  <h3 className="types_text" title={restaurant.name}>
-                    {restaurant.name}
-                  </h3>
-                  <p className="looking_text" title={restaurant.description}>
-                    {restaurant.description}
-                  </p>
-                  <p className="looking_text" title={restaurant.location}>
-                    <i class="fa-solid fa-location-dot"></i>{" "}
-                    {restaurant.location}
-                  </p>
-                  <div className="read_bt">
-                    {restaurant.status === "open" ? (
-                      <NavLink
-                        className="order_btn"
-                        to={`/user/menu-page/${restaurant.id}`}
-                      >
-                        Order Now
-                      </NavLink>
-                    ) : (
-                      <button className="btn btn-secondary" disabled>
-                        Closed
-                      </button>
-                    )}
-                  </div>
+              <div className="restaurant_box">
+                <h3 className="types_text" title={restaurant.name}>
+                  {restaurant.name}
+                </h3>
+                <p className="looking_text" title={restaurant.description}>
+                  {restaurant.description}
+                </p>
+                <p className="looking_text" title={restaurant.location}>
+                  <i className="fa-solid fa-location-dot"></i>{" "}
+                  {restaurant.location}
+                </p>
+                <div className="read_bt">
+                  {restaurant.status === "open" ? (
+                    <NavLink
+                      className="order_btn"
+                      to={`/user/menu-page/${restaurant.id}`}
+                    >
+                      Order Now
+                    </NavLink>
+                  ) : (
+                    <button className="btn btn-secondary" disabled>
+                      Closed
+                    </button>
+                  )}
                 </div>
               </div>
             </div>
-          ))
-        ) : (
-          <div className="text-center my-5">
-            <h5>No restaurants available at the moment.</h5>
           </div>
-        )}
-      </div>
+        ))
+      ) : initialLoad ? (
+        <div className="text-center my-5">
+          <h5>No restaurants available at the moment.</h5>
+        </div>
+      ) : (
+        [...Array(BATCH_SIZE)].map((_, index) => (
+          <RestaurantCardPlaceholder key={index} />
+        ))
+      )}
     </div>
-  );
+  </div>
+);
+
 }
 
 export default RestaurantsPage;
