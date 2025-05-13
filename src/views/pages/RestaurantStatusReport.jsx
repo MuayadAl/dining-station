@@ -18,6 +18,8 @@ import {
   faDoorOpen,
   faDoorClosed,
 } from "@fortawesome/free-solid-svg-icons";
+import SpinnerFallback from "../components/SpinnerFallback"
+
 
 const RestaurantStatusReports = () => {
   const [restaurant, setRestaurant] = useState(null);
@@ -250,29 +252,32 @@ const RestaurantStatusReports = () => {
       }
     });
 
-    return () => unsubscribe(); // Cleanup on unmount
+    return () => unsubscribe(); 
   }, []);
 
-  if (error) {
-    return (
-      <div className="min-vh-100 container-fluid">
-        <div
-          className=" container-fluid float-start alert alert-danger text-center my-5 py-5 fs-5"
-          role="alert"
-        >
-          {error}
-        </div>
-      </div>
-    );
-  }
+  if (loading) {
+  return <SpinnerFallback message="Loading restaurant data..." />;
+}
 
-  if (!restaurant) {
-    return (
-      <div className="alert alert-warning text-center mt-5" role="alert">
-        No restaurant data available.
+
+if (error) {
+  return (
+    <div className="min-vh-100 container-fluid">
+      <div className="container-fluid float-start alert alert-danger text-center my-5 py-5 fs-5" role="alert">
+        {error}
       </div>
-    );
-  }
+    </div>
+  );
+}
+
+if (!restaurant) {
+  return (
+    <div className="alert alert-warning text-center mt-5" role="alert">
+      No restaurant data available.
+    </div>
+  );
+}
+
 
   return (
     <div className="d-flex container justify-content-center align-items-center mb-4 ">

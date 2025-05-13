@@ -22,6 +22,7 @@ const AdminManageUsers = () => {
   const [restaurantId, setRestaurantId] = useState("");
   const [currentUserId, setCurrentUserId] = useState("");
   const { confirmAction, showSuccess, showError } = useAlert();
+  const [deleteLoadingMap, setDeleteLoadingMap] = useState({});
 
   const BATCH_SIZE = 20;
   const searchRef = useRef("");
@@ -127,7 +128,7 @@ const AdminManageUsers = () => {
           constraints.push(orderBy("email"));
           constraints.push(where("email", ">=", searchTerm));
           constraints.push(where("email", "<=", searchTerm + "\uf8ff"));
-          constraints.push(orderBy("createdAt", "desc")); // optional secondary sort
+          constraints.push(orderBy("createdAt", "desc"));
         } else {
           constraints.push(orderBy("createdAt", "desc"));
         }
@@ -208,6 +209,9 @@ const AdminManageUsers = () => {
     );
     if (!confirmed) return;
 
+    // Start spinner for this user
+    setDeleteLoadingMap((prev) => ({ ...prev, [uid]: true }));
+
     try {
       const API_BASE_URL =
         process.env.NODE_ENV === "development"
@@ -215,9 +219,9 @@ const AdminManageUsers = () => {
           : process.env.REACT_APP_API_BASE_URL;
 
       const currentUser = auth.currentUser;
-
       if (!currentUser) {
         showError("User not authenticated.");
+        setDeleteLoadingMap((prev) => ({ ...prev, [uid]: false }));
         return;
       }
 
@@ -227,7 +231,7 @@ const AdminManageUsers = () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`, // ✅ Add the token here
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({ uid }),
       });
@@ -245,6 +249,9 @@ const AdminManageUsers = () => {
     } catch (error) {
       console.error("Error deleting user:", error);
       showError("Error deleting user.");
+    } finally {
+      // Stop spinner for this user
+      setDeleteLoadingMap((prev) => ({ ...prev, [uid]: false }));
     }
   };
 
@@ -296,10 +303,22 @@ const AdminManageUsers = () => {
                       </td>
                       <td className="p-2 border">
                         <button
-                          className="btn btn-danger"
+                          className="btn btn-danger d-flex align-items-center justify-content-center gap-2"
                           onClick={() => handleDelete(user.uid || user.id)}
+                          disabled={deleteLoadingMap[user.uid || user.id]}
                         >
-                          Delete
+                          {deleteLoadingMap[user.uid || user.id] ? (
+                            <>
+                              <span
+                                className="spinner-border spinner-border-sm"
+                                role="status"
+                                aria-hidden="true"
+                              ></span>
+                              Deleting...
+                            </>
+                          ) : (
+                            "Delete"
+                          )}
                         </button>
                       </td>
                     </tr>
