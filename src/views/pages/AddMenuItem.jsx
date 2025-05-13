@@ -32,6 +32,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 
 import useAlert from "../../hooks/userAlert";
+import SpinnerFallback from "../components/SpinnerFallback";
 
 const popularCategories = [
   "Rice",
@@ -124,36 +125,44 @@ const AddMenuItemPage = () => {
   const [message, setMessage] = useState("");
   const [errors, setErrors] = useState({});
   const [availability, setAvailability] = useState(true);
+  const [initialLoading, setInitialLoading] = useState(true);
+
 
   // Fetch restaurant id from firestore if not available in sessionStorage.
-  useEffect(() => {
-    const fetchRestaurantId = async () => {
-      try {
-        const user = auth.currentUser;
-        if (!user) return;
+ useEffect(() => {
+  const fetchRestaurantId = async () => {
+    try {
+      const user = auth.currentUser;
+      if (!user) return;
 
-        const q = query(
-          collection(db, "restaurants"),
-          where("userId", "==", user.uid)
-        );
-        const querySnapshot = await getDocs(q);
-        if (!querySnapshot.empty) {
-          const fetchedRestaurantId = querySnapshot.docs[0].data().restaurantId;
-          setRestaurantId(fetchedRestaurantId);
-          sessionStorage.setItem("restaurantId", fetchedRestaurantId);
-        } else {
-          setRestaurantId(""); // ensure we don't keep the old ID
-          sessionStorage.removeItem("restaurantId"); // also clear this
-        }
-      } catch (error) {
-        console.error("Error fetching restaurant ID:", error);
+      const q = query(
+        collection(db, "restaurants"),
+        where("userId", "==", user.uid)
+      );
+      const querySnapshot = await getDocs(q);
+      if (!querySnapshot.empty) {
+        const fetchedRestaurantId =
+          querySnapshot.docs[0].data().restaurantId;
+        setRestaurantId(fetchedRestaurantId);
+        sessionStorage.setItem("restaurantId", fetchedRestaurantId);
+      } else {
+        setRestaurantId(""); // explicitly no restaurant
+        sessionStorage.removeItem("restaurantId");
       }
-    };
-
-    if (!restaurantId) {
-      fetchRestaurantId();
+    } catch (error) {
+      console.error("Error fetching restaurant ID:", error);
+    } finally {
+      setInitialLoading(false); 
     }
-  }, [auth.currentUser]);
+  };
+
+  if (!restaurantId) {
+    fetchRestaurantId();
+  } else {
+    setInitialLoading(false); 
+  }
+}, [auth.currentUser]);
+
 
   const uploadImage = async (file) => {
     if (!file) return "";
@@ -322,8 +331,12 @@ const AddMenuItemPage = () => {
     setSizes(updatedSizes);
   };
 
+  if (initialLoading) return <SpinnerFallback message="Checking restaurant status..." />;
+  
+
   return (
-    <div className="container d-flex justify-content-center align-items-center">
+    <div className={`container d-flex justify-content-center align-items-center transition-opacity ${initialLoading ? 'opacity-0' : 'opacity-100'}`}>
+
       <div className="card shadow p-4 w-100 my-3">
         <h2 className="text-center mb-4">Add Menu Item</h2>
         {restaurantId ? (
@@ -369,7 +382,6 @@ const AddMenuItemPage = () => {
                         handleSizeChange(index, "size", e.target.value)
                       }
                     >
-                      <option value="">Select a size</option>
                       {itemSize.map((s, idx) => {
                         const alreadySelected = sizes.some(
                           (sz, i) => sz.size === s && i !== index

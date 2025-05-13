@@ -121,17 +121,6 @@ const AdminManageUsers = () => {
       if (restaurantId !== "ALL_ADMINS_CAN_VIEW") {
         constraints.push(where("userRole", "==", "restaurant-staff"));
         constraints.push(where("restaurantId", "==", restaurantId));
-        constraints.push(orderBy("createdAt", "desc"));
-      } else {
-        if (search.trim()) {
-          const searchTerm = search.trim();
-          constraints.push(orderBy("email"));
-          constraints.push(where("email", ">=", searchTerm));
-          constraints.push(where("email", "<=", searchTerm + "\uf8ff"));
-          constraints.push(orderBy("createdAt", "desc"));
-        } else {
-          constraints.push(orderBy("createdAt", "desc"));
-        }
       }
 
       // Firestore search for admin

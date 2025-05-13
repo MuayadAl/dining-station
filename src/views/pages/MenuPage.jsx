@@ -31,6 +31,8 @@ import { useCart } from "../../contexts/CartContext";
 
 import imagePlaceHolder from "../../assets/image-placeholder.jpg";
 import foodPlaceHolder from "../../assets/food-placeHolder.png";
+import CardSkeletonFallback from "../components/CardSkeletonFallback";
+
 
 const MenuPage = () => {
   const { restaurantId } = useParams();
@@ -76,6 +78,8 @@ const MenuPage = () => {
   const { refreshCart } = useCart();
   const [userRole, setUserRole] = useState(null);
   const [logoLoading, setLogoLoading] = useState(true);
+  const [initialLoading, setInitialLoading] = useState(true);
+  
 
   useEffect(() => {
     if (!restaurantId || isOwner === null) return;
@@ -116,6 +120,7 @@ const MenuPage = () => {
         if (isMounted) console.error("Error fetching menu:", error);
       } finally {
         if (isMounted) setLoading(false);
+        setInitialLoading(false);
       }
     };
 
@@ -500,6 +505,8 @@ const MenuPage = () => {
       ? "Open"
       : "Closed";
   };
+
+if (initialLoading) return <CardSkeletonFallback />;
 
   return (
     <div className="container p-1 ">

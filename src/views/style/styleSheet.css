@@ -1415,4 +1415,17 @@ textarea#comment.massage-bt::placeholder {
   }
   
   /* Icons */
+
+  /* Add menu Items */
+
+  .transition-opacity {
+  transition: opacity 0.5s ease;
+}
+.opacity-0 {
+  opacity: 0;
+}
+.opacity-100 {
+  opacity: 1;
+}
+
  

@@ -1,5 +1,3 @@
-import React from 'react';
-
 function CardSkeletonFallback() {
   return (
     <div className="container p-5 text-center">
