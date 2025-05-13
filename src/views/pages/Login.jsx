@@ -16,6 +16,8 @@ export default function Login() {
   const [showResetModal, setShowResetModal] = useState(false); // Modal visibility
   const [resetEmail, setResetEmail] = useState("");
   const [resetMessage, setResetMessage] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [resetLoading, setResetLoading] = useState(false);
 
   const navigate = useNavigate();
 
@@ -43,15 +45,18 @@ export default function Login() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+    setLoading(true);
 
     if (!email || !password) {
       setError("Both email and password are required.");
+      setLoading(false);
       return;
     }
 
     const emailRegex = /^[a-zA-Z0-9._-]+@(apu\.edu\.my|mail\.apu\.edu\.my)$/;
     if (!emailRegex.test(email)) {
       setError("Please enter a valid email address.");
+      setLoading(false);
       return;
     }
 
@@ -60,24 +65,30 @@ export default function Login() {
       navigate("/landing", { replace: true });
     } catch (error) {
       setError("Invalid email or password. Please try again.");
+    } finally {
+      setLoading(false);
     }
   };
 
   // Password reset
   const handleResetSubmit = async () => {
     setResetMessage("");
+    setResetLoading(true);
 
     if (!resetEmail) {
       setResetMessage("Email is required.");
+      setResetLoading(false);
+
       return;
     }
 
     const emailRegex = /^[a-zA-Z0-9._-]+@(apu\.edu\.my|mail\.apu\.edu\.my)$/;
     if (!emailRegex.test(resetEmail)) {
       setResetMessage("Please enter a valid APU email address.");
+      setResetLoading(false);
+
       return;
     }
-
     try {
       await handlePasswordReset(resetEmail);
       setResetMessage(
@@ -85,6 +96,8 @@ export default function Login() {
       );
     } catch (err) {
       setResetMessage("Failed to send reset email. Please try again.");
+    } finally {
+      setResetLoading(false);
     }
   };
 
@@ -145,8 +158,19 @@ export default function Login() {
           </div>
 
           <div className="d-flex justify-content-center align-items-center main_btn active w-100">
-            <button type="submit" className="btn w-50">
-              Login
+            <button type="submit" className="btn w-50" disabled={loading}>
+              {loading ? (
+                <>
+                  <span
+                    className="spinner-border spinner-border-sm me-2"
+                    role="status"
+                    aria-hidden="true"
+                  ></span>
+                  Logging...
+                </>
+              ) : (
+                "Login"
+              )}
             </button>
           </div>
 
@@ -218,8 +242,23 @@ export default function Login() {
           <Button variant="secondary" onClick={() => setShowResetModal(false)}>
             Cancel
           </Button>
-          <Button variant="danger" onClick={handleResetSubmit}>
-            Send Reset Link
+          <Button
+            variant="danger"
+            onClick={handleResetSubmit}
+            disabled={resetLoading}
+          >
+            {resetLoading ? (
+              <>
+                <span
+                  className="spinner-border spinner-border-sm me-2"
+                  role="status"
+                  aria-hidden="true"
+                ></span>
+                Sending...
+              </>
+            ) : (
+              "Send Reset Link"
+            )}
           </Button>
         </Modal.Footer>
       </Modal>
