@@ -99,6 +99,7 @@ export const editRestaurant = async (
     email,
     phone,
     location,
+    description,
     imgFile,
     openingHours,
   }
@@ -133,6 +134,7 @@ export const editRestaurant = async (
       email,
       phone,
       location,
+      description,
       imgUrl,
       openingHours, 
       updatedAt: serverTimestamp(),

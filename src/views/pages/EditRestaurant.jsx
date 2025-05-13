@@ -10,9 +10,7 @@ import useAlert from "../../hooks/userAlert";
 
 // Font awesome Import Starts
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faSpinner } from "@fortawesome/free-solid-svg-icons";
 import { faPen } from "@fortawesome/free-solid-svg-icons";
-import { faClock } from "@fortawesome/free-solid-svg-icons";
 
 import imagePlaceHolder from "../../assets/image-placeholder.jpg";
 
@@ -25,6 +23,7 @@ export default function EditRestaurant() {
     email: "",
     phone: "",
     location: "",
+    description: "",
     imgUrl: "",
     openingHours: {
       Monday: { enabled: false, open: "", close: "" },
@@ -77,6 +76,7 @@ export default function EditRestaurant() {
               email: data.email || "",
               phone: data.phone || "",
               location: data.location || "",
+              description: data.description || "",
               imgUrl: data.imgUrl || "",
               openingHours: data.openingHours || {
                 Monday: { enabled: false, open: "", close: "" },
@@ -177,7 +177,7 @@ export default function EditRestaurant() {
 
     if (!isConfirmed){ 
       setSaving(false);
-      return}; // Stop if user cancels
+      return}; 
 
     if(isConfirmed){
       setSaving(true);
@@ -204,9 +204,9 @@ export default function EditRestaurant() {
         {error && <div className="alert alert-danger">{error}</div>}
         {success && <div className="alert alert-success">{success}</div>}
 
-        {/* Conditionally render the form based on isHidden */}
         {!isHidden && (
           <form onSubmit={handleSubmit}>
+            
             {/* Restaurant Image */}
             <div className="mb-3 text-center position-relative">
               {imgLoading && (
@@ -304,10 +304,25 @@ export default function EditRestaurant() {
               />
             </div>
 
+            {/* Restaurant Description */}
+            <div className="mb-3">
+              <label className="form-label">
+                <i class="fa-solid fa-tag"></i> Description
+              </label>
+              <input
+                type="text"
+                className="form-control"
+                name="description"
+                value={formData.description}
+                onChange={handleChange}
+                required
+              />
+            </div>
+
             {/* Opening Hours */}
             <div className="mb-3 ">
               <label className="form-label">
-                <FontAwesomeIcon icon={faClock} /> Opening Hours
+                <i class="fa-solid fa-clock"></i> Opening Hours
               </label>
 
               <div className="form-check">
@@ -374,11 +389,11 @@ export default function EditRestaurant() {
               <button type="submit" disabled={saving}>
                 {saving ? (
                   <>
-                    <FontAwesomeIcon icon={faSpinner} spin /> Updating...
+                    <i class="fa-solid fa-spinner fa-spin"></i> Updating...
                   </>
                 ) : (
                   <>
-                    <FontAwesomeIcon icon={faPen}></FontAwesomeIcon> Update
+                    <i class="fa-solid fa-pen-to-square"></i> Update
                     Restaurant
                   </>
                 )}
