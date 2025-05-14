@@ -375,28 +375,30 @@ const AddMenuItemPage = () => {
                     <span className="input-group-text">
                       <FontAwesomeIcon icon={faScaleUnbalanced} />
                     </span>
-                    <select
-                      className="form-select"
-                      value={size.size}
-                      onChange={(e) =>
-                        handleSizeChange(index, "size", e.target.value)
-                      }
-                    >
-                      {itemSize.map((s, idx) => {
-                        const alreadySelected = sizes.some(
-                          (sz, i) => sz.size === s && i !== index
-                        );
-                        return (
-                          <option
-                            key={idx}
-                            value={s}
-                            disabled={alreadySelected}
-                          >
-                            {s}
-                          </option>
-                        );
-                      })}
-                    </select>
+                   <select
+  className="form-select"
+  value={size.size}
+  onChange={(e) =>
+    handleSizeChange(index, "size", e.target.value)
+  }
+>
+  <option value="">Select Size</option>
+  {itemSize.map((s, idx) => {
+    const alreadySelected = sizes.some(
+      (sz, i) => sz.size === s && i !== index
+    );
+    return (
+      <option
+        key={idx}
+        value={s}
+        disabled={alreadySelected}
+      >
+        {s}
+      </option>
+    );
+  })}
+</select>
+
 
                     <span
                       className="input-group-text"
@@ -424,13 +426,16 @@ const AddMenuItemPage = () => {
                     )}
                   </div>
                 ))}
-                <button
-                  type="button"
-                  className="btn btn-secondary"
-                  onClick={addSizeField}
-                >
-                  <FontAwesomeIcon icon={faPlus} /> Add Size
-                </button>
+               {sizes.length < itemSize.length && (
+  <button
+    type="button"
+    className="btn btn-secondary"
+    onClick={addSizeField}
+  >
+    <FontAwesomeIcon icon={faPlus} /> Add Size
+  </button>
+)}
+
               </div>
               {errors.sizes && (
                 <small className="text-danger">
