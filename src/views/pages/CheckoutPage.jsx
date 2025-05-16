@@ -171,6 +171,8 @@ const CheckoutForm = ({ cartItems, total, user, restaurant }) => {
       window.location.href = data.url;
     } catch (err) {
       console.error("Network error:", err);
+        const text = await err.response?.text?.();
+  console.log("❌ Response body:", text);
       showError("Network error: Unable to reach Stripe.");
     } finally {
       setLoading(false);

@@ -1,4 +1,4 @@
-const functions = require("firebase-functions");
+const { onRequest } = require("firebase-functions/v2/https");
 const express = require("express");
 const cors = require("cors");
 const Stripe = require("stripe");
@@ -9,59 +9,38 @@ const adminRoutes = require("./adminRoutes");
 const orderRoutes = require("./orderController");
 
 const app = express();
+const router = express.Router(); // ✅ define router
 
-// ✅ CORS configuration
+// ✅ CORS setup
 const allowedOrigin = "https://dinging-station.web.app";
 
-const corsOptions = {
+app.use(cors({
   origin: allowedOrigin,
   credentials: true,
-  methods: ["GET", "POST", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"],
-};
+}));
 
-app.use(cors(corsOptions));
+app.options("*", cors({
+  origin: allowedOrigin,
+  credentials: true,
+}));
+
 app.use(express.json());
 
-// ✅ Manual CORS headers for full control
-app.use((req, res, next) => {
-  res.setHeader("Access-Control-Allow-Origin", allowedOrigin);
-  res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
-  res.setHeader("Access-Control-Allow-Credentials", "true");
-  next();
-});
-
-// ✅ Stripe setup
-const stripeSecret =
-  process.env.STRIPE_SECRET_KEY || functions.config().stripe?.secret;
-const frontendBaseUrl =
-  process.env.FRONTEND_BASE_URL || functions.config().frontend?.base_url;
-
-if (!stripeSecret || !frontendBaseUrl) {
-  console.error("❌ Missing STRIPE_SECRET_KEY or FRONTEND_BASE_URL");
-  throw new Error("Stripe environment configuration missing");
-}
-
-const stripe = Stripe(stripeSecret);
-
-// ✅ Register other routes
+// ✅ Admin and order routes (outside router)
 app.use(adminRoutes);
 app.use("/orders", orderRoutes);
 
-// ✅ Handle preflight requests
-app.options("/create-checkout-session", (req, res) => {
-  res.setHeader("Access-Control-Allow-Origin", allowedOrigin);
-  res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
-  res.setHeader("Access-Control-Allow-Credentials", "true");
-  res.status(204).send();
-});
+// ✅ Stripe checkout session route
+router.post("/create-checkout-session", async (req, res) => {
+  const stripeSecret = process.env.STRIPE_SECRET_KEY;
+  const frontendBaseUrl = process.env.FRONTEND_BASE_URL;
 
-// ✅ Checkout session endpoint
-app.post("/create-checkout-session", async (req, res) => {
-  res.setHeader("Access-Control-Allow-Origin", allowedOrigin);
-  res.setHeader("Access-Control-Allow-Credentials", "true");
+  if (!stripeSecret || !frontendBaseUrl) {
+    console.error("❌ Missing STRIPE_SECRET_KEY or FRONTEND_BASE_URL");
+    return res.status(500).json({ error: "Stripe configuration missing" });
+  }
+
+  const stripe = Stripe(stripeSecret);
 
   try {
     const { cartItems } = req.body;
@@ -96,10 +75,12 @@ app.post("/create-checkout-session", async (req, res) => {
   }
 });
 
-app.get("/retrieve-checkout-session", async (req, res) => {
-  const sessionId = req.query.session_id;
+// ✅ Stripe session retrieval
+router.get("/retrieve-checkout-session", async (req, res) => {
+  const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
+
   try {
-    const session = await stripe.checkout.sessions.retrieve(sessionId);
+    const session = await stripe.checkout.sessions.retrieve(req.query.session_id);
     res.status(200).json(session);
   } catch (error) {
     console.error("🔥 Stripe Session Retrieval Error:", error);
@@ -107,6 +88,23 @@ app.get("/retrieve-checkout-session", async (req, res) => {
   }
 });
 
+// ✅ Test route
+router.get("/test", (req, res) => {
+  res.status(200).json({
+    message: "✅ Test route reached successfully!",
+    timestamp: new Date().toISOString(),
+  });
+});
 
-// ✅ Export the function
-exports.api = functions.https.onRequest(app);
+// ✅ Mount all routes under /api
+app.use("/api", router);
+app.use("/api", adminRoutes);
+
+// ✅ Export Gen 2 Cloud Function
+exports.api = onRequest(
+  {
+    timeoutSeconds: 60,
+    secrets: ["STRIPE_SECRET_KEY", "FRONTEND_BASE_URL"],
+  },
+  app
+);

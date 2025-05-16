@@ -1,0 +1,276 @@
+[debug] [2025-05-15T23:50:55.721Z] ----------------------------------------------------------------------
+[debug] [2025-05-15T23:50:55.727Z] Command:       C:\Program Files\nodejs\node.exe C:\Users\chemi\AppData\Roaming\npm\node_modules\firebase-tools\lib\bin\firebase.js deploy --only functions
+[debug] [2025-05-15T23:50:55.728Z] CLI Version:   13.35.1
+[debug] [2025-05-15T23:50:55.728Z] Platform:      win32
+[debug] [2025-05-15T23:50:55.728Z] Node Version:  v22.13.1
+[debug] [2025-05-15T23:50:55.729Z] Time:          Fri May 16 2025 07:50:55 GMT+0800 (Malaysia Time)
+[debug] [2025-05-15T23:50:55.730Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2025-05-15T23:50:56.190Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2025-05-15T23:50:56.190Z] > authorizing via signed-in user (diningstationfyp25@gmail.com)
+[debug] [2025-05-15T23:50:56.191Z] [iam] checking project dinging-station for permissions ["cloudfunctions.functions.create","cloudfunctions.functions.delete","cloudfunctions.functions.get","cloudfunctions.functions.list","cloudfunctions.functions.update","cloudfunctions.operations.get","firebase.projects.get"]
+[debug] [2025-05-15T23:50:56.192Z] Checked if tokens are valid: true, expires at: 1747355704765
+[debug] [2025-05-15T23:50:56.192Z] Checked if tokens are valid: true, expires at: 1747355704765
+[debug] [2025-05-15T23:50:56.193Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/dinging-station:testIamPermissions [none]
+[debug] [2025-05-15T23:50:56.194Z] >>> [apiv2][(partial)header] POST https://cloudresourcemanager.googleapis.com/v1/projects/dinging-station:testIamPermissions x-goog-quota-user=projects/dinging-station
+[debug] [2025-05-15T23:50:56.194Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/dinging-station:testIamPermissions {"permissions":["cloudfunctions.functions.create","cloudfunctions.functions.delete","cloudfunctions.functions.get","cloudfunctions.functions.list","cloudfunctions.functions.update","cloudfunctions.operations.get","firebase.projects.get"]}
+[debug] [2025-05-15T23:50:57.385Z] <<< [apiv2][status] POST https://cloudresourcemanager.googleapis.com/v1/projects/dinging-station:testIamPermissions 200
+[debug] [2025-05-15T23:50:57.385Z] <<< [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/dinging-station:testIamPermissions {"permissions":["cloudfunctions.functions.create","cloudfunctions.functions.delete","cloudfunctions.functions.get","cloudfunctions.functions.list","cloudfunctions.functions.update","cloudfunctions.operations.get","firebase.projects.get"]}
+[debug] [2025-05-15T23:50:57.386Z] Checked if tokens are valid: true, expires at: 1747355704765
+[debug] [2025-05-15T23:50:57.386Z] Checked if tokens are valid: true, expires at: 1747355704765
+[debug] [2025-05-15T23:50:57.386Z] >>> [apiv2][query] POST https://iam.googleapis.com/v1/projects/dinging-station/serviceAccounts/dinging-station@appspot.gserviceaccount.com:testIamPermissions [none]
+[debug] [2025-05-15T23:50:57.386Z] >>> [apiv2][body] POST https://iam.googleapis.com/v1/projects/dinging-station/serviceAccounts/dinging-station@appspot.gserviceaccount.com:testIamPermissions {"permissions":["iam.serviceAccounts.actAs"]}
+[debug] [2025-05-15T23:50:58.717Z] <<< [apiv2][status] POST https://iam.googleapis.com/v1/projects/dinging-station/serviceAccounts/dinging-station@appspot.gserviceaccount.com:testIamPermissions 200
+[debug] [2025-05-15T23:50:58.717Z] <<< [apiv2][body] POST https://iam.googleapis.com/v1/projects/dinging-station/serviceAccounts/dinging-station@appspot.gserviceaccount.com:testIamPermissions {"permissions":["iam.serviceAccounts.actAs"]}
+[info] 
+[info] === Deploying to 'dinging-station'...
+[info] 
+[info] i  deploying functions 
+[debug] [2025-05-15T23:50:58.727Z] Checked if tokens are valid: true, expires at: 1747355704765
+[debug] [2025-05-15T23:50:58.728Z] Checked if tokens are valid: true, expires at: 1747355704765
+[debug] [2025-05-15T23:50:58.728Z] >>> [apiv2][query] GET https://cloudresourcemanager.googleapis.com/v1/projects/dinging-station [none]
+[debug] [2025-05-15T23:50:58.984Z] <<< [apiv2][status] GET https://cloudresourcemanager.googleapis.com/v1/projects/dinging-station 200
+[debug] [2025-05-15T23:50:58.984Z] <<< [apiv2][body] GET https://cloudresourcemanager.googleapis.com/v1/projects/dinging-station {"projectNumber":"113072864772","projectId":"dinging-station","lifecycleState":"ACTIVE","name":"Dining Station","labels":{"firebase":"enabled","firebase-core":"disabled"},"createTime":"2025-03-03T17:27:30.465957Z"}
+[info] i  functions: preparing codebase default for deployment 
+[info] i  functions: ensuring required API cloudfunctions.googleapis.com is enabled... 
+[debug] [2025-05-15T23:50:58.989Z] Checked if tokens are valid: true, expires at: 1747355704765
+[debug] [2025-05-15T23:50:58.989Z] Checked if tokens are valid: true, expires at: 1747355704765
+[debug] [2025-05-15T23:50:58.990Z] Checked if tokens are valid: true, expires at: 1747355704765
+[debug] [2025-05-15T23:50:58.990Z] Checked if tokens are valid: true, expires at: 1747355704765
+[info] i  functions: ensuring required API cloudbuild.googleapis.com is enabled... 
+[debug] [2025-05-15T23:50:58.991Z] Checked if tokens are valid: true, expires at: 1747355704765
+[debug] [2025-05-15T23:50:58.992Z] Checked if tokens are valid: true, expires at: 1747355704765
+[info] i  artifactregistry: ensuring required API artifactregistry.googleapis.com is enabled... 
+[debug] [2025-05-15T23:50:58.993Z] Checked if tokens are valid: true, expires at: 1747355704765
+[debug] [2025-05-15T23:50:58.993Z] Checked if tokens are valid: true, expires at: 1747355704765
+[debug] [2025-05-15T23:50:58.995Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/dinging-station/services/cloudfunctions.googleapis.com [none]
+[debug] [2025-05-15T23:50:58.996Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/dinging-station/services/cloudfunctions.googleapis.com x-goog-quota-user=projects/dinging-station
+[debug] [2025-05-15T23:50:59.001Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/dinging-station/services/runtimeconfig.googleapis.com [none]
+[debug] [2025-05-15T23:50:59.001Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/dinging-station/services/runtimeconfig.googleapis.com x-goog-quota-user=projects/dinging-station
+[debug] [2025-05-15T23:50:59.006Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/dinging-station/services/cloudbuild.googleapis.com [none]
+[debug] [2025-05-15T23:50:59.007Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/dinging-station/services/cloudbuild.googleapis.com x-goog-quota-user=projects/dinging-station
+[debug] [2025-05-15T23:50:59.013Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/dinging-station/services/artifactregistry.googleapis.com [none]
+[debug] [2025-05-15T23:50:59.014Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/dinging-station/services/artifactregistry.googleapis.com x-goog-quota-user=projects/dinging-station
+[debug] [2025-05-15T23:51:00.434Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/dinging-station/services/artifactregistry.googleapis.com 200
+[debug] [2025-05-15T23:51:00.434Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/dinging-station/services/artifactregistry.googleapis.com [omitted]
+[info] +  artifactregistry: required API artifactregistry.googleapis.com is enabled 
+[debug] [2025-05-15T23:51:00.443Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/dinging-station/services/cloudbuild.googleapis.com 200
+[debug] [2025-05-15T23:51:00.444Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/dinging-station/services/cloudbuild.googleapis.com [omitted]
+[info] +  functions: required API cloudbuild.googleapis.com is enabled 
+[debug] [2025-05-15T23:51:00.449Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/dinging-station/services/cloudfunctions.googleapis.com 200
+[debug] [2025-05-15T23:51:00.450Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/dinging-station/services/cloudfunctions.googleapis.com [omitted]
+[info] +  functions: required API cloudfunctions.googleapis.com is enabled 
+[debug] [2025-05-15T23:51:00.452Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/dinging-station/services/runtimeconfig.googleapis.com 200
+[debug] [2025-05-15T23:51:00.453Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/dinging-station/services/runtimeconfig.googleapis.com [omitted]
+[debug] [2025-05-15T23:51:00.453Z] Checked if tokens are valid: true, expires at: 1747355704765
+[debug] [2025-05-15T23:51:00.454Z] Checked if tokens are valid: true, expires at: 1747355704765
+[debug] [2025-05-15T23:51:00.454Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/dinging-station/adminSdkConfig [none]
+[debug] [2025-05-15T23:51:01.304Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/dinging-station/adminSdkConfig 200
+[debug] [2025-05-15T23:51:01.304Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/dinging-station/adminSdkConfig {"projectId":"dinging-station","storageBucket":"dinging-station.firebasestorage.app"}
+[debug] [2025-05-15T23:51:01.306Z] Checked if tokens are valid: true, expires at: 1747355704765
+[debug] [2025-05-15T23:51:01.307Z] Checked if tokens are valid: true, expires at: 1747355704765
+[debug] [2025-05-15T23:51:01.307Z] >>> [apiv2][query] GET https://runtimeconfig.googleapis.com/v1beta1/projects/dinging-station/configs [none]
+[debug] [2025-05-15T23:51:01.641Z] <<< [apiv2][status] GET https://runtimeconfig.googleapis.com/v1beta1/projects/dinging-station/configs 200
+[debug] [2025-05-15T23:51:01.641Z] <<< [apiv2][body] GET https://runtimeconfig.googleapis.com/v1beta1/projects/dinging-station/configs {"configs":[{"name":"projects/dinging-station/configs/stripe"},{"name":"projects/dinging-station/configs/frontend"}]}
+[debug] [2025-05-15T23:51:01.645Z] Checked if tokens are valid: true, expires at: 1747355704765
+[debug] [2025-05-15T23:51:01.650Z] Checked if tokens are valid: true, expires at: 1747355704765
+[debug] [2025-05-15T23:51:01.651Z] Checked if tokens are valid: true, expires at: 1747355704765
+[debug] [2025-05-15T23:51:01.651Z] Checked if tokens are valid: true, expires at: 1747355704765
+[debug] [2025-05-15T23:51:01.652Z] >>> [apiv2][query] GET https://runtimeconfig.googleapis.com/v1beta1/projects/dinging-station/configs/stripe/variables [none]
+[debug] [2025-05-15T23:51:01.656Z] >>> [apiv2][query] GET https://runtimeconfig.googleapis.com/v1beta1/projects/dinging-station/configs/frontend/variables [none]
+[debug] [2025-05-15T23:51:01.944Z] <<< [apiv2][status] GET https://runtimeconfig.googleapis.com/v1beta1/projects/dinging-station/configs/stripe/variables 200
+[debug] [2025-05-15T23:51:01.945Z] <<< [apiv2][body] GET https://runtimeconfig.googleapis.com/v1beta1/projects/dinging-station/configs/stripe/variables {"variables":[{"name":"projects/dinging-station/configs/stripe/variables/webhook_secret","updateTime":"2025-04-18T16:48:36.813035765Z"},{"name":"projects/dinging-station/configs/stripe/variables/secret","updateTime":"2025-04-17T18:59:55.586069289Z"}]}
+[debug] [2025-05-15T23:51:01.947Z] Checked if tokens are valid: true, expires at: 1747355704765
+[debug] [2025-05-15T23:51:01.947Z] Checked if tokens are valid: true, expires at: 1747355704765
+[debug] [2025-05-15T23:51:01.948Z] Checked if tokens are valid: true, expires at: 1747355704765
+[debug] [2025-05-15T23:51:01.948Z] Checked if tokens are valid: true, expires at: 1747355704765
+[debug] [2025-05-15T23:51:01.949Z] >>> [apiv2][query] GET https://runtimeconfig.googleapis.com/v1beta1/projects/dinging-station/configs/stripe/variables/webhook_secret [none]
+[debug] [2025-05-15T23:51:01.950Z] >>> [apiv2][query] GET https://runtimeconfig.googleapis.com/v1beta1/projects/dinging-station/configs/stripe/variables/secret [none]
+[debug] [2025-05-15T23:51:01.970Z] <<< [apiv2][status] GET https://runtimeconfig.googleapis.com/v1beta1/projects/dinging-station/configs/frontend/variables 200
+[debug] [2025-05-15T23:51:01.971Z] <<< [apiv2][body] GET https://runtimeconfig.googleapis.com/v1beta1/projects/dinging-station/configs/frontend/variables {"variables":[{"name":"projects/dinging-station/configs/frontend/variables/base_url","updateTime":"2025-04-17T18:59:55.590998623Z"}]}
+[debug] [2025-05-15T23:51:01.972Z] Checked if tokens are valid: true, expires at: 1747355704765
+[debug] [2025-05-15T23:51:01.972Z] Checked if tokens are valid: true, expires at: 1747355704765
+[debug] [2025-05-15T23:51:01.973Z] >>> [apiv2][query] GET https://runtimeconfig.googleapis.com/v1beta1/projects/dinging-station/configs/frontend/variables/base_url [none]
+[debug] [2025-05-15T23:51:02.234Z] <<< [apiv2][status] GET https://runtimeconfig.googleapis.com/v1beta1/projects/dinging-station/configs/frontend/variables/base_url 200
+[debug] [2025-05-15T23:51:02.235Z] <<< [apiv2][body] GET https://runtimeconfig.googleapis.com/v1beta1/projects/dinging-station/configs/frontend/variables/base_url {"name":"projects/dinging-station/configs/frontend/variables/base_url","updateTime":"2025-04-17T18:59:55.590998623Z","text":"https://dinging-station.web.app"}
+[debug] [2025-05-15T23:51:02.251Z] <<< [apiv2][status] GET https://runtimeconfig.googleapis.com/v1beta1/projects/dinging-station/configs/stripe/variables/secret 200
+[debug] [2025-05-15T23:51:02.252Z] <<< [apiv2][body] GET https://runtimeconfig.googleapis.com/v1beta1/projects/dinging-station/configs/stripe/variables/secret {"name":"projects/dinging-station/configs/stripe/variables/secret","updateTime":"2025-04-17T18:59:55.586069289Z","text":"sk_test_51R4QfXHfv7m0rXZXHgDPjAJLmprmaNFQilHyvMeagVoxRY5FyqyU0JbROaal345o9KfFVYYLIbdu9lfydeWsZ85n00aSxgeNne"}
+[debug] [2025-05-15T23:51:02.377Z] <<< [apiv2][status] GET https://runtimeconfig.googleapis.com/v1beta1/projects/dinging-station/configs/stripe/variables/webhook_secret 200
+[debug] [2025-05-15T23:51:02.378Z] <<< [apiv2][body] GET https://runtimeconfig.googleapis.com/v1beta1/projects/dinging-station/configs/stripe/variables/webhook_secret {"name":"projects/dinging-station/configs/stripe/variables/webhook_secret","updateTime":"2025-04-18T16:48:36.813035765Z","text":"whsec_UHOpz7huPmPnIx09YW6RK28RQ2FdIbn5"}
+[debug] [2025-05-15T23:51:02.383Z] Validating nodejs source
+[warn] !  functions: Runtime Node.js 18 was deprecated on 2025-04-30 and will be decommissioned on 2025-10-31, after which you will not be able to deploy without upgrading. Consider upgrading now to avoid disruption. See https://cloud.google.com/functions/docs/runtime-support for full details on the lifecycle policy 
+[debug] [2025-05-15T23:51:03.606Z] > [functions] package.json contents: {
+  "name": "functions",
+  "description": "Cloud Functions for Firebase",
+  "scripts": {
+    "serve": "firebase emulators:start --only functions",
+    "shell": "firebase functions:shell",
+    "start": "npm run shell",
+    "deploy": "firebase deploy --only functions",
+    "logs": "firebase functions:log"
+  },
+  "engines": {
+    "node": "18"
+  },
+  "main": "index.js",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.5.0",
+    "express": "^4.18.2",
+    "firebase-admin": "^12.7.0",
+    "firebase-functions": "^6.3.2",
+    "path-to-regexp": "^6.2.1",
+    "stripe": "^18.0.0"
+  },
+  "devDependencies": {
+    "firebase-functions-test": "^3.1.0"
+  },
+  "private": true
+}
+[debug] [2025-05-15T23:51:03.607Z] Building nodejs source
+[info] i  functions: Loading and analyzing source code for codebase default to determine what to deploy 
+[debug] [2025-05-15T23:51:03.609Z] Could not find functions.yaml. Must use http discovery
+[debug] [2025-05-15T23:51:03.643Z] Found firebase-functions binary at 'C:\Users\chemi\Documents\My University study\Degree\Level3\Semester 2\FYP\dining-station\functions\node_modules\.bin\firebase-functions'
+[info] Serving at port 8600
+
+[debug] [2025-05-15T23:51:04.920Z] Got response from /__/functions.yaml {"endpoints":{"api":{"availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"concurrency":null,"serviceAccountEmail":null,"vpc":null,"platform":"gcfv2","labels":{},"httpsTrigger":{},"entryPoint":"api"}},"specVersion":"v1alpha1","requiredAPIs":[],"extensions":{}}
+[info] i  extensions: ensuring required API firebaseextensions.googleapis.com is enabled... 
+[debug] [2025-05-15T23:51:09.022Z] Checked if tokens are valid: true, expires at: 1747355704765
+[debug] [2025-05-15T23:51:09.022Z] Checked if tokens are valid: true, expires at: 1747355704765
+[debug] [2025-05-15T23:51:09.023Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/dinging-station/services/firebaseextensions.googleapis.com [none]
+[debug] [2025-05-15T23:51:09.023Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/dinging-station/services/firebaseextensions.googleapis.com x-goog-quota-user=projects/dinging-station
+[debug] [2025-05-15T23:51:10.686Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/dinging-station/services/firebaseextensions.googleapis.com 200
+[debug] [2025-05-15T23:51:10.687Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/dinging-station/services/firebaseextensions.googleapis.com [omitted]
+[info] +  extensions: required API firebaseextensions.googleapis.com is enabled 
+[debug] [2025-05-15T23:51:10.688Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2025-05-15T23:51:10.689Z] > authorizing via signed-in user (diningstationfyp25@gmail.com)
+[debug] [2025-05-15T23:51:10.689Z] [iam] checking project dinging-station for permissions ["firebase.projects.get","firebaseextensions.instances.list"]
+[debug] [2025-05-15T23:51:10.690Z] Checked if tokens are valid: true, expires at: 1747355704765
+[debug] [2025-05-15T23:51:10.690Z] Checked if tokens are valid: true, expires at: 1747355704765
+[debug] [2025-05-15T23:51:10.691Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/dinging-station:testIamPermissions [none]
+[debug] [2025-05-15T23:51:10.691Z] >>> [apiv2][(partial)header] POST https://cloudresourcemanager.googleapis.com/v1/projects/dinging-station:testIamPermissions x-goog-quota-user=projects/dinging-station
+[debug] [2025-05-15T23:51:10.692Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/dinging-station:testIamPermissions {"permissions":["firebase.projects.get","firebaseextensions.instances.list"]}
+[debug] [2025-05-15T23:51:11.739Z] <<< [apiv2][status] POST https://cloudresourcemanager.googleapis.com/v1/projects/dinging-station:testIamPermissions 200
+[debug] [2025-05-15T23:51:11.740Z] <<< [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/dinging-station:testIamPermissions {"permissions":["firebase.projects.get","firebaseextensions.instances.list"]}
+[debug] [2025-05-15T23:51:11.752Z] Checked if tokens are valid: true, expires at: 1747355704765
+[debug] [2025-05-15T23:51:11.753Z] Checked if tokens are valid: true, expires at: 1747355704765
+[debug] [2025-05-15T23:51:11.754Z] >>> [apiv2][query] GET https://firebaseextensions.googleapis.com/v1beta/projects/dinging-station/instances pageSize=100&pageToken=
+[debug] [2025-05-15T23:51:13.005Z] <<< [apiv2][status] GET https://firebaseextensions.googleapis.com/v1beta/projects/dinging-station/instances 200
+[debug] [2025-05-15T23:51:13.006Z] <<< [apiv2][body] GET https://firebaseextensions.googleapis.com/v1beta/projects/dinging-station/instances {}
+[info] i  functions: preparing functions directory for uploading... 
+[info] i  functions: packaged C:\Users\chemi\Documents\My University study\Degree\Level3\Semester 2\FYP\dining-station\functions (66.7 KB) for uploading 
+[debug] [2025-05-15T23:51:13.367Z] Checked if tokens are valid: true, expires at: 1747355704765
+[debug] [2025-05-15T23:51:13.368Z] Checked if tokens are valid: true, expires at: 1747355704765
+[debug] [2025-05-15T23:51:13.368Z] >>> [apiv2][query] GET https://cloudfunctions.googleapis.com/v1/projects/dinging-station/locations/-/functions [none]
+[debug] [2025-05-15T23:51:14.104Z] <<< [apiv2][status] GET https://cloudfunctions.googleapis.com/v1/projects/dinging-station/locations/-/functions 200
+[debug] [2025-05-15T23:51:14.104Z] <<< [apiv2][body] GET https://cloudfunctions.googleapis.com/v1/projects/dinging-station/locations/-/functions {}
+[debug] [2025-05-15T23:51:14.105Z] Checked if tokens are valid: true, expires at: 1747355704765
+[debug] [2025-05-15T23:51:14.105Z] Checked if tokens are valid: true, expires at: 1747355704765
+[debug] [2025-05-15T23:51:14.106Z] >>> [apiv2][query] GET https://cloudfunctions.googleapis.com/v2/projects/dinging-station/locations/-/functions filter=environment%3D%22GEN_2%22
+[debug] [2025-05-15T23:51:15.642Z] <<< [apiv2][status] GET https://cloudfunctions.googleapis.com/v2/projects/dinging-station/locations/-/functions 200
+[debug] [2025-05-15T23:51:15.643Z] <<< [apiv2][body] GET https://cloudfunctions.googleapis.com/v2/projects/dinging-station/locations/-/functions {"functions":[{"name":"projects/dinging-station/locations/us-central1/functions/api","buildConfig":{"build":"projects/113072864772/locations/us-central1/builds/efcc8dad-44c9-48fd-9c7a-35cd5579ef4d","runtime":"nodejs18","entryPoint":"api","source":{"storageSource":{"bucket":"gcf-v2-sources-113072864772-us-central1","object":"api/function-source.zip","generation":"1747352764065994"}},"environmentVariables":{"GOOGLE_NODE_RUN_SCRIPTS":""},"dockerRepository":"projects/dinging-station/locations/us-central1/repositories/gcf-artifacts","sourceProvenance":{"resolvedStorageSource":{"bucket":"gcf-v2-sources-113072864772-us-central1","object":"api/function-source.zip","generation":"1747352764065994"}},"dockerRegistry":"ARTIFACT_REGISTRY","serviceAccount":"projects/dinging-station/serviceAccounts/113072864772-compute@developer.gserviceaccount.com","automaticUpdatePolicy":{}},"state":"FAILED","updateTime":"2025-05-15T23:50:11.733109517Z","labels":{"firebase-functions-hash":"c3c2003906a83baff9e5ead0a66fcae776469346","deployment-tool":"cli-firebase"},"stateMessages":[{"severity":"ERROR","type":"CloudRunServiceNotFound","message":"Cloud Run service projects/dinging-station/locations/us-central1/services/api for the function was not found. The function will not work correctly. Please redeploy."}],"environment":"GEN_2","url":"https://us-central1-dinging-station.cloudfunctions.net/api","createTime":"2025-05-15T23:46:04.296493421Z","satisfiesPzi":true}]}
+[info] i  functions: ensuring required API run.googleapis.com is enabled... 
+[debug] [2025-05-15T23:51:15.661Z] Checked if tokens are valid: true, expires at: 1747355704765
+[debug] [2025-05-15T23:51:15.662Z] Checked if tokens are valid: true, expires at: 1747355704765
+[info] i  functions: ensuring required API eventarc.googleapis.com is enabled... 
+[debug] [2025-05-15T23:51:15.663Z] Checked if tokens are valid: true, expires at: 1747355704765
+[debug] [2025-05-15T23:51:15.664Z] Checked if tokens are valid: true, expires at: 1747355704765
+[info] i  functions: ensuring required API pubsub.googleapis.com is enabled... 
+[debug] [2025-05-15T23:51:15.665Z] Checked if tokens are valid: true, expires at: 1747355704765
+[debug] [2025-05-15T23:51:15.666Z] Checked if tokens are valid: true, expires at: 1747355704765
+[info] i  functions: ensuring required API storage.googleapis.com is enabled... 
+[debug] [2025-05-15T23:51:15.676Z] Checked if tokens are valid: true, expires at: 1747355704765
+[debug] [2025-05-15T23:51:15.676Z] Checked if tokens are valid: true, expires at: 1747355704765
+[debug] [2025-05-15T23:51:15.677Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/dinging-station/services/run.googleapis.com [none]
+[debug] [2025-05-15T23:51:15.678Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/dinging-station/services/run.googleapis.com x-goog-quota-user=projects/dinging-station
+[debug] [2025-05-15T23:51:15.679Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/dinging-station/services/eventarc.googleapis.com [none]
+[debug] [2025-05-15T23:51:15.680Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/dinging-station/services/eventarc.googleapis.com x-goog-quota-user=projects/dinging-station
+[debug] [2025-05-15T23:51:15.697Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/dinging-station/services/pubsub.googleapis.com [none]
+[debug] [2025-05-15T23:51:15.698Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/dinging-station/services/pubsub.googleapis.com x-goog-quota-user=projects/dinging-station
+[debug] [2025-05-15T23:51:15.717Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/dinging-station/services/storage.googleapis.com [none]
+[debug] [2025-05-15T23:51:15.717Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/dinging-station/services/storage.googleapis.com x-goog-quota-user=projects/dinging-station
+[debug] [2025-05-15T23:51:16.043Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/dinging-station/services/run.googleapis.com 200
+[debug] [2025-05-15T23:51:16.044Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/dinging-station/services/run.googleapis.com [omitted]
+[info] +  functions: required API run.googleapis.com is enabled 
+[debug] [2025-05-15T23:51:17.066Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/dinging-station/services/eventarc.googleapis.com 200
+[debug] [2025-05-15T23:51:17.067Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/dinging-station/services/eventarc.googleapis.com [omitted]
+[info] +  functions: required API eventarc.googleapis.com is enabled 
+[debug] [2025-05-15T23:51:17.099Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/dinging-station/services/pubsub.googleapis.com 200
+[debug] [2025-05-15T23:51:17.100Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/dinging-station/services/pubsub.googleapis.com [omitted]
+[info] +  functions: required API pubsub.googleapis.com is enabled 
+[debug] [2025-05-15T23:51:17.107Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/dinging-station/services/storage.googleapis.com 200
+[debug] [2025-05-15T23:51:17.107Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/dinging-station/services/storage.googleapis.com [omitted]
+[info] +  functions: required API storage.googleapis.com is enabled 
+[info] i  functions: generating the service identity for pubsub.googleapis.com... 
+[debug] [2025-05-15T23:51:17.115Z] Checked if tokens are valid: true, expires at: 1747355704765
+[debug] [2025-05-15T23:51:17.115Z] Checked if tokens are valid: true, expires at: 1747355704765
+[info] i  functions: generating the service identity for eventarc.googleapis.com... 
+[debug] [2025-05-15T23:51:17.116Z] Checked if tokens are valid: true, expires at: 1747355704765
+[debug] [2025-05-15T23:51:17.117Z] Checked if tokens are valid: true, expires at: 1747355704765
+[debug] [2025-05-15T23:51:17.117Z] >>> [apiv2][query] POST https://serviceusage.googleapis.com/v1beta1/projects/113072864772/services/pubsub.googleapis.com:generateServiceIdentity [none]
+[debug] [2025-05-15T23:51:17.119Z] >>> [apiv2][query] POST https://serviceusage.googleapis.com/v1beta1/projects/113072864772/services/eventarc.googleapis.com:generateServiceIdentity [none]
+[debug] [2025-05-15T23:51:17.504Z] <<< [apiv2][status] POST https://serviceusage.googleapis.com/v1beta1/projects/113072864772/services/pubsub.googleapis.com:generateServiceIdentity 200
+[debug] [2025-05-15T23:51:17.504Z] <<< [apiv2][body] POST https://serviceusage.googleapis.com/v1beta1/projects/113072864772/services/pubsub.googleapis.com:generateServiceIdentity {"name":"operations/finished.DONE_OPERATION","done":true,"response":{"@type":"type.googleapis.com/google.api.serviceusage.v1beta1.ServiceIdentity","email":"service-113072864772@gcp-sa-pubsub.iam.gserviceaccount.com","uniqueId":"100617033587018278701"}}
+[debug] [2025-05-15T23:51:17.511Z] <<< [apiv2][status] POST https://serviceusage.googleapis.com/v1beta1/projects/113072864772/services/eventarc.googleapis.com:generateServiceIdentity 200
+[debug] [2025-05-15T23:51:17.512Z] <<< [apiv2][body] POST https://serviceusage.googleapis.com/v1beta1/projects/113072864772/services/eventarc.googleapis.com:generateServiceIdentity {"name":"operations/finished.DONE_OPERATION","done":true,"response":{"@type":"type.googleapis.com/google.api.serviceusage.v1beta1.ServiceIdentity","email":"service-113072864772@gcp-sa-eventarc.iam.gserviceaccount.com","uniqueId":"116537705792838227042"}}
+[debug] [2025-05-15T23:51:17.519Z] Checked if tokens are valid: true, expires at: 1747355704765
+[debug] [2025-05-15T23:51:17.519Z] Checked if tokens are valid: true, expires at: 1747355704765
+[debug] [2025-05-15T23:51:17.519Z] >>> [apiv2][query] GET https://cloudresourcemanager.googleapis.com/v1/projects/dinging-station [none]
+[debug] [2025-05-15T23:51:18.611Z] <<< [apiv2][status] GET https://cloudresourcemanager.googleapis.com/v1/projects/dinging-station 200
+[debug] [2025-05-15T23:51:18.611Z] <<< [apiv2][body] GET https://cloudresourcemanager.googleapis.com/v1/projects/dinging-station {"projectNumber":"113072864772","projectId":"dinging-station","lifecycleState":"ACTIVE","name":"Dining Station","labels":{"firebase":"enabled","firebase-core":"disabled"},"createTime":"2025-03-03T17:27:30.465957Z"}
+[debug] [2025-05-15T23:51:18.615Z] Checked if tokens are valid: true, expires at: 1747355704765
+[debug] [2025-05-15T23:51:18.615Z] Checked if tokens are valid: true, expires at: 1747355704765
+[debug] [2025-05-15T23:51:18.616Z] >>> [apiv2][query] GET https://cloudbilling.googleapis.com/v1/projects/dinging-station/billingInfo [none]
+[debug] [2025-05-15T23:51:20.061Z] <<< [apiv2][status] GET https://cloudbilling.googleapis.com/v1/projects/dinging-station/billingInfo 200
+[debug] [2025-05-15T23:51:20.062Z] <<< [apiv2][body] GET https://cloudbilling.googleapis.com/v1/projects/dinging-station/billingInfo {"name":"projects/dinging-station/billingInfo","projectId":"dinging-station","billingAccountName":"billingAccounts/0130B2-5535D7-13A3C3","billingEnabled":true}
+[info] i  functions: updating Node.js 18 (2nd Gen) function api(us-central1)... 
+[debug] [2025-05-15T23:51:20.079Z] Precondition failed. Cannot update a GCFv2 function without storage
+[debug] [2025-05-15T23:51:20.114Z] Total Function Deployment time: 5
+[debug] [2025-05-15T23:51:20.114Z] 1 Functions Deployed
+[debug] [2025-05-15T23:51:20.114Z] 1 Functions Errored
+[debug] [2025-05-15T23:51:20.115Z] 0 Function Deployments Aborted
+[debug] [2025-05-15T23:51:20.115Z] Average Function Deployment time: 2
+[info] 
+[info] Functions deploy had errors with the following functions:
+	api(us-central1)
+[debug] [2025-05-15T23:51:20.215Z] Not printing URL for HTTPS function. Typically this means it didn't match a filter or we failed deployment
+[info] i  functions: cleaning up build files... 
+[debug] [2025-05-15T23:51:20.221Z] Checked if tokens are valid: true, expires at: 1747355704765
+[debug] [2025-05-15T23:51:20.222Z] Checked if tokens are valid: true, expires at: 1747355704765
+[debug] [2025-05-15T23:51:20.229Z] Checked if tokens are valid: true, expires at: 1747355704765
+[debug] [2025-05-15T23:51:20.230Z] Checked if tokens are valid: true, expires at: 1747355704765
+[debug] [2025-05-15T23:51:20.231Z] >>> [apiv2][query] DELETE https://artifactregistry.googleapis.com/v1/projects/dinging-station/locations/us-central1/repositories/gcf-artifacts/packages/dinging--station__us--central1__api [none]
+[debug] [2025-05-15T23:51:20.235Z] >>> [apiv2][query] GET https://us.gcr.io/v2/dinging-station/gcf/us-central1/tags/list [none]
+[debug] [2025-05-15T23:51:20.733Z] <<< [apiv2][status] GET https://us.gcr.io/v2/dinging-station/gcf/us-central1/tags/list 404
+[debug] [2025-05-15T23:51:20.734Z] <<< [apiv2][body] GET https://us.gcr.io/v2/dinging-station/gcf/us-central1/tags/list {"errors":[{"code":"NAME_UNKNOWN","message":"Repository \"us.gcr.io\" not found"}]}
+[debug] [2025-05-15T23:51:20.737Z] Failed docker command with error  Request to https://us.gcr.io/v2/dinging-station/gcf/us-central1/tags/list had HTTP Error: 404, Not Found {"name":"FirebaseError","children":[],"context":{"body":{"errors":[{"code":"NAME_UNKNOWN","message":"Repository \"us.gcr.io\" not found"}],"error":{"message":"Not Found"}},"response":{"statusCode":404}},"exit":1,"message":"Request to https://us.gcr.io/v2/dinging-station/gcf/us-central1/tags/list had HTTP Error: 404, Not Found","status":404}
+[debug] [2025-05-15T23:51:20.740Z] Checked if tokens are valid: true, expires at: 1747355704765
+[debug] [2025-05-15T23:51:20.740Z] Checked if tokens are valid: true, expires at: 1747355704765
+[debug] [2025-05-15T23:51:20.741Z] >>> [apiv2][query] GET https://us.gcr.io/v2/dinging-station/gcf/us-central1/tags/list [none]
+[debug] [2025-05-15T23:51:21.123Z] <<< [apiv2][status] GET https://us.gcr.io/v2/dinging-station/gcf/us-central1/tags/list 404
+[debug] [2025-05-15T23:51:21.123Z] <<< [apiv2][body] GET https://us.gcr.io/v2/dinging-station/gcf/us-central1/tags/list {"errors":[{"code":"NAME_UNKNOWN","message":"Repository \"us.gcr.io\" not found"}]}
+[debug] [2025-05-15T23:51:21.124Z] Failed docker command with error  Request to https://us.gcr.io/v2/dinging-station/gcf/us-central1/tags/list had HTTP Error: 404, Not Found {"name":"FirebaseError","children":[],"context":{"body":{"errors":[{"code":"NAME_UNKNOWN","message":"Repository \"us.gcr.io\" not found"}],"error":{"message":"Not Found"}},"response":{"statusCode":404}},"exit":1,"message":"Request to https://us.gcr.io/v2/dinging-station/gcf/us-central1/tags/list had HTTP Error: 404, Not Found","status":404}
+[debug] [2025-05-15T23:51:21.230Z] Checked if tokens are valid: true, expires at: 1747355704765
+[debug] [2025-05-15T23:51:21.231Z] Checked if tokens are valid: true, expires at: 1747355704765
+[debug] [2025-05-15T23:51:21.231Z] >>> [apiv2][query] GET https://us.gcr.io/v2/dinging-station/gcf/us-central1/tags/list [none]
+[debug] [2025-05-15T23:51:21.531Z] <<< [apiv2][status] DELETE https://artifactregistry.googleapis.com/v1/projects/dinging-station/locations/us-central1/repositories/gcf-artifacts/packages/dinging--station__us--central1__api 404
+[debug] [2025-05-15T23:51:21.532Z] <<< [apiv2][body] DELETE https://artifactregistry.googleapis.com/v1/projects/dinging-station/locations/us-central1/repositories/gcf-artifacts/packages/dinging--station__us--central1__api {"error":{"code":404,"message":"Package \"projects/dinging-station/locations/us-central1/repositories/gcf-artifacts/packages/dinging--station__us--central1__api\" was not found.","status":"NOT_FOUND"}}
+[debug] [2025-05-15T23:51:21.614Z] <<< [apiv2][status] GET https://us.gcr.io/v2/dinging-station/gcf/us-central1/tags/list 404
+[debug] [2025-05-15T23:51:21.615Z] <<< [apiv2][body] GET https://us.gcr.io/v2/dinging-station/gcf/us-central1/tags/list {"errors":[{"code":"NAME_UNKNOWN","message":"Repository \"us.gcr.io\" not found"}]}
+[debug] [2025-05-15T23:51:21.616Z] Failed docker command with error  Request to https://us.gcr.io/v2/dinging-station/gcf/us-central1/tags/list had HTTP Error: 404, Not Found {"name":"FirebaseError","children":[],"context":{"body":{"errors":[{"code":"NAME_UNKNOWN","message":"Repository \"us.gcr.io\" not found"}],"error":{"message":"Not Found"}},"response":{"statusCode":404}},"exit":1,"message":"Request to https://us.gcr.io/v2/dinging-station/gcf/us-central1/tags/list had HTTP Error: 404, Not Found","status":404}
+[warn] !  functions: Unhandled error cleaning up build images. This could result in a small monthly bill if not corrected. You can attempt to delete these images by redeploying or you can delete them manually at https://console.cloud.google.com/gcr/images/dinging-station/us/gcf 
+[debug] [2025-05-15T23:51:21.618Z] Functions deploy failed.
+[debug] [2025-05-15T23:51:21.619Z] {}
+[debug] [2025-05-15T23:51:21.642Z] Error: Precondition failed
+    at Fabricator.updateV2Function (C:\Users\chemi\AppData\Roaming\npm\node_modules\firebase-tools\lib\deploy\functions\release\fabricator.js:382:19)
+    at Fabricator.updateEndpoint (C:\Users\chemi\AppData\Roaming\npm\node_modules\firebase-tools\lib\deploy\functions\release\fabricator.js:155:24)
+    at C:\Users\chemi\AppData\Roaming\npm\node_modules\firebase-tools\lib\deploy\functions\release\fabricator.js:110:71
+    at handle (C:\Users\chemi\AppData\Roaming\npm\node_modules\firebase-tools\lib\deploy\functions\release\fabricator.js:89:23)
+    at Fabricator.applyChangeset (C:\Users\chemi\AppData\Roaming\npm\node_modules\firebase-tools\lib\deploy\functions\release\fabricator.js:110:26)
+    at C:\Users\chemi\AppData\Roaming\npm\node_modules\firebase-tools\lib\deploy\functions\release\fabricator.js:69:40
+    at Array.map (<anonymous>)
+    at Fabricator.applyPlan (C:\Users\chemi\AppData\Roaming\npm\node_modules\firebase-tools\lib\deploy\functions\release\fabricator.js:68:54)
+    at release (C:\Users\chemi\AppData\Roaming\npm\node_modules\firebase-tools\lib\deploy\functions\release\index.js:76:31)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+[error] 
+[error] Error: There was an error deploying functions
