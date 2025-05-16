@@ -84,6 +84,17 @@ export default function SignUp({ isStaffRegistration = false }) {
     setError("");
     setLoading(true);
 
+    const nameRegex = /^[a-zA-Z\s'-]+$/;
+    if (!nameRegex.test(formData.name)) {
+      const msg =
+        "Name must only contain letters, spaces, hyphens, or apostrophes.";
+      setError(msg);
+      showError(msg);
+      setLoading(false);
+      scrollToError();
+      return;
+    }
+
     const emailRegex = /@apu.edu.my$|@mail.apu.edu.my$/;
     if (!emailRegex.test(formData.email)) {
       const msg = "Email must be @apu.edu.my or @mail.apu.edu.my";
