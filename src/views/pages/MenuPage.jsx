@@ -655,6 +655,7 @@ if (initialLoading) return <CardSkeletonFallback />;
                   aria-label="Search"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
+                  maxLength={50}
                 />
                 <span className="input-group-text bg-black">
                   <i className="fa fa-search text-white"></i>

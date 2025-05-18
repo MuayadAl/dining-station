@@ -255,6 +255,7 @@ const AdminManageUsers = () => {
             className="mb-4 p-2 border rounded w-full"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
+            maxLength={50}
           />
 
           {loading ? (
