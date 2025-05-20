@@ -1,6 +1,6 @@
 // src/views/pages/AddRestaurant.jsx
 import React, { useState, useEffect, useRef } from "react";
-import { Navigate, Link } from "react-router-dom";
+import { Navigate, Link, useNavigate } from "react-router-dom";
 
 // import { Link } from "react-router-dom";
 import { addRestaurant } from "../../controllers/restaurantController";
@@ -38,6 +38,7 @@ export default function AddRestaurant() {
 
   // Reference for scrolling
   const messageRef = useRef(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const checkExistingRestaurant = async () => {
@@ -167,6 +168,8 @@ export default function AddRestaurant() {
         description: "",
       });
       setImgFile(null);
+
+      window.location.href = "/my-restaurant/status-report";
     } catch (err) {
       showError("Error adding restaurant: " + err.message);
     } finally {
@@ -182,15 +185,17 @@ export default function AddRestaurant() {
           <h5 className="text-center">Checking your restaurant status...</h5>
         ) : hasRestaurant ? (
           <div className="alert alert-info text-center">
-          You already have a registered restaurant. You can view it from the{" "}
-          <strong>
-            <Link to="/my-restaurant/status-report" className="text-decoration-underline">
-              Restaurant Status & Report
-            </Link>
-          </strong>{" "}
-          page.
-        </div>
-        
+            You already have a registered restaurant. You can view it from the{" "}
+            <strong>
+              <Link
+                to="/my-restaurant/status-report"
+                className="text-decoration-underline"
+              >
+                Restaurant Status & Report
+              </Link>
+            </strong>{" "}
+            page.
+          </div>
         ) : (
           <>
             <h3 className="text-center mb-4">

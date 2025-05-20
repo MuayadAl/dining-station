@@ -376,18 +376,22 @@ const MenuPage = () => {
   );
 
   const handleCategoryClick = (category) => {
-    if (categoryRefs.current[category]) {
-      categoryRefs.current[category].scrollIntoView({
-        behavior: "smooth",
-        block: "start",
-      });
-    }
-  };
+  if (categoryRefs.current[category]) {
+    const element = categoryRefs.current[category];
+    const elementPosition = element.getBoundingClientRect().top + window.pageYOffset;
+    const offsetPosition = elementPosition - 80; 
+    
+    window.scrollTo({
+      top: offsetPosition,
+      behavior: "smooth"
+    });
+  }
+};
 
   const filteredCategories = categories.filter((category) =>
-    filteredItems.some((item) => item.category === category)
-  );
+    filteredItems.some((item) => item.category === category));
 
+  
   const handleEditItem = (item) => {
     if (!isOwner) return; // Only owners can edit
     setSelectedItem(item);
@@ -708,10 +712,13 @@ if (initialLoading) return <CardSkeletonFallback />;
           filteredCategories.map((category, index) => (
             <div
               key={index}
-              ref={(el) => (categoryRefs.current[category] = el)}
+              
               className="mt-4"
             >
-              <h3 className="text-dark p-2">{category}</h3>
+              <h3 className="text-dark p-2"
+              ref={(el) => (categoryRefs.current[category] = el)}
+              >{category}</h3>
+
               <div className="justify-content-start shadow px-1 pb-3 mb-5 bg-body rounded-3 row g-3">
                 {filteredItems
                   .filter((item) => item.category === category)
