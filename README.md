@@ -1,70 +1,41 @@
-# Getting Started with Create React App
+📖 Project Overview
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+This project aims to provide a web-based solution for managing food ordering operations within a university campus. The system is designed to streamline interactions between students/customers and on-campus dining outlets by offering a centralized platform for browsing menus, placing orders, making payments, and tracking deliveries.
+🎯 Objectives
 
-## Available Scripts
+    Provide a seamless and accessible food ordering experience for university students.
 
-In the project directory, you can run:
+    Allow dining facility staff to manage menus, track orders, and monitor performance.
 
-### `npm start`
+    Enable real-time updates and order tracking features.
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+    Reduce wait times and improve overall service efficiency on campus.
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+🛠️ Features
 
-### `npm test`
+    User Authentication: Secure login and registration system.
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+    Menu Management: Restaurants can add, update, and remove menu items.
 
-### `npm run build`
+    Order Placement: Users can browse restaurant menus and place food orders.
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+    Payment Integration: Support for wallet or online payment (future enhancement).
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+    Order Tracking: Real-time status updates on order processing and delivery.
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+    Admin Dashboard: Tools for managing restaurants, users, and data analytics.
+    
+📁 Technologies Used
 
-### `npm run eject`
+    Frontend: React.js / HTML / CSS / JavaScript
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+    Backend: Firebase Firestore / Authentication
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+    PWA: Progressive Web App support
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+    Version Control: Git & GitHub
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+✅ Status
 
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
-
-### Code Splitting
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
-
-### Analyzing the Bundle Size
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+  🟢 Project Completed
+  📅 FYP Presentation Delivered
