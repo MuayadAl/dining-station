@@ -33,3 +33,4 @@ yarn-error.log*
 
 # ✅ Firebase hosting cache (optional)
 .firebase/
+.env.production
